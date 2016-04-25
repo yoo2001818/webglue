@@ -1,0 +1,51 @@
+{
+  "rules": {
+    "indent": [
+      2,
+      2
+    ],
+    "quotes": [
+      2,
+      "single"
+    ],
+    "linebreak-style": [
+      2,
+      "unix"
+    ],
+    "semi": [
+      2,
+      "always"
+    ],
+    "max-len": [
+      1,
+      80,
+      2
+    ],
+    "keyword-spacing": 2,
+    "no-multiple-empty-lines": [
+      1,
+      {
+        "max": 2
+      }
+    ],
+    "strict": 0,
+    "no-console": 0,
+    "curly": [
+      2,
+      "multi-line"
+    ]
+  },
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    },
+  },
+  "env": {
+    "es6": true,
+    "node": true,
+    "browser": true
+  },
+  "extends": "eslint:recommended"
+}
