@@ -1,0 +1,188 @@
+@startuml
+
+class RenderContext {
+  #gl: WebGLRenderingContext
+  +sharedAttributes: Object<String, uint>
+  #shaders: Object<String, InternalShader>
+  #textures: Object<String, InternalTexture>
+  #geometries: Object<String, InternalGeometry>
+  +lights: Array<Light>
+  +meshes: Array<Mesh>
+  +camera: Camera
+  #currentGeometry: InternalGeometry
+  #currentShader: InternalShader
+  #currentMaterial: Material
+  +render(): void
+  +reset(): void
+}
+
+class InternalShader {
+  -vertexShader: WebGLShader
+  -fragmentShader: WebGLShader
+  -program: WebGLProgram
+  #isShared: Boolean
+  +name: Symbol | String
+  +attributes: Object<String, uint>
+  +uniforms: Object<String, uint>
+}
+
+InternalShader --o RenderContext
+
+class Shader {
+  #vertex: String
+  #fragment: String
+  +name: Symbol | String
+}
+
+class InternalTexture {
+  #texture: WebGLTexture
+  +name: Symbol | String
+}
+
+InternalTexture --o RenderContext
+
+class Texture {
+  +name: Symbol | String
+}
+
+class Texture2D {
+  +image: HTMLImageElement
+  {static} +fromURL(url: String): Texture2D
+}
+
+class TextureCube {
+  +images: Array<HTMLImageElement>
+  {static} +fromURL(urls: Array<String>): TextureCube
+}
+
+Texture2D --|> Texture
+TextureCube --|> Texture
+
+class Material {
+  #shader: Shader
+  +visible: Boolean
+  +name: Symbol | String
+}
+
+Shader --* Material
+Texture --* Material
+
+class InternalGeometry {
+  #vbo: WebGLBuffer
+  #vba: Object<Symbol | String, WebGLBuffer>
+  +name: Symbol | String
+}
+
+InternalGeometry --o RenderContext
+
+class Geometry {
+  #indices: Uint16Array | Uint8Array
+  #type: String
+  +name: Symbol | String
+}
+
+class 2DGeometry {
+  #vertices: Float32Array
+  #texCoords: Float32Array
+}
+
+class 3DGeometry {
+  #vertices: Float32Array
+  #normals: Float32Array
+  #tangents: Float32Array
+  #texCoords: Float32Array
+  -calculateNormals(): void
+  -calculateTangents(): void
+}
+
+2DGeometry --|> Geometry
+3DGeometry --|> Geometry
+
+class WireframeGeometry {
+  +geometry: Geometry
+}
+
+WireframeGeometry --|> Geometry
+
+class Transform {
+  +position: Float32Array
+  +rotation: Float32Array
+  +scale: Float32Array
+  #matrix: Float32Array
+  #valid: Boolean
+  #validate(): void
+  +invalidate(): void
+}
+
+class Object3D {
+  +transform: Transform
+  #globalMatrix: Float32Array
+  #valid: Boolean
+  #validate(): void
+  +invalidate(): void
+  +update(context: RenderContext, parent: Container): void
+}
+
+Transform --o Object3D
+
+class Mesh {
+  +material: Material
+  +geometry: Geometry
+  +visible: Boolean
+  #normalMatrix: Float32Array
+}
+
+Mesh -|> Object3D
+
+class Light {
+  +ambient: Float32Array
+  +diffuse: Float32Array
+  +specular: Float32Array
+}
+
+Light --|> Object3D
+
+class PointLight {
+  +attenuation: Number
+}
+
+PointLight --|> Light
+
+class SpotLight {
+  +angleNear: Number
+  +angleFar: Number
+}
+
+SpotLight -|> PointLight
+
+class DirectionalLight {
+
+}
+
+DirectionalLight --|> Light
+
+class Camera {
+  +type: String
+  +near: Number
+  +far: Number
+  +fov: Number
+}
+
+Camera --|> Object3D
+
+class Container {
+  +children: Array<Object3D>
+  +appendChild(child: Object3D): void
+  +hasChild(child: Object3D): Boolean
+  +removeChild(child: Object3D): void
+  +removeChildren(): void
+  +getChildIndex(child: Object3D): Number
+}
+
+Object3D --* Container
+Container --|> Object3D
+
+Geometry --* Mesh
+Material --* Mesh
+
+@enduml
