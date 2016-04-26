@@ -91,7 +91,8 @@ class InternalGeometry {
   #vba: Object<Symbol | String, WebGLBuffer>
   +name: Symbol | String
   +upload(context: RenderContext, geometry: Geometry): void
-  +use(context: RenderContext, geometry: Geometry): void
+  +use(context: RenderContext, geometry: Geometry, shader: InternalShader): void
+  +render(context: RenderContext, geometry: Geometry): void
   +dispose(context: RenderContext): void
 }
 
@@ -101,8 +102,9 @@ class Geometry {
   #indices: Uint16Array | Uint8Array
   #type: String
   +name: Symbol | String
+  {abstract} +getVertexCount(): Number
   {abstract} +upload(gl: WebGLRenderingContext): void
-  {abstract} +use(gl: WebGLRenderingContext): void
+  {abstract} +use(gl: WebGLRenderingContext, shader: InternalShader): void
 }
 
 class 2DGeometry {
