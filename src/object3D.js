@@ -8,8 +8,11 @@ export default class Object3D {
     this.globalMatrix = mat4.create();
     this.hasChanged = false;
   }
+  validate() {
+    return this.transform.validate();
+  }
   update(context, parent) {
-    this.hasChanged = this.transform.validate();
+    this.hasChanged = this.validate();
     // Parent should call children's update function after updating its
     // components, without ticking valid variable.
     if (this.hasChanged || (parent && parent.hasChanged)) {
