@@ -14,6 +14,11 @@ class RenderContext {
   #currentMaterial: Material
   +render(): void
   +reset(): void
+  #renderMesh(mesh: Mesh): void
+  #useShader(shader: Shader): void
+  #useMaterial(material: Material): void
+  #useGeometry(geometry: Geometry): void
+  #renderGeometry(geometry: Geometry): void
 }
 
 class InternalShader {
@@ -24,6 +29,9 @@ class InternalShader {
   +name: Symbol | String
   +attributes: Object<String, uint>
   +uniforms: Object<String, uint>
+  +upload(context: RenderContext, shader: Shader): void
+  +use(context: RenderContext): void
+  +dispose(context: RenderContext): void
 }
 
 InternalShader --o RenderContext
@@ -37,12 +45,20 @@ class Shader {
 class InternalTexture {
   #texture: WebGLTexture
   +name: Symbol | String
+  +type: Number
+  +loaded: Boolean
+  +upload(context: RenderContext, texture: Texture): void
+  +use(context: RenderContext, unit: Number): void
+  +dispose(context: RenderContext): void
 }
 
 InternalTexture --o RenderContext
 
 class Texture {
   +name: Symbol | String
+  +type: String
+  {abstract} +isPrepared(): Boolean
+  {abstract} +upload(gl: WebGLRenderingContext, texture: WebGLTexture): void
 }
 
 class Texture2D {
@@ -62,6 +78,7 @@ class Material {
   #shader: Shader
   +visible: Boolean
   +name: Symbol | String
+  {abstract} +use(gl: WebGLRenderingContext, shader: InternalShader): void
 }
 
 Shader --* Material
@@ -69,8 +86,13 @@ Texture --* Material
 
 class InternalGeometry {
   #vbo: WebGLBuffer
+  #ebo: WebGLBuffer
+  #eboType: Number
   #vba: Object<Symbol | String, WebGLBuffer>
   +name: Symbol | String
+  +upload(context: RenderContext, geometry: Geometry): void
+  +use(context: RenderContext, geometry: Geometry): void
+  +dispose(context: RenderContext): void
 }
 
 InternalGeometry --o RenderContext
@@ -79,6 +101,8 @@ class Geometry {
   #indices: Uint16Array | Uint8Array
   #type: String
   +name: Symbol | String
+  {abstract} +upload(gl: WebGLRenderingContext): void
+  {abstract} +use(gl: WebGLRenderingContext): void
 }
 
 class 2DGeometry {
@@ -110,16 +134,14 @@ class Transform {
   +scale: Float32Array
   #matrix: Float32Array
   #valid: Boolean
-  #validate(): void
+  #validate(): Boolean
   +invalidate(): void
 }
 
 class Object3D {
   +transform: Transform
   #globalMatrix: Float32Array
-  #valid: Boolean
-  #validate(): void
-  +invalidate(): void
+  #validate(): Boolean
   +update(context: RenderContext, parent: Container): void
 }
 
@@ -166,6 +188,8 @@ class Camera {
   +near: Number
   +far: Number
   +fov: Number
+  #valid: Boolean
+  +invalidate(): Boolean
 }
 
 Camera --|> Object3D
