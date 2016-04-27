@@ -6,7 +6,7 @@ import Camera from '../src/camera';
 import Container from '../src/container';
 import RenderContext from '../src/webgl/renderContext';
 
-import { quat } from 'gl-matrix';
+import { quat, vec3 } from 'gl-matrix';
 
 // Init canvas
 
@@ -61,25 +61,75 @@ container.appendChild(mesh);
 container.appendChild(camera);
 
 camera.aspect = 640 / 480;
-camera.transform.position[2] = 3;
+//camera.transform.position[2] = 3;
 camera.transform.invalidate();
 
 mesh.transform.position[2] = -3;
 mesh.transform.invalidate();
+
+let mesh2 = new Mesh(geometry, material);
+container.appendChild(mesh2);
+
+mesh2.transform.position[1] = -2;
+mesh2.transform.position[2] = -3;
+mesh2.transform.invalidate();
 
 let context = new RenderContext(gl);
 
 container.update(context, null);
 
 function animate() {
+  quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
+      Math.PI / 180 * 2);
+  mesh.transform.invalidate();
+  /* quat.rotateY(camera.transform.rotation, camera.transform.rotation,
+      Math.PI / 180 * 1); */
+  vec3.transformQuat(camera.transform.position, [0, 0, 6],
+    camera.transform.rotation);
+  vec3.add(camera.transform.position, camera.transform.position, [0, -2, -3]);
+  camera.transform.invalidate();
+
   context.reset();
   container.update(context, null);
   context.render();
 
-  quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
-      Math.PI / 180 * 2);
-  //console.log(mesh.transform.rotation);
-  mesh.transform.invalidate();
   window.requestAnimationFrame(animate);
 }
 window.requestAnimationFrame(animate);
+
+let prevX = 0, prevY = 0, dir = 0;
+
+function handleMouseMove(e) {
+  let offsetX = e.clientX - prevX;
+  let offsetY = e.clientY - prevY;
+  // Global rotation....
+  let rot = quat.create();
+  quat.rotateY(rot, rot,
+      Math.PI / 180 * -offsetX * dir);
+  quat.multiply(camera.transform.rotation, rot, camera.transform.rotation);
+  quat.rotateX(camera.transform.rotation, camera.transform.rotation,
+      Math.PI / 180 * -offsetY);
+  prevX = e.clientX;
+  prevY = e.clientY;
+  //console.log(quat.dot(def, camera.transform.rotation));
+  //quat.copy(mesh2.transform.rotation, camera.transform.rotation);
+  mesh2.transform.invalidate();
+}
+
+window.addEventListener('mousedown', e => {
+  // Determine if we should go clockwise or anticlockwise.
+  let upLocal = vec3.create();
+  let up = vec3.fromValues(0, 1, 0);
+  vec3.transformQuat(upLocal, [0, 1, 0],
+    camera.transform.rotation);
+  let upDot = vec3.dot(up, upLocal);
+  dir = upDot > 0 ? 1 : -1;
+  // Set position and register event
+  prevX = e.clientX;
+  prevY = e.clientY;
+  window.addEventListener('mousemove', handleMouseMove);
+});
+
+window.addEventListener('mouseup', () => {
+  window.removeEventListener('mousemove', handleMouseMove);
+});
