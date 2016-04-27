@@ -18,9 +18,10 @@ export default class Object3D {
     if (this.hasChanged || (parent && parent.hasChanged)) {
       // Recalculate global matrix...
       if (parent) {
-        mat4.multiply(this.globalMatrix, parent.globalMatrix, this.transform);
+        mat4.multiply(this.globalMatrix, parent.globalMatrix,
+          this.transform.matrix);
       } else {
-        mat4.copy(this.globalMatrix, this.transform);
+        mat4.copy(this.globalMatrix, this.transform.matrix);
       }
     }
   }

@@ -19,8 +19,9 @@ export default class Mesh extends Object3D {
     if (this.visible) {
       // TODO Append the mesh information to the context, however context object
       // is absent as well, so we use console.log to debug mesh information.
-      console.log('Mesh: ' + this.geometry.name.toString() + ', ' +
-        this.material.name.toString());
+      // console.log('Mesh: ' + this.geometry.name.toString() + ', ' +
+      //   this.material.name.toString());
+      context.meshes.push(this);
     }
   }
 }

@@ -33,7 +33,7 @@ export default class Geometry3D extends Geometry {
         origin);
       vec3.subtract(p2, this.vertices.slice(vertexId3 * 3, vertexId3 * 3 + 3),
         origin);
-      vec3.subtract(uv, p1, p2);
+      vec3.cross(uv, p1, p2);
       // Done! Paste them to those three vertices.
       this.normals.set(uv, vertexId1 * 3);
       this.normals.set(uv, vertexId2 * 3);
@@ -90,28 +90,27 @@ export default class Geometry3D extends Geometry {
     gl.bufferSubData(gl.ARRAY_BUFFER, vertexCount * 24, this.tangents);
     gl.bufferSubData(gl.ARRAY_BUFFER, vertexCount * 36, this.texCoords);
   }
-  use(gl, shader) {
+  use(gl, attributes) {
     // InternalGeometry will handle VAO and VBO section; we just need to
     // bind the array to the attributes.
-    const attributes = shader.attributes;
     const vertexCount = this.getVertexCount();
-    if (attributes.vertex !== -1) {
-      gl.enableVertexAttribArray(attributes.vertex);
-      gl.vertexAttribPointer(attributes.vertex, 3, gl.FLOAT, false, 12, 0);
+    if (attributes.aPosition !== -1) {
+      gl.enableVertexAttribArray(attributes.aPosition);
+      gl.vertexAttribPointer(attributes.aPosition, 3, gl.FLOAT, false, 12, 0);
     }
-    if (attributes.normal !== -1) {
-      gl.enableVertexAttribArray(attributes.normal);
-      gl.vertexAttribPointer(attributes.normal, 3, gl.FLOAT, false, 12,
+    if (attributes.aNormal !== -1) {
+      gl.enableVertexAttribArray(attributes.aNormal);
+      gl.vertexAttribPointer(attributes.aNormal, 3, gl.FLOAT, false, 12,
         vertexCount * 12);
     }
-    if (attributes.tangent !== -1) {
-      gl.enableVertexAttribArray(attributes.tangent);
-      gl.vertexAttribPointer(attributes.normal, 3, gl.FLOAT, false, 12,
+    if (attributes.aTangent !== -1) {
+      gl.enableVertexAttribArray(attributes.aTangent);
+      gl.vertexAttribPointer(attributes.aTangent, 3, gl.FLOAT, false, 12,
         vertexCount * 24);
     }
-    if (attributes.texCoord !== -1) {
-      gl.enableVertexAttribArray(attributes.texCoord);
-      gl.vertexAttribPointer(attributes.normal, 2, gl.FLOAT, false, 8,
+    if (attributes.aTexCoord !== -1) {
+      gl.enableVertexAttribArray(attributes.aTexCoord);
+      gl.vertexAttribPointer(attributes.aTexCoord, 2, gl.FLOAT, false, 8,
         vertexCount * 36);
     }
   }
