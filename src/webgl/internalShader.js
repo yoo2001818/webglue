@@ -4,6 +4,7 @@ export default class InternalShader {
     this.name = null;
     this.attributes = {};
     this.uniforms = {};
+    this.uniformTypes = {};
   }
   upload(context, shader) {
     const gl = context.gl;
@@ -34,6 +35,7 @@ export default class InternalShader {
     this.program = program;
     this.attributes = {};
     this.uniforms = {};
+    this.uniformTypes = {};
     this.isShared = true;
     // Load program information
     let attributeSize = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
@@ -54,7 +56,8 @@ export default class InternalShader {
       let uniform = gl.getActiveUniform(program, i);
       let name = uniform.name;
       this.uniforms[name] = gl.getUniformLocation(program, name);
-      console.log(name, this.uniforms[name], i);
+      this.uniformTypes[name] = uniform.type;
+      console.log(name, this.uniforms[name], i, uniform);
     }
   }
   use(context) {

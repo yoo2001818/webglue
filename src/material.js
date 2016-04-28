@@ -5,5 +5,7 @@ export default class Material {
   }
   use() {
     // Set material-specific uniforms here.
+    // .... Abstraction to the rescue.
+    return {};
   }
 }

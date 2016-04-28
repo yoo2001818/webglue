@@ -40,7 +40,7 @@ export default class InternalGeometry {
     const shader = context.currentShader;
     const name = shader.isShared ? SHARED_ATTRIBUTES : shader.name;
     // If VAO extension exists, try to use it
-    if (!context.vaoExt) {
+    if (context.vaoExt) {
       // If VAO exists, just bind it and return
       if (this.vao[name]) {
         context.vaoExt.bindVertexArrayOES(this.vao[name]);
