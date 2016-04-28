@@ -66,6 +66,12 @@ export default class RenderContext {
     if (uniforms.uProjectionView) {
       gl.uniformMatrix4fv(uniforms.uProjectionView, false, camera.pvMatrix);
     }
+    if (uniforms.uView) {
+      gl.uniformMatrix4fv(uniforms.uView, false, camera.inverseMatrix);
+    }
+    if (uniforms.uViewInv) {
+      gl.uniformMatrix4fv(uniforms.uViewInv, false, camera.globalMatrix);
+    }
     if (uniforms.uViewPos) {
       gl.uniform3fv(uniforms.uViewPos, camera.transform.position);
     }
@@ -94,20 +100,29 @@ export default class RenderContext {
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
     if (this.currentMaterial === material) return;
-    const gl = this.gl;
     // Use the shader in the material.
     this.useShader(material.shader);
     // Then, call the material's use method.
     let shader = this.currentShader;
     let uniforms = material.use();
-    for (let name in uniforms) {
-      let value = uniforms[name];
-      let key = shader.uniforms[name];
+    this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
+    // Done!
+    this.currentMaterial = material;
+  }
+  bindUniforms(values, uniforms, uniformTypes) {
+    const gl = this.gl;
+    for (let name in values) {
+      let value = values[name];
+      let key = uniforms[name];
+      let typeId = uniformTypes[name];
       if (key == null) continue;
-      // Why Why Why Why WHY
-      // Maybe we should move this to somewhere else, to process lightning
-      // and stuff easily.
-      switch (shader.uniformTypes[name]) {
+      // I'm not sure if this is good way to do it... Probably bad.
+      if (!(key instanceof WebGLUniformLocation)) {
+        // Array can be handled with this too
+        this.bindUniforms(value, key, typeId);
+        continue;
+      }
+      switch (typeId) {
       case gl.FLOAT_VEC2:
         gl.uniform2fv(key, value);
         break;
@@ -157,8 +172,6 @@ export default class RenderContext {
         break;
       }
     }
-    // Done!
-    this.currentMaterial = material;
   }
   useGeometry(geometry, previousShader) {
     // We can do a ignore-check if geometry is same.
@@ -250,6 +263,9 @@ export default class RenderContext {
     const gl = this.gl;
     if (uniforms.uModel) {
       gl.uniformMatrix4fv(uniforms.uModel, false, mesh.globalMatrix);
+    }
+    if (uniforms.uModelInvTransp) {
+      gl.uniformMatrix3fv(uniforms.uModelInvTransp, false, mesh.normalMatrix);
     }
     this.useGeometry(mesh.geometry, prevShader);
     this.currentGeometry.render(this, mesh.geometry);

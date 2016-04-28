@@ -51,12 +51,71 @@ export default class InternalShader {
         this.isShared = false;
       }
     }
+    // Since uniform supports struct and array, this gets pretty tricky..
     let uniformSize = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
     for (let i = 0; i < uniformSize; ++i) {
       let uniform = gl.getActiveUniform(program, i);
-      let name = uniform.name;
-      this.uniforms[name] = gl.getUniformLocation(program, name);
-      this.uniformTypes[name] = uniform.type;
+      let { name, type: typeId } = uniform;
+      let location = gl.getUniformLocation(program, name);
+
+      // Support raw string (.[] is reserved anyway)
+      this.uniforms[name] = location;
+      this.uniformTypes[name] = typeId;
+
+      let parent = this.uniforms;
+      let parentTypes = this.uniformTypes;
+      let parentArray = false;
+      let parentIndex = null;
+      let truncName = name;
+      let hasFinished = false;
+      do {
+        // Check for array..
+        let arrayStartLoc = truncName.indexOf('[');
+        if (arrayStartLoc !== -1) {
+          let arrayEndLoc = truncName.indexOf(']');
+          let fieldName = truncName.slice(0, arrayStartLoc);
+          let index = parseInt(truncName.slice(arrayStartLoc + 1, arrayEndLoc));
+          truncName = truncName.slice(arrayEndLoc + 1);
+
+          let parentField = parentArray ? parentIndex : fieldName;
+          if (parent[parentField] == null) {
+            parent[parentField] = [];
+            parentTypes[parentField] = [];
+          }
+          parent = parent[parentField];
+          parentTypes = parentTypes[parentField];
+
+          parentArray = true;
+          parentIndex = index;
+        }
+        let objectStartLoc = truncName.indexOf('.');
+        if (objectStartLoc !== -1) {
+          let fieldName = truncName.slice(0, objectStartLoc);
+          truncName = truncName.slice(objectStartLoc + 1);
+
+          let parentField = parentArray ? parentIndex : fieldName;
+          if (parent[parentField] == null) {
+            parent[parentField] = {};
+            parentTypes[parentField] = {};
+          }
+          parent = parent[parentField];
+          parentTypes = parentTypes[parentField];
+
+          parentArray = false;
+        } else {
+          let fieldName = truncName;
+
+          let parentField = parentArray ? parentIndex : fieldName;
+          if (parent[parentField] == null) {
+            parent[parentField] = {};
+            parentTypes[parentField] = {};
+          }
+          parent[parentField] = location;
+          parentTypes[parentField] = typeId;
+
+          hasFinished = true;
+        }
+      } while (!hasFinished);
       console.log(name, this.uniforms[name], i, uniform);
     }
   }

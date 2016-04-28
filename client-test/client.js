@@ -1,4 +1,5 @@
 import Shader from '../src/shader';
+import SolidMaterial from './solidMaterial';
 import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
@@ -59,12 +60,20 @@ gl.depthFunc(gl.LEQUAL);
 // Clear the color as well as the depth buffer.
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-let shader = new Shader(
+/*let shader = new Shader(
   require('./shader/test.vert'), require('./shader/test.frag')
-);
+);*/
+
+let material = new SolidMaterial({
+  specular: new Float32Array([0.2, 0.2, 0.2]),
+  diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
+  ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
+  reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
+  shininess: 4.0
+});
 
 function createMaterial(image) {
-  let texture = Texture2D.fromImage(image);
+  /*let texture = Texture2D.fromImage(image);
   let material = new Material(shader);
 
   material.use = () => {
@@ -72,6 +81,7 @@ function createMaterial(image) {
       uTexture: texture
     };
   };
+  return material;*/
   return material;
 }
 
@@ -153,9 +163,9 @@ function handleMouseMove(e) {
     // relative to the camera rotation
     let vecX = vec3.create();
     let vecY = vec3.create();
-    vec3.transformQuat(vecX, [-offsetX / 100, 0, 0],
+    vec3.transformQuat(vecX, [-offsetX * radius / 600, 0, 0],
       camera.transform.rotation);
-    vec3.transformQuat(vecY, [0, offsetY / 100, 0],
+    vec3.transformQuat(vecY, [0, offsetY * radius / 600, 0],
       camera.transform.rotation);
     vec3.add(cameraCenter, cameraCenter, vecX);
     vec3.add(cameraCenter, cameraCenter, vecY);
