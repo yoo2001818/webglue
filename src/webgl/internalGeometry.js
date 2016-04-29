@@ -11,8 +11,18 @@ export default class InternalGeometry {
   }
   upload(context, geometry) {
     const gl = context.gl;
-    // TODO hard-coded for now...
-    this.type = gl.TRIANGLES;
+    switch (geometry.type) {
+    case 'triangles':
+      this.type = gl.TRIANGLES;
+      break;
+    case 'lines':
+      this.type = gl.LINES;
+      break;
+    case 'points':
+    default:
+      this.types = gl.POINTS;
+      break;
+    }
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     geometry.upload(gl);

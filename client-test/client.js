@@ -7,6 +7,7 @@ import Mesh from '../src/mesh';
 import Camera from '../src/camera';
 import Container from '../src/container';
 import RenderContext from '../src/webgl/renderContext';
+import Grid from './grid';
 
 import { quat, vec3 } from 'gl-matrix';
 
@@ -60,28 +61,34 @@ gl.depthFunc(gl.LEQUAL);
 // Clear the color as well as the depth buffer.
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-/*let shader = new Shader(
-  require('./shader/test.vert'), require('./shader/test.frag')
-);*/
+let shader = new Shader(
+  require('./shader/solid.vert'), require('./shader/test.frag')
+);
 
-let material = new SolidMaterial({
+/*let material = new SolidMaterial({
   specular: new Float32Array([0.2, 0.2, 0.2]),
   diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
   ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
   reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
   shininess: 4.0
-});
+});*/
 
 function createMaterial(image) {
-  /*let texture = Texture2D.fromImage(image);
+  let texture = Texture2D.fromImage(image);
   let material = new Material(shader);
-
-  material.use = () => {
-    return {
-      uTexture: texture
-    };
+  let options = {
+    uTexture: texture,
+    uMaterial: {
+      specular: new Float32Array([0.2, 0.2, 0.2]),
+      diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
+      ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
+      reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
+      shininess: 4.0,
+      threshold: 0.0
+    }
   };
-  return material;*/
+
+  material.use = () => options;
   return material;
 }
 
@@ -95,6 +102,8 @@ container.appendChild(camera);
 
 camera.aspect = canvas.width / canvas.height;
 //camera.transform.position[2] = 3;
+quat.rotateX(camera.transform.rotation, camera.transform.rotation,
+  -Math.PI / 3);
 camera.transform.invalidate();
 
 mesh.transform.position[2] = -3;
@@ -103,17 +112,21 @@ mesh.transform.invalidate();
 let mesh2 = new Mesh(geometry, createMaterial(require('./texture/2.png')));
 container.appendChild(mesh2);
 
-mesh2.transform.position[1] = -2;
-mesh2.transform.position[2] = -3;
+mesh2.transform.position[2] = -4 - Math.sqrt(2);
 mesh2.transform.invalidate();
 
 let mesh3 = new Mesh(geometry, createMaterial(require('./texture/3.jpg')));
 container.appendChild(mesh3);
 
 mesh3.transform.position[0] = -2;
-mesh3.transform.position[1] = -2;
-mesh3.transform.position[2] = -3;
+mesh3.transform.position[2] = -4 - Math.sqrt(2);
 mesh3.transform.invalidate();
+
+let grid = new Grid();
+container.appendChild(grid);
+
+quat.rotateX(grid.transform.rotation, grid.transform.rotation, Math.PI / 2);
+grid.transform.invalidate();
 
 let context = new RenderContext(gl);
 
@@ -150,7 +163,7 @@ function animate() {
 window.requestAnimationFrame(animate);
 
 let prevX = 0, prevY = 0, dir = 0;
-let cameraCenter = vec3.fromValues(0, -2, -3);
+let cameraCenter = vec3.fromValues(0, 0, 0);
 let radius = 6;
 
 function handleMouseMove(e) {
