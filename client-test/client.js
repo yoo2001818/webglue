@@ -21,14 +21,14 @@ document.body.style.overflow = 'hidden';
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
 
-let statusBar = document.createElement('div');
+/* let statusBar = document.createElement('div');
 statusBar.style.color = '#fff';
 statusBar.style.position = 'absolute';
 statusBar.style.top = '10px';
 statusBar.style.left = '18px';
 statusBar.style.fontSize = '11px';
 document.body.appendChild(statusBar);
-statusBar.innerHTML = 'User Persp';
+statusBar.innerHTML = 'User Persp'; */
 
 let cWidth, cHeight;
 function validateSize() {
@@ -116,20 +116,20 @@ quat.rotateX(camera.transform.rotation, camera.transform.rotation,
   -Math.PI / 3);
 camera.transform.invalidate();
 
-mesh.transform.position[2] = -3;
+mesh.transform.position[2] = -0;
 mesh.transform.invalidate();
 
 let mesh2 = new Mesh(geometry, createMaterial(require('./texture/2.png')));
 container.appendChild(mesh2);
 
-mesh2.transform.position[2] = -4 - Math.sqrt(2);
+mesh2.transform.position[2] = -1 - Math.sqrt(2);
 mesh2.transform.invalidate();
 
 let mesh3 = new Mesh(geometry, createMaterial(require('./texture/3.jpg')));
 container.appendChild(mesh3);
 
 mesh3.transform.position[0] = -2;
-mesh3.transform.position[2] = -4 - Math.sqrt(2);
+mesh3.transform.position[2] = -1 - Math.sqrt(2);
 mesh3.transform.invalidate();
 
 let grid = new Grid();
@@ -168,12 +168,27 @@ function handleResize() {
   render();
 }
 
+function easeInOutQuad (t) {
+  t *= 2;
+  if (t < 1) return t*t/2;
+  t--;
+  return (t*(t-2) - 1) / -2;
+}
+
 function render() {
   quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
       Math.PI / 180 * 2);
   mesh.transform.invalidate();
   /* quat.rotateY(camera.transform.rotation, camera.transform.rotation,
       Math.PI / 180 * 1); */
+  if (lerpCounter !== -1) {
+    quat.slerp(camera.transform.rotation,
+      lerpStart, lerpEnd, easeInOutQuad(lerpCounter / 15)
+    );
+    lerpCounter ++;
+
+    if (lerpCounter > 15) lerpCounter = -1;
+  }
   if (camera.type === 'ortho') {
     camera.zoom = radius;
     camera.invalidate();
@@ -204,6 +219,10 @@ window.requestAnimationFrame(animate);
 let prevX = 0, prevY = 0, dir = 0;
 let cameraCenter = vec3.fromValues(0, 0, 0);
 let radius = 6;
+
+let lerpStart = quat.create();
+let lerpEnd = quat.create();
+let lerpCounter = -1;
 
 function handleMouseMove(e) {
   let offsetX = e.clientX - prevX;
@@ -245,7 +264,7 @@ window.addEventListener('mousedown', e => {
   vec3.transformQuat(upLocal, [0, 1, 0],
     camera.transform.rotation);
   let upDot = vec3.dot(up, upLocal);
-  dir = upDot > 0 ? 1 : -1;
+  dir = upDot >= 0 ? 1 : -1;
   // Set position and register event
   prevX = e.clientX;
   prevY = e.clientY;
@@ -258,18 +277,47 @@ window.addEventListener('mouseup', () => {
 
 window.addEventListener('keydown', (e) => {
   if (e.shiftKey) return;
-  if (camera.type === 'persp') {
-    camera.type = 'ortho';
-    camera.near = -100;
-    //camera.far = 100;
-    statusBar.innerHTML = 'User Ortho';
-  } else {
-    camera.type = 'persp';
-    camera.near = 0.3;
-    //camera.far = 1000;
-    statusBar.innerHTML = 'User Persp';
+  // Screw legacy browser compatability.
+  if (e.key === '5') {
+    if (camera.type === 'persp') {
+      camera.type = 'ortho';
+      camera.near = -100;
+      //camera.far = 100;
+      // statusBar.innerHTML = 'User Ortho';
+    } else {
+      camera.type = 'persp';
+      camera.near = 0.3;
+      //camera.far = 1000;
+      // statusBar.innerHTML = 'User Persp';
+    }
+    camera.invalidate();
   }
-  camera.invalidate();
+  if (e.key === '1') {
+    quat.copy(lerpStart, camera.transform.rotation);
+    quat.identity(lerpEnd);
+    if (e.ctrlKey) {
+      quat.rotateY(lerpEnd, lerpEnd, Math.PI);
+    }
+    lerpCounter = 0;
+  }
+  if (e.key === '3') {
+    quat.copy(lerpStart, camera.transform.rotation);
+    quat.identity(lerpEnd);
+    quat.rotateY(lerpEnd, lerpEnd, Math.PI / 2);
+    if (e.ctrlKey) {
+      quat.rotateY(lerpEnd, lerpEnd, -Math.PI);
+    }
+    lerpCounter = 0;
+  }
+  if (e.key === '7') {
+    quat.copy(lerpStart, camera.transform.rotation);
+    quat.identity(lerpEnd);
+    quat.rotateX(lerpEnd, lerpEnd, -Math.PI / 2);
+    if (e.ctrlKey) {
+      quat.rotateX(lerpEnd, lerpEnd, Math.PI);
+    }
+    lerpCounter = 0;
+  }
 });
 
 window.addEventListener('wheel', e => {
