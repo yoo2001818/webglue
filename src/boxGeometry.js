@@ -1,8 +1,8 @@
 import Geometry3D from './geometry3D';
 
 export default class BoxGeometry extends Geometry3D {
-  constructor(context) {
-    super(context);
+  constructor() {
+    super();
     this.vertices = BoxGeometry.VERTICES;
     this.texCoords = BoxGeometry.TEXCOORDS;
     this.indices = BoxGeometry.INDICES;

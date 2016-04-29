@@ -20,9 +20,10 @@ export default class InternalGeometry {
       break;
     case 'points':
     default:
-      this.types = gl.POINTS;
+      this.type = gl.POINTS;
       break;
     }
+    this.name = geometry.name;
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     geometry.upload(gl);

@@ -7,19 +7,22 @@ export default class Camera extends Object3D {
     super();
     this.type = 'persp';
     this.aspect = 1;
-    this.near = 0.03;
+    this.near = 0.3;
     this.far = 1000;
     this.fov = Math.PI / 180 * 70;
+    this.zoom = 1;
     this.valid = false;
     this.projectMatrix = mat4.create();
     this.inverseMatrix = mat4.create();
     this.pvMatrix = mat4.create();
   }
   validate() {
-    let hasChanged = !this.valid || super.validate();
+    let hasChanged = super.validate() || !this.valid;
     if (!this.valid) {
       if (this.type === 'ortho') {
-        mat4.orthographic(this.projectMatrix, -this.aspect, this.aspect, -1, 1,
+        mat4.ortho(this.projectMatrix,
+          -this.aspect * this.zoom, this.aspect * this.zoom,
+          -1 * this.zoom, 1 * this.zoom,
           this.near, this.far);
       } else {
         mat4.perspective(this.projectMatrix, this.fov, this.aspect,

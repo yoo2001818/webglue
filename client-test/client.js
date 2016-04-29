@@ -3,6 +3,7 @@ import SolidMaterial from './solidMaterial';
 import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
+import PointGeometry from './pointGeometry';
 import Mesh from '../src/mesh';
 import Camera from '../src/camera';
 import Container from '../src/container';
@@ -19,6 +20,15 @@ document.body.style.overflow = 'hidden';
 
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
+
+let statusBar = document.createElement('div');
+statusBar.style.color = '#fff';
+statusBar.style.position = 'absolute';
+statusBar.style.top = '10px';
+statusBar.style.left = '18px';
+statusBar.style.fontSize = '11px';
+document.body.appendChild(statusBar);
+statusBar.innerHTML = 'User Persp';
 
 let cWidth, cHeight;
 function validateSize() {
@@ -128,6 +138,24 @@ container.appendChild(grid);
 quat.rotateX(grid.transform.rotation, grid.transform.rotation, Math.PI / 2);
 grid.transform.invalidate();
 
+let pointGeom = new PointGeometry();
+let pointShader = new Shader(
+  require('./shader/anchorPoint.vert'), require('./shader/anchorPoint.frag')
+);
+let pointMaterial = new Material(pointShader);
+pointMaterial.use = () => ({
+  uCross: new Float32Array([0, 0, 0]),
+  uBorder1: new Float32Array([1, 0, 0]),
+  uBorder2: new Float32Array([1, 1, 1]),
+  uCrossWidth: 1/40,
+  uCrossSize: 40,
+  uCrossStart: 10/40,
+  uRadius: 20/40,
+  uBorderWidth: 1/40
+});
+let centerPoint = new Mesh(pointGeom, pointMaterial);
+container.appendChild(centerPoint);
+
 let context = new RenderContext(gl);
 
 container.update(context, null);
@@ -146,10 +174,21 @@ function render() {
   mesh.transform.invalidate();
   /* quat.rotateY(camera.transform.rotation, camera.transform.rotation,
       Math.PI / 180 * 1); */
-  vec3.transformQuat(camera.transform.position, [0, 0, radius],
-    camera.transform.rotation);
-  vec3.add(camera.transform.position, camera.transform.position, cameraCenter);
-  camera.transform.invalidate();
+  if (camera.type === 'ortho') {
+    camera.zoom = radius;
+    camera.invalidate();
+    vec3.transformQuat(camera.transform.position, [0, 0, radius],
+      camera.transform.rotation);
+    vec3.add(camera.transform.position, camera.transform.position,
+      cameraCenter);
+    camera.transform.invalidate();
+  } else {
+    vec3.transformQuat(camera.transform.position, [0, 0, radius],
+      camera.transform.rotation);
+    vec3.add(camera.transform.position, camera.transform.position,
+      cameraCenter);
+    camera.transform.invalidate();
+  }
 
   context.reset();
   container.update(context, null);
@@ -183,6 +222,8 @@ function handleMouseMove(e) {
     vec3.add(cameraCenter, cameraCenter, vecX);
     vec3.add(cameraCenter, cameraCenter, vecY);
     camera.transform.invalidate();
+    vec3.copy(centerPoint.transform.position, cameraCenter);
+    centerPoint.transform.invalidate();
     return;
   }
   // Global rotation....
@@ -213,6 +254,22 @@ window.addEventListener('mousedown', e => {
 
 window.addEventListener('mouseup', () => {
   window.removeEventListener('mousemove', handleMouseMove);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.shiftKey) return;
+  if (camera.type === 'persp') {
+    camera.type = 'ortho';
+    camera.near = -100;
+    //camera.far = 100;
+    statusBar.innerHTML = 'User Ortho';
+  } else {
+    camera.type = 'persp';
+    camera.near = 0.3;
+    //camera.far = 1000;
+    statusBar.innerHTML = 'User Persp';
+  }
+  camera.invalidate();
 });
 
 window.addEventListener('wheel', e => {
