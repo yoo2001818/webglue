@@ -3,6 +3,7 @@ import SolidMaterial from './solidMaterial';
 import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
+import WireframeGeometry from '../src/wireframeGeometry';
 import PointGeometry from './pointGeometry';
 import Mesh from '../src/mesh';
 import Camera from '../src/camera';
@@ -75,6 +76,12 @@ let shader = new Shader(
   require('./shader/solid.vert'), require('./shader/test.frag')
 );
 
+let wireShader = new Shader(
+  require('./shader/wireframe.vert'), require('./shader/wireframe.frag')
+);
+
+let inWireframe = false;
+
 /*let material = new SolidMaterial({
   specular: new Float32Array([0.2, 0.2, 0.2]),
   diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
@@ -95,7 +102,8 @@ function createMaterial(image) {
       reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
       shininess: 4.0,
       threshold: 0.0
-    }
+    },
+    uColor: new Float32Array([0, 0, 0])
   };
 
   material.use = () => options;
@@ -103,6 +111,7 @@ function createMaterial(image) {
 }
 
 let geometry = new BoxGeometry();
+let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
 let camera = new Camera();
@@ -278,6 +287,25 @@ window.addEventListener('mouseup', () => {
 window.addEventListener('keydown', (e) => {
   if (e.shiftKey) return;
   // Screw legacy browser compatability.
+  if (e.key === 'z') {
+    if (inWireframe) {
+      mesh.material.shader = shader;
+      mesh2.material.shader = shader;
+      mesh3.material.shader = shader;
+      mesh.geometry = geometry;
+      mesh2.geometry = geometry;
+      mesh3.geometry = geometry;
+      inWireframe = false;
+    } else {
+      mesh.material.shader = wireShader;
+      mesh2.material.shader = wireShader;
+      mesh3.material.shader = wireShader;
+      mesh.geometry = wireGeometry;
+      mesh2.geometry = wireGeometry;
+      mesh3.geometry = wireGeometry;
+      inWireframe = true;
+    }
+  }
   if (e.key === '5') {
     if (camera.type === 'persp') {
       camera.type = 'ortho';

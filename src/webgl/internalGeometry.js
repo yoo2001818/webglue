@@ -48,8 +48,12 @@ export default class InternalGeometry {
     }
   }
   use(context, geometry) {
+    const gl = context.gl;
     const shader = context.currentShader;
     const name = shader.isShared ? SHARED_ATTRIBUTES : shader.name;
+    if (this.type === gl.LINES && geometry.lineWidth != null) {
+      gl.lineWidth(geometry.lineWidth);
+    }
     // If VAO extension exists, try to use it
     if (context.vaoExt) {
       // If VAO exists, just bind it and return
@@ -63,7 +67,6 @@ export default class InternalGeometry {
         this.vao[name] = vao;
       }
     }
-    const gl = context.gl;
     const attributes = shader.isShared ? context.sharedAttributes :
       shader.attributes;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);

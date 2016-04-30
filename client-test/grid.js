@@ -38,6 +38,7 @@ export default class Grid extends Mesh {
     }
     geometry.vertices = vertices;
     geometry.type = 'lines';
+    geometry.lineWidth = 1;
     // Construct material
     let material = new Material(shader);
     material.use = () => colors;
