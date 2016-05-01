@@ -74,7 +74,7 @@ gl.depthFunc(gl.LEQUAL);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 let shader = new Shader(
-  require('./shader/solid.vert'), require('./shader/test.frag')
+  require('./shader/normal.vert'), require('./shader/normal.frag')
 );
 
 let wireShader = new Shader(
