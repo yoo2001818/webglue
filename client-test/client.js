@@ -3,6 +3,7 @@ import SolidMaterial from './solidMaterial';
 import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
+import ConeGeometry from '../src/coneGeometry';
 import WireframeGeometry from '../src/wireframeGeometry';
 import PointGeometry from './pointGeometry';
 import Mesh from '../src/mesh';
@@ -110,7 +111,7 @@ function createMaterial(image) {
   return material;
 }
 
-let geometry = new BoxGeometry();
+let geometry = new ConeGeometry(16);
 let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
