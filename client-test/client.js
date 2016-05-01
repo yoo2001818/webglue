@@ -4,6 +4,7 @@ import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
 import ConeGeometry from '../src/coneGeometry';
+import UVSphereGeometry from '../src/uvSphereGeometry';
 import WireframeGeometry from '../src/wireframeGeometry';
 import PointGeometry from './pointGeometry';
 import Mesh from '../src/mesh';
@@ -74,7 +75,7 @@ gl.depthFunc(gl.LEQUAL);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 let shader = new Shader(
-  require('./shader/normal.vert'), require('./shader/normal.frag')
+  require('./shader/solid.vert'), require('./shader/test.frag')
 );
 
 let wireShader = new Shader(
@@ -111,7 +112,7 @@ function createMaterial(image) {
   return material;
 }
 
-let geometry = new ConeGeometry(16);
+let geometry = new UVSphereGeometry(32, 16);
 let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
