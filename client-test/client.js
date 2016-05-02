@@ -5,6 +5,7 @@ import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
 import ConeGeometry from '../src/coneGeometry';
 import UVSphereGeometry from '../src/uvSphereGeometry';
+import CombinedGeometry from '../src/combinedGeometry';
 import WireframeGeometry from '../src/wireframeGeometry';
 import PointGeometry from './pointGeometry';
 import Mesh from '../src/mesh';
@@ -13,7 +14,7 @@ import Container from '../src/container';
 import RenderContext from '../src/webgl/renderContext';
 import Grid from './grid';
 
-import { quat, vec3 } from 'gl-matrix';
+import { quat, vec3, mat4 } from 'gl-matrix';
 
 // Init canvas
 
@@ -112,7 +113,11 @@ function createMaterial(image) {
   return material;
 }
 
-let geometry = new UVSphereGeometry(32, 16);
+let geometry = new CombinedGeometry();
+geometry.combine(new BoxGeometry(), mat4.translate(mat4.create(),
+  mat4.create(), [0, 1, 0]));
+geometry.combine(new UVSphereGeometry(32, 16), mat4.create());
+geometry.apply();
 let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
@@ -142,6 +147,14 @@ container.appendChild(mesh3);
 mesh3.transform.position[0] = -2;
 mesh3.transform.position[2] = -1 - Math.sqrt(2);
 mesh3.transform.invalidate();
+
+let mesh4 = new Mesh(geometry, mesh.material);
+container.appendChild(mesh4);
+
+mesh4.transform.position[0] = -2;
+mesh4.transform.position[1] = -2;
+mesh4.transform.position[2] = -1 - Math.sqrt(2);
+mesh4.transform.invalidate();
 
 let grid = new Grid();
 container.appendChild(grid);
@@ -297,6 +310,7 @@ window.addEventListener('keydown', (e) => {
       mesh.geometry = geometry;
       mesh2.geometry = geometry;
       mesh3.geometry = geometry;
+      mesh4.geometry = geometry;
       inWireframe = false;
     } else {
       mesh.material.shader = wireShader;
@@ -305,6 +319,7 @@ window.addEventListener('keydown', (e) => {
       mesh.geometry = wireGeometry;
       mesh2.geometry = wireGeometry;
       mesh3.geometry = wireGeometry;
+      mesh4.geometry = wireGeometry;
       inWireframe = true;
     }
   }

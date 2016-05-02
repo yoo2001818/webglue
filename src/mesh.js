@@ -17,11 +17,7 @@ export default class Mesh extends Object3D {
       mat3.normalFromMat4(this.normalMatrix, this.globalMatrix);
     }
     if (this.visible) {
-      // TODO Append the mesh information to the context, however context object
-      // is absent as well, so we use console.log to debug mesh information.
-      // console.log('Mesh: ' + this.geometry.name.toString() + ', ' +
-      //   this.material.name.toString());
-      context.meshes.push(this);
+      context.addMesh(this);
     }
   }
 }

@@ -9,7 +9,6 @@ export default class WireframeGeometry extends Geometry3D {
     this.tangents = geometry.tangents;
     this.calculateIndices(geometry.indices);
     this.type = 'lines';
-    this.lineWidth = 1;
     this.original = geometry;
   }
   calculateIndices(original) {

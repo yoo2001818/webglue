@@ -26,7 +26,7 @@ varying lowp vec3 vColor;
 void main(void) {
   gl_Position = uProjectionView * uModel * vec4(aPosition, 1.0);
 
-  lowp vec3 lightPos = (uViewInv * vec4(-0.5, 1.0, 0.0, 1.0)).xyz;
+  lowp vec3 lightPos = uViewPos + (uViewInv * vec4(-8.0, 1.0, 0.0, 0.0)).xyz;
   // lowp vec3 modelPos = (uModel * vec4(aPosition, 1.0)).xyz;
 
   // Calculate normal vector relative to the model matrix
