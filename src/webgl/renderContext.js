@@ -28,9 +28,6 @@ export default class RenderContext {
     // objects, such as lights, meshes, camera, etc.
     this.lights = [];
     this.meshes = [];
-    this.meshQueueMaterials = [];
-    this.meshQueueGeometries = {};
-    this.meshQueue = {};
     this.camera = null;
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
@@ -44,22 +41,10 @@ export default class RenderContext {
     if (this.currentShader && this.camera.hasChanged) {
       this.useCamera(this.camera);
     }
-    for (let i = 0; i < this.meshQueueMaterials.length; ++i) {
-      let materialId = this.meshQueueMaterials[i];
-      let geometries = this.meshQueueGeometries[materialId];
-      let queueGeometry = this.meshQueue[materialId];
-      for (let j = 0; j < geometries.length; ++j) {
-        let geometryId = geometries[j];
-        let queueMesh = queueGeometry[geometryId];
-        for (let k = 0; k < queueMesh.length; ++k) {
-          this.renderMesh(queueMesh[k]);
-        }
-      }
-    }
     // Render every mesh, one at a time.
-    /*for (let i = 0; i < this.meshes.length; ++i) {
+    for (let i = 0; i < this.meshes.length; ++i) {
       this.renderMesh(this.meshes[i]);
-    }*/
+    }
   }
   // Resets current render context.
   reset() {
@@ -69,9 +54,6 @@ export default class RenderContext {
     this.lights = [];
     this.meshes = [];
     this.camera = null;
-    this.meshQueue = {};
-    this.meshQueueMaterials = [];
-    this.meshQueueGeometries = {};
   }
   useCamera(camera) {
     const gl = this.gl;
@@ -289,19 +271,7 @@ export default class RenderContext {
     this.currentGeometry.render(this, mesh.geometry);
   }
   addMesh(mesh) {
-    let materialQueue = this.meshQueue[mesh.material.name];
-    if (materialQueue == null) {
-      materialQueue = this.meshQueue[mesh.material.name] = {};
-      this.meshQueueGeometries[mesh.material.name] = [];
-      this.meshQueueMaterials.push(mesh.material.name);
-    }
-    let geometryQueue = materialQueue[mesh.geometry.name];
-    if (geometryQueue == null) {
-      geometryQueue = materialQueue[mesh.geometry.name] = [];
-      this.meshQueueGeometries[mesh.material.name].push(mesh.geometry.name);
-    }
-    geometryQueue.push(mesh);
-    // this.meshes.push(mesh);
+    this.meshes.push(mesh);
   }
   addLight(light) {
     this.lights.push(light);
