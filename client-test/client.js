@@ -117,6 +117,16 @@ function createMaterial(image) {
 let geometry = new CombinedGeometry([
   new UVSphereGeometry(32, 16),
   new BoxGeometry()
+], [
+  null,
+  {
+    aPosition: (() => {
+      let mat = mat4.create();
+      mat4.translate(mat, mat, [0, 2, 0]);
+      return mat;
+    })(),
+    aTexCoord: new Float32Array([2, 0, 0, -2])
+  }
 ]);
 let wireGeometry = new WireframeGeometry(geometry);
 

@@ -1,14 +1,9 @@
 import Geometry from './geometry';
 
-import { vec3 } from 'gl-matrix';
+import { vec2, vec3, vec4 } from 'gl-matrix';
 
-function joinArray(orig, dest) {
-  for (let i = 0; i < dest.length; ++i) {
-    orig.push(dest[i]);
-  }
-}
 export default class CombinedGeometry extends Geometry {
-  constructor(geometries, name) {
+  constructor(geometries, transforms, name) {
     super(name);
     this.type = [];
     // Attributes data can be stored linearly, without any sorting. However,
@@ -62,16 +57,16 @@ export default class CombinedGeometry extends Geometry {
     let vertPos = 0;
     for (let i = 0; i < geometries.length; ++i) {
       let geometry = geometries[i];
+      let transform = transforms[i];
       // Calculate attributes
       let attribData = geometry.getAttributes();
       for (let key in attribData) {
         let data = attribData[key];
+        let buffer;
         if (this.attributes[key] == null) {
           // Create buffer and put data
           // TODO support other than Float32Array
-          let buffer = new Float32Array(data.axis * verticesCount);
-          // Overwrite buffer data
-          buffer.set(data.data, data.axis * vertPos);
+          buffer = new Float32Array(data.axis * verticesCount);
           // ....Then set the attributes.
           this.attributes[key] = {
             axis: data.axis,
@@ -86,8 +81,54 @@ export default class CombinedGeometry extends Geometry {
           if (combinedData.axis !== data.axis) {
             throw new Error('Vertices data axis mismatch');
           }
-          // If everything is okay, overwrite buffer data.
-          combinedData.data.set(data.data, data.axis * vertPos);
+          buffer = combinedData.data;
+          // If everything is okay, continue and put the data.
+        }
+        // Overwrite buffer data. However, if transform is enabled, we have
+        // to set them one by one.
+        if (transform && transform[key]) {
+          let size = geometry.getVertexCount();
+          let attribTransform = transform[key];
+          for (let i = 0; i < size; ++i) {
+            let original = data.data.slice(data.axis * i,
+              data.axis * i + data.axis);
+            if (attribTransform instanceof Float32Array) {
+              if (attribTransform.length === data.axis) {
+                // Constant transform
+                original = attribTransform;
+              } else if (data.axis === 4 && attribTransform.length === 16) {
+                // Matrix transform (4D, 4x4)
+                vec4.transformMat4(original, original, attribTransform);
+              } else if (data.axis === 3 && attribTransform.length === 16) {
+                // Matrix transform (3D, 4x4)
+                vec3.transformMat4(original, original, attribTransform);
+              } else if (data.axis === 3 && attribTransform.length === 9) {
+                // Matrix transform (3D, 3x3)
+                vec3.transformMat3(original, original, attribTransform);
+              } else if (data.axis === 2 && attribTransform.length === 9) {
+                // Matrix transform (2D, 3x3)
+                vec2.transformMat3(original, original, attribTransform);
+              } else if (data.axis === 2 && attribTransform.length === 6) {
+                // Matrix transform (2D, 2x3)
+                vec2.transformMat2d(original, original, attribTransform);
+              } else if (data.axis === 2 && attribTransform.length === 4) {
+                // Matrix transform (2D, 2x2)
+                vec2.transformMat2(original, original, attribTransform);
+              } else {
+                // Unsupported
+                throw new Error('Unsupported array transform type');
+              }
+            } else if (typeof attribTransform === 'function') {
+              // Run the function.
+              original = attribTransform(original, i);
+            } else {
+              // Unsupported. what?
+              throw new Error('Unsupported transform type');
+            }
+            buffer.set(original, data.axis * (vertPos + i));
+          }
+        } else {
+          buffer.set(data.data, data.axis * vertPos);
         }
       }
       // Calculate indices. In order to add vertex position to the indices,
