@@ -1,4 +1,4 @@
-import Geometry3D from './geometry3D';
+import Geometry from './geometry';
 
 import { vec3 } from 'gl-matrix';
 
@@ -7,59 +7,113 @@ function joinArray(orig, dest) {
     orig.push(dest[i]);
   }
 }
-export default class CombinedGeometry extends Geometry3D {
-  constructor(name) {
+export default class CombinedGeometry extends Geometry {
+  constructor(geometries, name) {
     super(name);
-    this.vertices = [];
-    this.normals = [];
-    this.texCoords = [];
-    this.tangents = [];
-    this.indicesCount = 0;
-    this.typeIndices = {};
     this.type = [];
-  }
-  combine(geometry, matrix) {
-    // TODO Currently it's impossible to combine two combinedGeometry together
-    // ...But why would anyone do that?
-    let verticesCount = this.vertices.length / 3 | 0;
-    let indices = this.typeIndices[geometry.type];
-    if (indices == null) {
-      indices = this.typeIndices[geometry.type] = [];
-    }
-    // Push indices... obviously.
-    this.indicesCount += geometry.indices.length;
-    for (let i = 0; i < geometry.indices.length; ++i) {
-      indices.push(geometry.indices[i] + verticesCount);
-    }
+    // Attributes data can be stored linearly, without any sorting. However,
+    // indices data must be sorted by types in order to reduce draw calls.
 
-    // Apply matrix operations to the geometry
-    for (let i = 0; i < geometry.getVertexCount(); ++i) {
-      let vertex = vec3.create();
-      vec3.transformMat4(vertex, geometry.vertices.slice(i*3, i*3 + 3), matrix);
-      this.vertices.push(vertex[0], vertex[1], vertex[2]);
+    // First, compute total vertices count of the geometries.
+    // Compute the indices too.
+    let verticesCount = geometries.reduce((before, geometry) =>
+      before + geometry.getVertexCount()
+    , 0);
+    let indicesCount = geometries.reduce((before, geometry) =>
+      before + geometry.indices.length
+    , 0);
+    this.verticesCount = verticesCount;
+    // Then, create the indices - We must sort them in types to reduce
+    // draw calls.
+    if (verticesCount <= 65536) {
+      this.indices = new Uint16Array(indicesCount);
+    } else {
+      // Handle overflow, however, WebGL doesn't support Uint32Array without
+      // extensions. ... But the extension is available on 98% of total devices
+      // that support WebGL, so it won't be a problem.
+      this.indices = new Uint32Array(indicesCount);
     }
-    joinArray(this.normals, geometry.normals);
-    joinArray(this.texCoords, geometry.texCoords);
-    joinArray(this.tangents, geometry.tangents);
-  }
-  apply() {
-    // Convert the array to typed array.
-    this.vertices = new Float32Array(this.vertices);
-    this.normals = new Float32Array(this.normals);
-    this.texCoords = new Float32Array(this.texCoords);
-    this.tangents = new Float32Array(this.tangents);
-    // Merge all indices to one...
-    this.indices = new Uint16Array(this.indicesCount);
-    let pos = 0;
-    for (let typeName in this.typeIndices) {
-      let array = this.typeIndices[typeName];
-      this.indices.set(array, pos);
+    // Calculate total indices per type, this should be more efficient than
+    // creating buffer for each type.
+    let typeIndicesSize = {};
+    for (let i = 0; i < geometries.length; ++i) {
+      let geometry = geometries[i];
+      // TODO Support multi-type geometries, like CombinedGeometry.
+      // (Yes, it can't combine itself)
+      typeIndicesSize[geometry.type] = (typeIndicesSize[geometry.type] || 0) +
+        geometry.indices.length;
+    }
+    // Then, calculate each type's offset. (Order shouldn't really matter)
+    let typeIndicesPos = {};
+    let typeIndicesOffset = {};
+    let indicesPos = 0;
+    for (let key in typeIndicesSize) {
+      typeIndicesPos[key] = indicesPos;
+      typeIndicesOffset[key] = indicesPos;
+      indicesPos += typeIndicesSize[key];
+    }
+    // Then, create attributes used by geometries. We have to handle axis
+    // conflict and other stuff too.
+    // If one geometry uses a attribute and others don't, other geometries
+    // will be filled with 0 instead. (Default behavior of typed array)
+    // Processing attributes after the indices can save one for loop
+    // (it doesn't really matter though)
+    this.attributes = {};
+    let vertPos = 0;
+    for (let i = 0; i < geometries.length; ++i) {
+      let geometry = geometries[i];
+      // Calculate attributes
+      let attribData = geometry.getAttributes();
+      for (let key in attribData) {
+        let data = attribData[key];
+        if (this.attributes[key] == null) {
+          // Create buffer and put data
+          // TODO support other than Float32Array
+          let buffer = new Float32Array(data.axis * verticesCount);
+          // Overwrite buffer data
+          buffer.set(data.data, data.axis * vertPos);
+          // ....Then set the attributes.
+          this.attributes[key] = {
+            axis: data.axis,
+            data: buffer
+          };
+        } else {
+          // Do a simple type check
+          let combinedData = this.attributes[key];
+          if (combinedData.data.constructor !== data.data.constructor) {
+            throw new Error('Vertices data type mismatch');
+          }
+          if (combinedData.axis !== data.axis) {
+            throw new Error('Vertices data axis mismatch');
+          }
+          // If everything is okay, overwrite buffer data.
+          combinedData.data.set(data.data, data.axis * vertPos);
+        }
+      }
+      // Calculate indices. In order to add vertex position to the indices,
+      // we have to process one index at a time.
+      let indicesPos = typeIndicesPos[geometry.type];
+      for (let j = 0; j < geometry.indices.length; ++j) {
+        this.indices[indicesPos + j] = geometry.indices[j] + vertPos;
+      }
+      // Finally, increment the pointer.
+      typeIndicesPos[geometry.type] += geometry.indices.length;
+      vertPos += geometry.getVertexCount();
+    }
+    // ... Set the type.
+    this.type = [];
+    for (let key in typeIndicesSize) {
       this.type.push({
-        first: pos,
-        count: array.length,
-        type: typeName
+        first: typeIndicesOffset[key],
+        count: typeIndicesSize[key],
+        type: key
       });
-      pos += array.length;
     }
+  }
+  getVertexCount() {
+    return this.verticesCount;
+  }
+  getAttributes() {
+    return this.attributes;
   }
 }

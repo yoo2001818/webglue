@@ -66,7 +66,6 @@ export default class UVSphereGeometry extends Geometry3D {
       let thetaNext = (j + 2) / (rings - 1) * Math.PI;
       let yNext = Math.cos(thetaNext);
       let radiusNext = Math.sin(thetaNext);
-      console.log(j, y, radius, yNext, radiusNext);
       for (let i = 0; i < segments; ++i) {
         let startPos = segments * (3 + 4 * j) + i * 4;
         let startIndices = segments * (3 + 6 * j) + i * 6;

@@ -113,7 +113,11 @@ function createMaterial(image) {
   return material;
 }
 
-let geometry = new UVSphereGeometry(32, 16);
+// let geometry = new UVSphereGeometry(32, 16);
+let geometry = new CombinedGeometry([
+  new UVSphereGeometry(32, 16),
+  new BoxGeometry()
+]);
 let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
