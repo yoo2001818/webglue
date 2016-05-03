@@ -17,6 +17,7 @@ export default class InternalGeometry {
     this.ebo = null;
     this.eboType = 0;
     this.type = 0;
+    this.attributes = [];
     this.vao = {};
     this.name = null;
   }
@@ -39,7 +40,69 @@ export default class InternalGeometry {
     this.name = geometry.name;
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    geometry.upload(gl);
+    // Convert the provided geometry to internal format
+    this.attributes = [];
+    let vertexCount = geometry.getVertexCount();
+    let geometryData = geometry.getAttributes();
+    let pos = 0;
+    for (let key in geometryData) {
+      let entry = geometryData[key];
+      let typeId = 0;
+      let size = 0;
+      if (entry.data == null) {
+        throw new Error('Vertex data cannot be null');
+      }
+      if (entry.data.length !== entry.axis * vertexCount) {
+        throw new Error('Vertex data size mismatch');
+      }
+      // Obtain buffer size and type from data type
+      if (entry.data instanceof Float32Array) {
+        typeId = gl.FLOAT;
+        size = 4;
+      } else if (entry.data instanceof Float64Array) {
+        // Not supported by WebGL at all
+        throw new Error('Float64Array is not supported by WebGL');
+      } else if (entry.data instanceof Int8Array) {
+        typeId = gl.BYTE;
+        size = 1;
+      } else if (entry.data instanceof Int16Array) {
+        typeId = gl.SHORT;
+        size = 2;
+      } else if (entry.data instanceof Int32Array) {
+        typeId = gl.INT;
+        size = 4;
+      } else if (entry.data instanceof Uint8Array) {
+        typeId = gl.UNSIGNED_BYTE;
+        size = 1;
+      } else if (entry.data instanceof Uint16Array) {
+        typeId = gl.UNSIGNED_SHORT;
+        size = 2;
+      } else if (entry.data instanceof Uint32Array) {
+        typeId = gl.UNSIGNED_INT;
+        size = 4;
+      } else {
+        // Nope
+        throw new Error('Unknown vertex data type');
+      }
+      this.attributes.push({
+        name: key,
+        axis: entry.axis,
+        type: typeId,
+        size: size * entry.axis,
+        pos: pos,
+        data: entry.data
+      });
+      pos += vertexCount * size * entry.axis;
+    }
+    // Set the buffer size needed by geometry
+    // TODO Maybe it can be dynamically edited?
+    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    // Upload each attribute, one at a time
+    for (let i = 0; i < this.attributes.length; ++i) {
+      let attribute = this.attributes[i];
+      gl.bufferSubData(gl.ARRAY_BUFFER, attribute.pos, attribute.data);
+    }
+    // Done!
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     if (geometry.indices) {
       if (geometry.indices instanceof Uint8Array) {
@@ -83,7 +146,15 @@ export default class InternalGeometry {
       shader.attributes;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    geometry.use(gl, attributes);
+    // Read each attribute, and set pointer to it
+    for (let i = 0; i < this.attributes.length; ++i) {
+      let attribute = this.attributes[i];
+      let attribPos = attributes[attribute.name];
+      if (attribPos == null) continue;
+      gl.enableVertexAttribArray(attribPos);
+      gl.vertexAttribPointer(attribPos, attribute.axis, attribute.type,
+        false, attribute.size, attribute.pos);
+    }
   }
   render(context, geometry) {
     const gl = context.gl;

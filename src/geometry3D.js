@@ -65,53 +65,24 @@ export default class Geometry3D extends Geometry {
       this.tangents.set(p1, vertexId3 * 3);
     }
   }
-  upload(gl) {
-    if (this.vertices === null) throw new Error('Vertices array is null');
-    if (this.normals === null) throw new Error('Normals array is null');
-    if (this.texCoords === null) throw new Error('Texture coord array is null');
-    if (this.tangents === null) throw new Error('Tangents array is null');
-    if (this.vertices.length !== this.normals.length) {
-      throw new Error('Vertices and normals array size does not match');
-    }
-    if (this.vertices.length / 3 !== this.texCoords.length / 2) {
-      throw new Error('Vertices and texture coords array size does not match');
-    }
-    const vertexCount = this.getVertexCount();
-    // Assign the buffer.
-    // Since this class assumes the geometry is buffered only once, it is right
-    // to use STATIC_DRAW.
-    // Each vertex consumes 44 bytes (that's a lot). Every float is 4 bytes,
-    // and there is position (vec3), texCoords (vec2), normals (vec3).
-    // plus tangent (vec3).
-    gl.bufferData(gl.ARRAY_BUFFER, vertexCount * 44, gl.STATIC_DRAW);
-    // Upload data to the buffer.
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vertices);
-    gl.bufferSubData(gl.ARRAY_BUFFER, vertexCount * 12, this.normals);
-    gl.bufferSubData(gl.ARRAY_BUFFER, vertexCount * 24, this.tangents);
-    gl.bufferSubData(gl.ARRAY_BUFFER, vertexCount * 36, this.texCoords);
-  }
-  use(gl, attributes) {
-    // InternalGeometry will handle VAO and VBO section; we just need to
-    // bind the array to the attributes.
-    const vertexCount = this.getVertexCount();
-    if (attributes.aPosition !== -1) {
-      gl.enableVertexAttribArray(attributes.aPosition);
-      gl.vertexAttribPointer(attributes.aPosition, 3, gl.FLOAT, false, 12, 0);
-    }
-    if (attributes.aNormal !== -1) {
-      gl.enableVertexAttribArray(attributes.aNormal);
-      gl.vertexAttribPointer(attributes.aNormal, 3, gl.FLOAT, false, 12,
-        vertexCount * 12);
-    }
-    if (attributes.aTangent !== -1) {
-      gl.enableVertexAttribArray(attributes.aTangent);
-      gl.vertexAttribPointer(attributes.aTangent, 3, gl.FLOAT, false, 12,
-        vertexCount * 24);
-    }
-    if (attributes.aTexCoord !== -1) {
-      gl.enableVertexAttribArray(attributes.aTexCoord);
-      gl.vertexAttribPointer(attributes.aTexCoord, 2, gl.FLOAT, false, 8,
-        vertexCount * 36);
-    }
+  getAttributes() {
+    return {
+      aPosition: {
+        axis: 3,
+        data: this.vertices
+      },
+      aNormal: {
+        axis: 3,
+        data: this.normals
+      },
+      aTexCoord: {
+        axis: 2,
+        data: this.texCoords
+      },
+      aTangent: {
+        axis: 3,
+        data: this.tangents
+      }
+    };
   }
 }

@@ -7,10 +7,7 @@ export default class Geometry {
   getVertexCount() {
     return 0;
   }
-  upload() {
-    throw new Error('Subclass did not implement the method');
-  }
-  use() {
-    throw new Error('Subclass did not implement the method');
+  getAttributes() {
+    return {};
   }
 }

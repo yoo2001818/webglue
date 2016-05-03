@@ -113,11 +113,7 @@ function createMaterial(image) {
   return material;
 }
 
-let geometry = new CombinedGeometry();
-geometry.combine(new BoxGeometry(), mat4.translate(mat4.create(),
-  mat4.create(), [0, 1, 0]));
-geometry.combine(new UVSphereGeometry(32, 16), mat4.create());
-geometry.apply();
+let geometry = new UVSphereGeometry(32, 16);
 let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
@@ -132,7 +128,7 @@ quat.rotateX(camera.transform.rotation, camera.transform.rotation,
   -Math.PI / 3);
 camera.transform.invalidate();
 
-mesh.transform.position[2] = -0;
+mesh.transform.position[0] = -2;
 mesh.transform.invalidate();
 
 let mesh2 = new Mesh(geometry, createMaterial(require('./texture/2.png')));
@@ -147,14 +143,6 @@ container.appendChild(mesh3);
 mesh3.transform.position[0] = -2;
 mesh3.transform.position[2] = -1 - Math.sqrt(2);
 mesh3.transform.invalidate();
-
-let mesh4 = new Mesh(geometry, mesh.material);
-container.appendChild(mesh4);
-
-mesh4.transform.position[0] = -2;
-mesh4.transform.position[1] = -2;
-mesh4.transform.position[2] = -1 - Math.sqrt(2);
-mesh4.transform.invalidate();
 
 let grid = new Grid();
 container.appendChild(grid);
@@ -310,7 +298,6 @@ window.addEventListener('keydown', (e) => {
       mesh.geometry = geometry;
       mesh2.geometry = geometry;
       mesh3.geometry = geometry;
-      mesh4.geometry = geometry;
       inWireframe = false;
     } else {
       mesh.material.shader = wireShader;
@@ -319,7 +306,6 @@ window.addEventListener('keydown', (e) => {
       mesh.geometry = wireGeometry;
       mesh2.geometry = wireGeometry;
       mesh3.geometry = wireGeometry;
-      mesh4.geometry = wireGeometry;
       inWireframe = true;
     }
   }
