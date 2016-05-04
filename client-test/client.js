@@ -115,17 +115,40 @@ function createMaterial(image) {
 
 // let geometry = new UVSphereGeometry(32, 16);
 let geometry = new CombinedGeometry([
-  new UVSphereGeometry(32, 16),
+  new BoxGeometry(),
+  new BoxGeometry(),
+  new BoxGeometry(),
   new BoxGeometry()
 ], [
-  null,
   {
     aPosition: (() => {
       let mat = mat4.create();
-      mat4.translate(mat, mat, [0, 2, 0]);
+      mat4.translate(mat, mat, [0, 2.5, 0]);
       return mat;
-    })(),
-    aTexCoord: new Float32Array([2, 0, 0, -2])
+    })()
+  },
+  {
+    aPosition: (() => {
+      let mat = mat4.create();
+      mat4.scale(mat, mat, [0.5, 1.5, 1]);
+      return mat;
+    })()
+  },
+  {
+    aPosition: (() => {
+      let mat = mat4.create();
+      mat4.translate(mat, mat, [1, -2.25, 0]);
+      mat4.scale(mat, mat, [0.5, 0.75, 1]);
+      return mat;
+    })()
+  },
+  {
+    aPosition: (() => {
+      let mat = mat4.create();
+      mat4.translate(mat, mat, [-1, -2.25, 0]);
+      mat4.scale(mat, mat, [0.5, 0.75, 1]);
+      return mat;
+    })()
   }
 ]);
 let wireGeometry = new WireframeGeometry(geometry);
@@ -154,7 +177,7 @@ mesh2.transform.invalidate();
 let mesh3 = new Mesh(geometry, createMaterial(require('./texture/3.jpg')));
 container.appendChild(mesh3);
 
-mesh3.transform.position[0] = -2;
+mesh3.transform.position[0] = -3;
 mesh3.transform.position[2] = -1 - Math.sqrt(2);
 mesh3.transform.invalidate();
 
