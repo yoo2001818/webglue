@@ -8,12 +8,16 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
-    chunkFilename: '[id].js'
+    chunkFilename: '[id].js',
+    pathinfo: true
   },
   resolve: {
     root: path.join(__dirname, 'client-test'),
     extensions: ['', '.js'],
-    modulesDirectories: ['node_modules', 'src']
+    modulesDirectories: ['node_modules'],
+    alias: {
+      webglue: '../src'
+    }
   },
   plugins: [
     new webpack.optimize.OccurenceOrderPlugin(),
