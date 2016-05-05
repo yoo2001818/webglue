@@ -1,5 +1,5 @@
 import Shader from 'webglue/shader';
-// import SolidMaterial from './solidMaterial';
+import PhongMaterial from './phongMaterial';
 import Material from 'webglue/material';
 import Texture2D from 'webglue/texture2D';
 import BoxGeometry from 'webglue/boxGeometry';
@@ -11,6 +11,8 @@ import PointGeometry from './pointGeometry';
 import Mesh from 'webglue/mesh';
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
+import AmbientLight from 'webglue/light/ambient';
+import PointLight from 'webglue/light/point';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
 
@@ -75,41 +77,28 @@ gl.depthFunc(gl.LEQUAL);
 // Clear the color as well as the depth buffer.
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-let shader = new Shader(
-  require('./shader/solid.vert'), require('./shader/test.frag')
-);
-
 let wireShader = new Shader(
   require('./shader/wireframe.vert'), require('./shader/wireframe.frag')
 );
 
-let inWireframe = false;
+let wireMaterial = new Material(wireShader);
+wireMaterial.use = () => ({
+  uColor: new Float32Array([0, 0, 0])
+});
 
-/*let material = new SolidMaterial({
-  specular: new Float32Array([0.2, 0.2, 0.2]),
-  diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
-  ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
-  reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
-  shininess: 4.0
-});*/
+let inWireframe = false;
 
 function createMaterial(image) {
   let texture = Texture2D.fromImage(image);
-  let material = new Material(shader);
-  let options = {
+  let material = new PhongMaterial({
     uTexture: texture,
     uMaterial: {
-      specular: new Float32Array([0.2, 0.2, 0.2]),
+      specular: new Float32Array([0.8, 0.8, 0.8]),
       diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
       ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
-      reflection: new Float32Array([140 / 255, 140 / 255, 170 / 255]),
-      shininess: 4.0,
-      threshold: 0.0
-    },
-    uColor: new Float32Array([0, 0, 0])
-  };
-
-  material.use = () => options;
+      shininess: 51.0
+    }
+  });
   return material;
 }
 
@@ -204,6 +193,38 @@ pointMaterial.use = () => ({
 });
 let centerPoint = new Mesh(pointGeom, pointMaterial);
 container.appendChild(centerPoint);
+
+let ambientLight = new AmbientLight({
+  color: new Float32Array([1, 1, 1]),
+  ambient: 0.1
+});
+container.appendChild(ambientLight);
+
+let pointLight = new PointLight({
+  color: new Float32Array([1, 1, 1]),
+  ambient: 0.2,
+  diffuse: 0.8,
+  specular: 0.8,
+  attenuation: 0.001
+});
+container.appendChild(pointLight);
+
+pointLight.transform.position[0] = -2;
+pointLight.transform.position[1] = 10;
+pointLight.transform.invalidate();
+
+let pointLight2 = new PointLight({
+  color: new Float32Array([1, 0, 0]),
+  ambient: 0.2,
+  diffuse: 0.8,
+  specular: 0.8,
+  attenuation: 0.01
+});
+container.appendChild(pointLight2);
+
+// pointLight2.transform.position[0] = -2;
+// pointLight2.transform.position[1] = 10;
+pointLight2.transform.invalidate();
 
 let context = new RenderContext(gl);
 
@@ -328,10 +349,10 @@ window.addEventListener('keydown', (e) => {
   if (e.shiftKey) return;
   // Screw legacy browser compatability.
   if (e.keyCode === 90) {
-    if (inWireframe) {
-      mesh.material.shader = shader;
-      mesh2.material.shader = shader;
-      mesh3.material.shader = shader;
+    /* if (inWireframe) {
+      mesh.material = shader;
+      mesh2.material = shader;
+      mesh3.material = shader;
       mesh.geometry = geometry;
       mesh2.geometry = geometry;
       mesh3.geometry = geometry;
@@ -344,7 +365,7 @@ window.addEventListener('keydown', (e) => {
       mesh2.geometry = wireGeometry;
       mesh3.geometry = wireGeometry;
       inWireframe = true;
-    }
+    } */
   }
   if (e.keyCode === 101 || e.keyCode === 53) {
     if (camera.type === 'persp') {
