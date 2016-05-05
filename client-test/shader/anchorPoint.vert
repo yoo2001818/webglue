@@ -1,3 +1,5 @@
+#version 100
+
 attribute vec2 aPosition;
 
 uniform mat4 uProjectionView;

@@ -1,3 +1,5 @@
+#version 100
+
 attribute vec3 aPosition;
 attribute vec2 aTexCoord;
 attribute vec3 aNormal;

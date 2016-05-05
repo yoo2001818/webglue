@@ -125,7 +125,7 @@ export default class InternalGeometry {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
   }
-  use(context, geometry) {
+  use(context) {
     const gl = context.gl;
     const shader = context.currentShader;
     const name = shader.isShared ? SHARED_ATTRIBUTES : shader.name;
@@ -184,6 +184,16 @@ export default class InternalGeometry {
     }
   }
   dispose(context) {
-    // TODO
+    const gl = context.gl;
+    // Throw away vbo, ebo, vao
+    gl.deleteBuffer(this.vbo);
+    gl.deleteBuffer(this.ebo);
+    Object.getOwnPropertyNames(this.vao).forEach(vao => {
+      context.vaoExt.deleteVertexArrayOES(vao);
+    });
+    Object.getOwnPropertySymbols(this.vao).forEach(vao => {
+      context.vaoExt.deleteVertexArrayOES(vao);
+    });
+    this.vao = {};
   }
 }

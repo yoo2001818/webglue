@@ -1,24 +1,21 @@
 var path = require('path');
 var webpack = require('webpack');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+var nodeExternals = require('webpack-node-externals');
 
 module.exports = {
   context: __dirname,
   entry: './client-test/client.js',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist-node'),
     filename: 'bundle.js',
     chunkFilename: '[id].js'
   },
   plugins: [
     new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.NoErrorsPlugin(),
-    new HtmlWebpackPlugin({
-      title: 'WebGLue'
-    }),
     new webpack.DefinePlugin({
-      __CLIENT__: true,
-      __SERVER__: false
+      __CLIENT__: false,
+      __SERVER__: true
     })
   ],
   module: {
@@ -49,5 +46,7 @@ module.exports = {
         loader: 'file-loader'
       }
     ]
-  }
+  },
+  target: 'node',
+  externals: [nodeExternals()]
 };

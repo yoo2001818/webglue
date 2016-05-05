@@ -1,3 +1,5 @@
+#version 100
+
 attribute vec2 aPosition;
 
 varying lowp vec3 vColor;

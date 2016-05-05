@@ -35,7 +35,6 @@
       "multi-line"
     ]
   },
-  "parser": "babel-eslint",
   "parserOptions": {
     "sourceType": "module",
     "ecmaFeatures": {

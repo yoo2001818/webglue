@@ -1,3 +1,5 @@
+#version 100
+
 uniform lowp vec3 uCross;
 
 uniform lowp vec3 uBorder2;

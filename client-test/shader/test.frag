@@ -1,3 +1,5 @@
+#version 100
+
 uniform sampler2D uTexture;
 
 varying lowp vec3 vColor;

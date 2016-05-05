@@ -125,6 +125,8 @@ export default class InternalShader {
   }
   dispose(context) {
     // Nothing to do yet
+    const gl = context.gl;
+    gl.deleteProgram(this.program);
   }
 }
 

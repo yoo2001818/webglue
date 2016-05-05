@@ -1,10 +1,10 @@
 import Shader from '../src/shader';
-import SolidMaterial from './solidMaterial';
+// import SolidMaterial from './solidMaterial';
 import Material from '../src/material';
 import Texture2D from '../src/texture2D';
 import BoxGeometry from '../src/boxGeometry';
-import ConeGeometry from '../src/coneGeometry';
-import UVSphereGeometry from '../src/uvSphereGeometry';
+// import ConeGeometry from '../src/coneGeometry';
+// import UVSphereGeometry from '../src/uvSphereGeometry';
 import CombinedGeometry from '../src/combinedGeometry';
 import WireframeGeometry from '../src/wireframeGeometry';
 import PointGeometry from './pointGeometry';
