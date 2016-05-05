@@ -34,6 +34,7 @@ export default class Geometry3D extends Geometry {
       vec3.subtract(p2, this.vertices.slice(vertexId3 * 3, vertexId3 * 3 + 3),
         origin);
       vec3.cross(uv, p1, p2);
+      vec3.normalize(uv, uv);
       // Done! Paste them to those three vertices.
       this.normals.set(uv, vertexId1 * 3);
       this.normals.set(uv, vertexId2 * 3);

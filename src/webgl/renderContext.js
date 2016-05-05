@@ -13,6 +13,13 @@ export default class RenderContext {
       aTangent: 2,
       aTexCoord: 3
     };
+    // Light type uniform names.
+    this.lightUniforms = {
+      ambient: 'uAmbientLight',
+      directional: 'uDirectionalLight',
+      point: 'uPointLight',
+      spot: 'uSpotLight'
+    };
     // We can use a Map instead.
     this.shaders = {};
     this.textures = {};
@@ -26,7 +33,7 @@ export default class RenderContext {
     this.textureBindId = 0;
     // This properties actually connect to the 'non-platform specific'
     // objects, such as lights, meshes, camera, etc.
-    this.lights = [];
+    this.lights = {};
     this.meshes = [];
     this.camera = null;
     // Enable vao extension, if exists.
@@ -41,6 +48,9 @@ export default class RenderContext {
     if (this.currentShader && this.camera.hasChanged) {
       this.useCamera(this.camera);
     }
+    if (this.currentShader) {
+      this.useLights();
+    }
     // Render every mesh, one at a time.
     for (let i = 0; i < this.meshes.length; ++i) {
       this.renderMesh(this.meshes[i]);
@@ -51,7 +61,7 @@ export default class RenderContext {
     // TODO Instead of doing this, Maybe it'd be better to use the array as a
     // queue and delete everything at render time?
     // (Though it won't really matter.)
-    this.lights = [];
+    this.lights = {};
     this.meshes = [];
     this.camera = null;
   }
@@ -76,6 +86,10 @@ export default class RenderContext {
       gl.uniform3fv(uniforms.uViewPos, camera.transform.position);
     }
   }
+  useLights() {
+    let shader = this.currentShader;
+    this.bindUniforms(this.lights, shader.uniforms, shader.uniformTypes);
+  }
   useShader(shader) {
     // If the shader is already being used, just ignore it.
     if (this.currentShader && this.currentShader.name === shader.name) return;
@@ -94,6 +108,7 @@ export default class RenderContext {
     }
     // Reset camera location.
     this.useCamera(this.camera);
+    this.useLights();
   }
   useMaterial(material) {
     // Use the shader in the material.
@@ -274,6 +289,10 @@ export default class RenderContext {
     this.meshes.push(mesh);
   }
   addLight(light) {
-    this.lights.push(light);
+    let typeName = this.lightUniforms[light.type];
+    if (this.lights[typeName] == null) {
+      this.lights[typeName] = [];
+    }
+    this.lights[typeName].push(light.uniforms);
   }
 }
