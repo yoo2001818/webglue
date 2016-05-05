@@ -12,7 +12,7 @@ import Mesh from 'webglue/mesh';
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 import AmbientLight from 'webglue/light/ambient';
-import PointLight from 'webglue/light/point';
+import PointLightMesh from './pointLightMesh';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
 
@@ -200,30 +200,31 @@ let ambientLight = new AmbientLight({
 });
 container.appendChild(ambientLight);
 
-let pointLight = new PointLight({
+let pointLight = new PointLightMesh({
   color: new Float32Array([1, 1, 1]),
   ambient: 0.2,
-  diffuse: 0.8,
+  diffuse: 1,
   specular: 0.8,
   attenuation: 0.001
 });
 container.appendChild(pointLight);
 
-pointLight.transform.position[0] = -2;
-pointLight.transform.position[1] = 10;
+pointLight.transform.position[0] = -5;
+pointLight.transform.position[1] = 8;
+pointLight.transform.position[2] = 5;
 pointLight.transform.invalidate();
 
-let pointLight2 = new PointLight({
+let pointLight2 = new PointLightMesh({
   color: new Float32Array([1, 0, 0]),
   ambient: 0.2,
-  diffuse: 0.8,
+  diffuse: 1,
   specular: 0.8,
   attenuation: 0.01
 });
 container.appendChild(pointLight2);
 
-// pointLight2.transform.position[0] = -2;
-// pointLight2.transform.position[1] = 10;
+pointLight2.transform.position[0] = 5;
+pointLight2.transform.position[1] = 3;
 pointLight2.transform.invalidate();
 
 let context = new RenderContext(gl);

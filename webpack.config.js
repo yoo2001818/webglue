@@ -19,7 +19,7 @@ module.exports = {
       webglue: '../src'
     }
   },
-  devtool: 'source-map',
+  // devtool: 'source-map',
   plugins: [
     new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.NoErrorsPlugin(),

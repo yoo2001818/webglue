@@ -9,8 +9,6 @@ export default class PointLight extends Light {
   use() {
     let position = vec3.create();
     vec3.transformMat4(position, position, this.globalMatrix);
-    console.log(this.globalMatrix);
-    console.log(position);
     return {
       position,
       color: this.options.color,
