@@ -327,7 +327,7 @@ window.addEventListener('mouseup', () => {
 window.addEventListener('keydown', (e) => {
   if (e.shiftKey) return;
   // Screw legacy browser compatability.
-  if (e.key === 'z') {
+  if (e.keyCode === 90) {
     if (inWireframe) {
       mesh.material.shader = shader;
       mesh2.material.shader = shader;
@@ -346,7 +346,7 @@ window.addEventListener('keydown', (e) => {
       inWireframe = true;
     }
   }
-  if (e.key === '5') {
+  if (e.keyCode === 101 || e.keyCode === 53) {
     if (camera.type === 'persp') {
       camera.type = 'ortho';
       camera.near = -100;
@@ -360,7 +360,7 @@ window.addEventListener('keydown', (e) => {
     }
     camera.invalidate();
   }
-  if (e.key === '1') {
+  if (e.keyCode === 97 || e.keyCode === 49) {
     quat.copy(lerpStart, camera.transform.rotation);
     quat.identity(lerpEnd);
     if (e.ctrlKey) {
@@ -368,7 +368,7 @@ window.addEventListener('keydown', (e) => {
     }
     lerpCounter = 0;
   }
-  if (e.key === '3') {
+  if (e.keyCode === 99 || e.keyCode === 51) {
     quat.copy(lerpStart, camera.transform.rotation);
     quat.identity(lerpEnd);
     quat.rotateY(lerpEnd, lerpEnd, Math.PI / 2);
@@ -377,7 +377,7 @@ window.addEventListener('keydown', (e) => {
     }
     lerpCounter = 0;
   }
-  if (e.key === '7') {
+  if (e.keyCode === 103 || e.keyCode === 55) {
     quat.copy(lerpStart, camera.transform.rotation);
     quat.identity(lerpEnd);
     quat.rotateX(lerpEnd, lerpEnd, -Math.PI / 2);
