@@ -19,7 +19,7 @@ export default class RenderContext {
     this.geometries = {};
     this.currentShader = null;
     this.currentGeometry = null;
-    this.currentMaterial = null;
+    this.currentMaterial = {};
     this.currentTextures = [];
     this.loadingTextures = [];
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
@@ -96,18 +96,18 @@ export default class RenderContext {
     this.useCamera(this.camera);
   }
   useMaterial(material) {
+    // Use the shader in the material.
+    this.useShader(material.shader);
     // If the material is already being used, ignore it.
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
-    if (this.currentMaterial === material) return;
-    // Use the shader in the material.
-    this.useShader(material.shader);
+    if (this.currentMaterial[material.shader.name] === material) return;
     // Then, call the material's use method.
     let shader = this.currentShader;
     let uniforms = material.use();
     this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
     // Done!
-    this.currentMaterial = material;
+    this.currentMaterial[shader.name] = material;
   }
   bindUniforms(values, uniforms, uniformTypes) {
     const gl = this.gl;
