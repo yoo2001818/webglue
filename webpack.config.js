@@ -4,28 +4,34 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   context: __dirname,
-  entry: './client-test/client.js',
+  entry: 'client',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
-    chunkFilename: '[id].js'
+    chunkFilename: '[id].js',
+    pathinfo: true
   },
+  resolve: {
+    root: path.join(__dirname, 'client-test'),
+    extensions: ['', '.js'],
+    modulesDirectories: ['node_modules'],
+    alias: {
+      webglue: '../src'
+    }
+  },
+  devtool: 'source-map',
   plugins: [
     new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.NoErrorsPlugin(),
     new HtmlWebpackPlugin({
       title: 'WebGLue'
-    }),
-    new webpack.DefinePlugin({
-      __CLIENT__: true,
-      __SERVER__: false
     })
   ],
   module: {
     loaders: [
       {
-        test: /\.jsx?$/i,
-        exclude: /(node_modules|bower_components)/,
+        test: /\.js$/i,
+        exclude: /node_modules/,
         loader: 'babel'
       },
       {
