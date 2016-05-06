@@ -2,6 +2,8 @@ import InternalShader from './internalShader';
 import InternalGeometry from './internalGeometry';
 import InternalTexture from './internalTexture';
 
+import Heap from 'heap';
+
 export default class RenderContext {
   constructor(gl) {
     this.gl = gl;
@@ -27,15 +29,25 @@ export default class RenderContext {
     this.currentShader = null;
     this.currentGeometry = null;
     this.currentMaterial = {};
+    this.currentCamera = {};
+    this.currentLight = {};
     this.currentTextures = [];
     this.loadingTextures = [];
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+    this.renderTickId = 0;
     this.textureBindId = 0;
     // This properties actually connect to the 'non-platform specific'
     // objects, such as lights, meshes, camera, etc.
     this.lights = {};
-    this.meshes = [];
+    this.meshes = new Heap((a, b) => {
+      if (a.material.shader.numberId !== b.material.shader.numberId) {
+        return a.material.shader.numberId - b.material.shader.numberId;
+      }
+      return a.material.numberId - b.material.numberId;
+    });
     this.camera = null;
+    this.lightChanged = 0;
+    this.cameraChanged = 0;
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
   }
@@ -45,6 +57,9 @@ export default class RenderContext {
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this.handleLoadingTextures();
+    if (this.camera.hasChanged) {
+      this.cameraChanged = this.renderTickId;
+    }
     if (this.currentShader && this.camera.hasChanged) {
       this.useCamera(this.camera);
     }
@@ -52,9 +67,10 @@ export default class RenderContext {
       this.useLights();
     }
     // Render every mesh, one at a time.
-    for (let i = 0; i < this.meshes.length; ++i) {
-      this.renderMesh(this.meshes[i]);
+    while (!this.meshes.empty()) {
+      this.renderMesh(this.meshes.pop());
     }
+    this.renderTickId ++;
   }
   // Resets current render context.
   reset() {
@@ -62,13 +78,18 @@ export default class RenderContext {
     // queue and delete everything at render time?
     // (Though it won't really matter.)
     this.lights = {};
-    this.meshes = [];
+    // Empty the heap
+    while (this.meshes.pop());
     this.camera = null;
   }
   useCamera(camera) {
     const gl = this.gl;
     const shader = this.currentShader;
     const uniforms = shader.uniforms;
+    let cameraUpdateTick = this.currentCamera[shader.name];
+    if (cameraUpdateTick != null && cameraUpdateTick > this.cameraChanged) {
+      return;
+    }
     // Set current camera. Basically it sets some uniform stuff.
     // PV matrix + M matrix + view location -> 35 floats.
     // P + V + M matrix -> 48 floats.
@@ -85,10 +106,16 @@ export default class RenderContext {
     if (uniforms.uViewPos) {
       gl.uniform3fv(uniforms.uViewPos, camera.transform.position);
     }
+    this.currentCamera[shader.name] = this.renderTickId;
   }
   useLights() {
     let shader = this.currentShader;
+    let lightUpdateTick = this.currentLight[shader.name];
+    if (lightUpdateTick != null && lightUpdateTick > this.lightChanged) {
+      return;
+    }
     this.bindUniforms(this.lights, shader.uniforms, shader.uniformTypes);
+    this.currentLight[shader.name] = this.renderTickId;
   }
   useShader(shader) {
     // If the shader is already being used, just ignore it.
@@ -294,5 +321,6 @@ export default class RenderContext {
       this.lights[typeName] = [];
     }
     this.lights[typeName].push(light.uniforms);
+    if (light.hasChanged) this.lightChanged = this.renderTickId;
   }
 }

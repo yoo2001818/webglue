@@ -257,23 +257,26 @@ function render() {
       lerpStart, lerpEnd, easeInOutQuad(lerpCounter / 15)
     );
     lerpCounter ++;
-
+    cameraUpdated = true;
     if (lerpCounter > 15) lerpCounter = -1;
   }
-  if (camera.type === 'ortho') {
-    camera.zoom = radius;
-    camera.invalidate();
-    vec3.transformQuat(camera.transform.position, [0, 0, radius],
-      camera.transform.rotation);
-    vec3.add(camera.transform.position, camera.transform.position,
-      cameraCenter);
-    camera.transform.invalidate();
-  } else {
-    vec3.transformQuat(camera.transform.position, [0, 0, radius],
-      camera.transform.rotation);
-    vec3.add(camera.transform.position, camera.transform.position,
-      cameraCenter);
-    camera.transform.invalidate();
+  if (cameraUpdated) {
+    if (camera.type === 'ortho') {
+      camera.zoom = radius;
+      camera.invalidate();
+      vec3.transformQuat(camera.transform.position, [0, 0, radius],
+        camera.transform.rotation);
+      vec3.add(camera.transform.position, camera.transform.position,
+        cameraCenter);
+      camera.transform.invalidate();
+    } else {
+      vec3.transformQuat(camera.transform.position, [0, 0, radius],
+        camera.transform.rotation);
+      vec3.add(camera.transform.position, camera.transform.position,
+        cameraCenter);
+      camera.transform.invalidate();
+    }
+    cameraUpdated = false;
   }
 
   context.reset();
@@ -290,6 +293,7 @@ window.requestAnimationFrame(animate);
 let prevX = 0, prevY = 0, dir = 0;
 let cameraCenter = vec3.fromValues(0, 0, 0);
 let radius = 6;
+let cameraUpdated = true;
 
 let lerpStart = quat.create();
 let lerpEnd = quat.create();
@@ -314,6 +318,7 @@ function handleMouseMove(e) {
     camera.transform.invalidate();
     vec3.copy(centerPoint.transform.position, cameraCenter);
     centerPoint.transform.invalidate();
+    cameraUpdated = true;
     return;
   }
   // Global rotation....
@@ -325,7 +330,8 @@ function handleMouseMove(e) {
       Math.PI / 180 * -offsetY);
   //console.log(quat.dot(def, camera.transform.rotation));
   //quat.copy(mesh2.transform.rotation, camera.transform.rotation);
-  mesh2.transform.invalidate();
+  camera.transform.invalidate();
+  cameraUpdated = true;
 }
 
 window.addEventListener('mousedown', e => {
@@ -411,5 +417,10 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('wheel', e => {
-  radius += e.deltaY / 5;
+  if (e.deltaMode === 0) {
+    radius += radius * e.deltaY / 50 / 12;
+  } else {
+    radius += radius * e.deltaY / 50;
+  }
+  cameraUpdated = true;
 });

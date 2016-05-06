@@ -41,18 +41,20 @@ export default class PointLightMesh extends Container {
   }
   update(context, parent) {
     super.update(context, parent);
-    // The line should point the ground...
-    let center = vec3.create();
-    vec3.transformMat4(center, center, this.globalMatrix);
-    let point = vec3.create();
-    vec3.copy(point, center);
-    point[1] = 0;
-    // Scale the line to match the size
-    this.line.transform.scale[0] = center[1];
-    // Here comes the hard part... setting rotation.
-    let hand = vec4.fromValues(1, 0, 0, 0);
-    vec4.transformMat4(hand, hand, this.globalMatrix);
-    quat.rotationTo(this.line.transform.rotation, hand, [0, -1, 0]);
-    this.line.transform.invalidate();
+    if (this.hasChanged) {
+      // The line should point the ground...
+      let center = vec3.create();
+      vec3.transformMat4(center, center, this.globalMatrix);
+      let point = vec3.create();
+      vec3.copy(point, center);
+      point[1] = 0;
+      // Scale the line to match the size
+      this.line.transform.scale[0] = center[1];
+      // Here comes the hard part... setting rotation.
+      let hand = vec4.fromValues(1, 0, 0, 0);
+      vec4.transformMat4(hand, hand, this.globalMatrix);
+      quat.rotationTo(this.line.transform.rotation, hand, [0, -1, 0]);
+      this.line.transform.invalidate();
+    }
   }
 }
