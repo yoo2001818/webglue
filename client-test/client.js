@@ -12,6 +12,7 @@ import Mesh from 'webglue/mesh';
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 import AmbientLight from 'webglue/light/ambient';
+import DirectionalLightMesh from './directionalLightMesh';
 import PointLightMesh from './pointLightMesh';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
@@ -199,6 +200,20 @@ let ambientLight = new AmbientLight({
   ambient: 0.1
 });
 container.appendChild(ambientLight);
+
+let directionalLight = new DirectionalLightMesh({
+  color: new Float32Array([1, 1, 0.5]),
+  ambient: 0.1,
+  diffuse: 1,
+  specular: 0.8
+});
+container.appendChild(directionalLight);
+
+directionalLight.transform.position[1] = 4;
+directionalLight.transform.position[2] = 8;
+quat.rotateY(directionalLight.transform.rotation,
+  directionalLight.transform.rotation, Math.PI / 2);
+directionalLight.transform.invalidate();
 
 let pointLight = new PointLightMesh({
   color: new Float32Array([1, 1, 1]),

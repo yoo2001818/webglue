@@ -3,41 +3,54 @@ import LineGeometry from './lineGeometry';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import Mesh from 'webglue/mesh';
-import PointLight from 'webglue/light/point';
+import DirectionalLight from 'webglue/light/directional';
 import Container from 'webglue/container';
 
 import { vec3, vec4, quat, mat4 } from 'gl-matrix';
 
 const pointGeom = new PointGeometry();
 const pointShader = new Shader(
-  require('./shader/pointLight.vert'), require('./shader/pointLight.frag')
+  require('./shader/pointLight.vert'), require('./shader/directionalLight.frag')
 );
 const pointMaterial = new Material(pointShader);
 pointMaterial.use = () => ({
   uColor: new Float32Array([0, 0, 0]),
-  uWidth: 1/25,
-  uFill: 6/25,
-  uLine1: 18/25,
-  uLine2: 25/25,
-  uRadius: 25
+  uWidth: 1/40,
+  uFill: 6/40,
+  uLine: 18/40,
+  uCrossStart: 22/40,
+  uRadius: 40
 });
 
 const lineGeom = new LineGeometry();
-const lineShader = new Shader(
+const guideLineShader = new Shader(
   require('./shader/line.vert'), require('./shader/line.frag')
 );
-const lineMaterial = new Material(lineShader);
-lineMaterial.use = () => ({
+const guideLineMaterial = new Material(guideLineShader);
+guideLineMaterial.use = () => ({
   uColor: new Float32Array([0.15, 0.15, 0.15])
 });
 
-export default class PointLightMesh extends Container {
+const lineShader = new Shader(
+  require('./shader/line.vert'), require('./shader/dottedLine.frag')
+);
+const lineMaterial = new Material(lineShader);
+lineMaterial.use = () => ({
+  uColor: new Float32Array([0, 0, 0]),
+  uDotted: 0.2
+});
+
+export default class DirectionalLightMesh extends Container {
   constructor(options) {
     super();
-    this.appendChild(new PointLight(options));
+    this.appendChild(new DirectionalLight(options));
     this.appendChild(new Mesh(pointGeom, pointMaterial));
-    this.guideLine = new Mesh(lineGeom, lineMaterial);
+    this.guideLine = new Mesh(lineGeom, guideLineMaterial);
     this.appendChild(this.guideLine);
+    this.line = new Mesh(lineGeom, lineMaterial);
+    this.line.transform.scale[0] = 20;
+    this.line.transform.invalidate();
+    this.appendChild(this.line);
   }
   update(context, parent) {
     super.update(context, parent);
