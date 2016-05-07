@@ -43,7 +43,7 @@ export default class InternalShader {
       let attribute = gl.getActiveAttrib(program, i);
       let name = attribute.name;
       this.attributes[name] = gl.getAttribLocation(program, name);
-      console.log(name, this.attributes[name], i);
+      // console.log(name, this.attributes[name], i);
       // Trigger non-shared shader if attribute cannot be found in shared
       // attribute object
       if (context.sharedAttributes[name] == null) {
@@ -116,7 +116,7 @@ export default class InternalShader {
           hasFinished = true;
         }
       } while (!hasFinished);
-      console.log(name, this.uniforms[name], i, uniform);
+      // console.log(name, this.uniforms[name], i, uniform);
     }
   }
   use(context) {

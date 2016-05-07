@@ -158,6 +158,9 @@ export default class InternalGeometry {
   }
   render(context, geometry) {
     const gl = context.gl;
+    if (this.ebo !== null) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    }
     if (this.typeArray) {
       for (let i = 0; i < this.type.length; ++i) {
         let data = this.type[i];
