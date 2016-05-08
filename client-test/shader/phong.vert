@@ -19,5 +19,5 @@ void main(void) {
   // OpenGL's Y axis is inverted... not sure why though.
   vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
   vFragPos = fragPos.xyz;
-  vNormal = uModelInvTransp * normalize(aNormal);
+  vNormal = normalize(uModelInvTransp * aNormal);
 }

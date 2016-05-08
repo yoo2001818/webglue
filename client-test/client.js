@@ -4,7 +4,7 @@ import Material from 'webglue/material';
 import Texture2D from 'webglue/texture2D';
 import BoxGeometry from 'webglue/boxGeometry';
 // import ConeGeometry from 'webglue/coneGeometry';
-// import UVSphereGeometry from 'webglue/uvSphereGeometry';
+import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import CombinedGeometry from 'webglue/combinedGeometry';
 import WireframeGeometry from 'webglue/wireframeGeometry';
 import PointGeometry from './pointGeometry';
@@ -88,6 +88,8 @@ wireMaterial.use = () => ({
   uColor: new Float32Array([0, 0, 0])
 });
 
+let wireGeometries = {};
+
 let inWireframe = false;
 
 function createMaterial(image) {
@@ -104,7 +106,7 @@ function createMaterial(image) {
   return material;
 }
 
-// let geometry = new UVSphereGeometry(32, 16);
+let sphereGeometry = new UVSphereGeometry(32, 16);
 let geometry = new CombinedGeometry([
   new BoxGeometry(),
   new BoxGeometry(),
@@ -142,7 +144,6 @@ let geometry = new CombinedGeometry([
     })()
   }
 ]);
-let wireGeometry = new WireframeGeometry(geometry);
 
 let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
 let camera = new Camera();
@@ -171,6 +172,16 @@ container.appendChild(mesh3);
 mesh3.transform.position[0] = -3;
 mesh3.transform.position[2] = -1 - Math.sqrt(2);
 mesh3.transform.invalidate();
+
+let mesh4 = new Mesh(sphereGeometry,
+  createMaterial(require('./texture/2.png')));
+container.appendChild(mesh4);
+
+mesh4.transform.position[0] = 2;
+mesh4.transform.scale[0] = 1.5;
+mesh4.transform.scale[1] = 1.5;
+mesh4.transform.scale[2] = 1.5;
+mesh4.transform.invalidate();
 
 let grid = new Grid();
 container.appendChild(grid);
@@ -350,7 +361,6 @@ function handleMouseMove(e) {
       camera.transform.rotation);
     vec3.add(cameraCenter, cameraCenter, vecX);
     vec3.add(cameraCenter, cameraCenter, vecY);
-    camera.transform.invalidate();
     vec3.copy(centerPoint.transform.position, cameraCenter);
     centerPoint.transform.invalidate();
     cameraUpdated = true;
@@ -365,7 +375,6 @@ function handleMouseMove(e) {
       Math.PI / 180 * -offsetY);
   //console.log(quat.dot(def, camera.transform.rotation));
   //quat.copy(mesh2.transform.rotation, camera.transform.rotation);
-  camera.transform.invalidate();
   cameraUpdated = true;
 }
 
@@ -389,25 +398,29 @@ window.addEventListener('mouseup', () => {
 
 window.addEventListener('keydown', (e) => {
   if (e.shiftKey) return;
-  // Screw legacy browser compatability.
   if (e.keyCode === 90) {
-    /* if (inWireframe) {
-      mesh.material = shader;
-      mesh2.material = shader;
-      mesh3.material = shader;
-      mesh.geometry = geometry;
-      mesh2.geometry = geometry;
-      mesh3.geometry = geometry;
-      inWireframe = false;
-    } else {
-      mesh.material.shader = wireShader;
-      mesh2.material.shader = wireShader;
-      mesh3.material.shader = wireShader;
-      mesh.geometry = wireGeometry;
-      mesh2.geometry = wireGeometry;
-      mesh3.geometry = wireGeometry;
-      inWireframe = true;
-    } */
+    // Iterate through all childrens in the container
+    container.children.forEach(child => {
+      if (!(child instanceof Mesh)) return;
+      if (inWireframe) {
+        if (child.origMaterial && child.origGeometry) {
+          child.material = child.origMaterial;
+          child.geometry = child.origGeometry;
+        }
+      } else {
+        if (child.geometry.type === 'points') return;
+        if (child.geometry.type === 'lines') return;
+        child.origMaterial = child.material;
+        child.material = wireMaterial;
+        child.origGeometry = child.geometry;
+        if (wireGeometries[child.geometry.name] == null) {
+          wireGeometries[child.geometry.name] =
+            new WireframeGeometry(child.geometry);
+        }
+        child.geometry = wireGeometries[child.geometry.name];
+      }
+    });
+    inWireframe = !inWireframe;
   }
   if (e.keyCode === 101 || e.keyCode === 53) {
     if (camera.type === 'persp') {
@@ -422,6 +435,7 @@ window.addEventListener('keydown', (e) => {
       // statusBar.innerHTML = 'User Persp';
     }
     camera.invalidate();
+    cameraUpdated = true;
   }
   if (e.keyCode === 97 || e.keyCode === 49) {
     quat.copy(lerpStart, camera.transform.rotation);
