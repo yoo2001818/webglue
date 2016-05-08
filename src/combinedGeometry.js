@@ -92,7 +92,9 @@ export default class CombinedGeometry extends Geometry {
           for (let i = 0; i < size; ++i) {
             let original = data.data.slice(data.axis * i,
               data.axis * i + data.axis);
-            if (attribTransform instanceof Float32Array) {
+            if (attribTransform instanceof Float32Array ||
+              Array.isArray(attribTransform)
+            ) {
               if (attribTransform.length === data.axis) {
                 // Constant transform
                 original = attribTransform;

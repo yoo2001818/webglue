@@ -97,6 +97,9 @@ export default class RenderContext {
     if (uniforms.uProjectionView) {
       gl.uniformMatrix4fv(uniforms.uProjectionView, false, camera.pvMatrix);
     }
+    if (uniforms.uProjection) {
+      gl.uniformMatrix4fv(uniforms.uProjection, false, camera.projectMatrix);
+    }
     if (uniforms.uView) {
       gl.uniformMatrix4fv(uniforms.uView, false, camera.inverseMatrix);
     }

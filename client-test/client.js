@@ -14,6 +14,7 @@ import Container from 'webglue/container';
 import AmbientLight from 'webglue/light/ambient';
 import DirectionalLightMesh from './directionalLightMesh';
 import PointLightMesh from './pointLightMesh';
+import SpotLightMesh from './spotLightMesh';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
 
@@ -214,6 +215,25 @@ directionalLight.transform.position[2] = 8;
 quat.rotateY(directionalLight.transform.rotation,
   directionalLight.transform.rotation, Math.PI / 2);
 directionalLight.transform.invalidate();
+
+let spotLight = new SpotLightMesh({
+  color: new Float32Array([0.2, 0.2, 1]),
+  ambient: 0.1,
+  diffuse: 1,
+  specular: 0.8,
+  attenuation: 0.001,
+  angleStart: 12.5 / 180 * Math.PI,
+  angleEnd: 17.5 / 180 * Math.PI
+});
+container.appendChild(spotLight);
+
+spotLight.transform.position[1] = 5.5;
+spotLight.transform.position[2] = -8;
+quat.rotateX(spotLight.transform.rotation,
+  spotLight.transform.rotation, Math.PI / 4);
+quat.rotateY(spotLight.transform.rotation,
+  spotLight.transform.rotation, -Math.PI / 2);
+spotLight.transform.invalidate();
 
 let pointLight = new PointLightMesh({
   color: new Float32Array([1, 1, 1]),

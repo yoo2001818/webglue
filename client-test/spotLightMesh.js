@@ -1,28 +1,31 @@
 import PointGeometry from './pointGeometry';
 import LineGeometry from './lineGeometry';
+import CircleGeometry from './circleGeometry';
+import CombinedGeometry from 'webglue/combinedGeometry';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import Mesh from 'webglue/mesh';
-import DirectionalLight from 'webglue/light/directional';
+import SpotLight from 'webglue/light/spot';
 import Container from 'webglue/container';
 
 import { vec3, vec4, quat, mat4 } from 'gl-matrix';
 
 const pointGeom = new PointGeometry();
 const pointShader = new Shader(
-  require('./shader/pointLight.vert'), require('./shader/directionalLight.frag')
+  require('./shader/pointLight.vert'), require('./shader/pointLight.frag')
 );
 const pointMaterial = new Material(pointShader);
 pointMaterial.use = () => ({
   uColor: new Float32Array([0, 0, 0]),
-  uWidth: 1/40,
-  uFill: 6/40,
-  uLine: 18/40,
-  uCrossStart: 22/40,
-  uRadius: 40
+  uWidth: 1/25,
+  uFill: 6/25,
+  uLine1: 18/25,
+  uLine2: 25/25,
+  uRadius: 25
 });
 
 const lineGeom = new LineGeometry();
+const circleGeom = new CircleGeometry(32);
 const guideLineShader = new Shader(
   require('./shader/line.vert'), require('./shader/line.frag')
 );
@@ -32,7 +35,8 @@ guideLineMaterial.use = () => ({
 });
 
 const lineShader = new Shader(
-  require('./shader/dottedLine.vert'), require('./shader/dottedLine.frag')
+  require('./shader/dottedBillboardLine.vert'),
+  require('./shader/dottedLine.frag')
 );
 const lineMaterial = new Material(lineShader);
 lineMaterial.use = () => ({
@@ -40,15 +44,33 @@ lineMaterial.use = () => ({
   uDotted: 0.2
 });
 
-export default class DirectionalLightMesh extends Container {
+export default class SpotLightMesh extends Container {
   constructor(options) {
     super();
-    this.appendChild(new DirectionalLight(options));
+    this.appendChild(new SpotLight(options));
     this.appendChild(new Mesh(pointGeom, pointMaterial));
     this.guideLine = new Mesh(lineGeom, guideLineMaterial);
     this.appendChild(this.guideLine);
-    this.line = new Mesh(lineGeom, lineMaterial);
-    this.line.transform.scale[0] = 20;
+    let geom = new CombinedGeometry([
+      lineGeom, lineGeom, lineGeom, circleGeom, circleGeom
+    ], [
+      { aPosition: [20, 0, 0, 0, 1, 0, 0, 0, 1] },
+      { aPosition: [20, Math.sin(options.angleStart) * 20, 0,
+        0, 1, 0, 0, 0, 1]},
+      { aPosition: [20, -Math.sin(options.angleStart) * 20, 0,
+        0, 1, 0, 0, 0, 1]},
+      { aPosition: [
+        0, 0, Math.sin(options.angleStart) * 20, 0,
+        0, Math.sin(options.angleStart) * 20, 0, 0,
+        0, 0, 0, 0,
+        20, 0, 0, 1]},
+      { aPosition: [
+        0, 0, Math.sin(options.angleEnd) * 20, 0,
+        0, Math.sin(options.angleEnd) * 20, 0, 0,
+        0, 0, 0, 0,
+        20, 0, 0, 1]}
+    ]);
+    this.line = new Mesh(geom, lineMaterial);
     this.line.transform.invalidate();
     this.appendChild(this.line);
   }
