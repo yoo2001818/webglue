@@ -1,7 +1,7 @@
 import Geometry3D from './geometry3D';
 
 export default class ConeGeometry extends Geometry3D {
-  constructor(polygons) {
+  constructor(polygons, hardNormals = false) {
     super();
     // A cone needs a base and sides, and it's possible to make them
     // using base + 1 vertices. However, since OpenGL requires making seperate
@@ -11,6 +11,7 @@ export default class ConeGeometry extends Geometry3D {
     // vertices?
     let texCoords = new Float32Array(4 * polygons * 2);
     let vertices = new Float32Array(4 * polygons * 3);
+    let normals = new Float32Array(4 * polygons * 3);
     let indices = new Uint16Array((polygons * 2 - 2) * 3);
     for (let i = 0; i < polygons; ++i) {
       // Cos / sin is useful for this.. I think?
@@ -24,18 +25,28 @@ export default class ConeGeometry extends Geometry3D {
       vertices[i * 3 + 2] = Math.sin(angle);
       texCoords[i * 2] = Math.cos(angle) * 0.25 + 0.25;
       texCoords[i * 2 + 1] = Math.sin(angle) * 0.25 + 0.25;
+      normals[i * 3] = 0;
+      normals[i * 3 + 1] = -1;
+      normals[i * 3 + 2] = 0;
       // Side left (from front)
       vertices[(polygons * 1 + i) * 3] = Math.cos(angle);
       vertices[(polygons * 1 + i) * 3 + 1] = -1;
       vertices[(polygons * 1 + i) * 3 + 2] = Math.sin(angle);
       texCoords[(polygons * 1 + i) * 2] = Math.cos(angleUV) * 0.5 + 0.5;
       texCoords[(polygons * 1 + i) * 2 + 1] = Math.sin(angleUV) * 0.5 + 0.5;
+      let normalDist = Math.sqrt(5/4);
+      normals[(polygons * 1 + i) * 3] = Math.cos(angle) * normalDist;
+      normals[(polygons * 1 + i) * 3 + 1] = 1/2 * normalDist;
+      normals[(polygons * 1 + i) * 3 + 2] = Math.sin(angle) * normalDist;
       // Side right (from front)
       vertices[(polygons * 2 + i) * 3] = Math.cos(angleNext);
       vertices[(polygons * 2 + i) * 3 + 1] = -1;
       vertices[(polygons * 2 + i) * 3 + 2] = Math.sin(angleNext);
       texCoords[(polygons * 2 + i) * 2] = Math.cos(angleNextUV) * 0.5 + 0.5;
       texCoords[(polygons * 2 + i) * 2 + 1] = Math.sin(angleNextUV) * 0.5 + 0.5;
+      normals[(polygons * 2 + i) * 3] = Math.cos(angleNext) * normalDist;
+      normals[(polygons * 2 + i) * 3 + 1] = 1/2 * normalDist;
+      normals[(polygons * 2 + i) * 3 + 2] = Math.sin(angleNext) * normalDist;
       // Side top
       vertices[(polygons * 3 + i) * 3] = 0;
       vertices[(polygons * 3 + i) * 3 + 1] = 1;
@@ -43,6 +54,9 @@ export default class ConeGeometry extends Geometry3D {
       // Always center
       texCoords[(polygons * 3 + i) * 2] = 0.5;
       texCoords[(polygons * 3 + i) * 2 + 1] = 0.5;
+      normals[(polygons * 3 + i) * 3] = 0;
+      normals[(polygons * 3 + i) * 3 + 1] = 1;
+      normals[(polygons * 3 + i) * 3 + 2] = 0;
     }
     for (let i = 0; i < polygons - 2; ++i) {
       // Create base
@@ -59,7 +73,8 @@ export default class ConeGeometry extends Geometry3D {
     this.vertices = vertices;
     this.texCoords = texCoords;
     this.indices = indices;
-    this.calculateNormals();
+    this.normals = normals;
+    if (hardNormals) this.calculateNormals();
     this.calculateTangents();
   }
 }

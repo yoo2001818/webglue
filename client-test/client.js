@@ -3,7 +3,7 @@ import PhongMaterial from './phongMaterial';
 import Material from 'webglue/material';
 import Texture2D from 'webglue/texture2D';
 import BoxGeometry from 'webglue/boxGeometry';
-// import ConeGeometry from 'webglue/coneGeometry';
+import ConeGeometry from 'webglue/coneGeometry';
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import CombinedGeometry from 'webglue/combinedGeometry';
 import WireframeGeometry from 'webglue/wireframeGeometry';
@@ -107,6 +107,7 @@ function createMaterial(image) {
 }
 
 let sphereGeometry = new UVSphereGeometry(32, 16);
+let coneGeometry = new ConeGeometry(16);
 let geometry = new CombinedGeometry([
   new BoxGeometry(),
   new BoxGeometry(),
@@ -182,6 +183,14 @@ mesh4.transform.scale[0] = 1.5;
 mesh4.transform.scale[1] = 1.5;
 mesh4.transform.scale[2] = 1.5;
 mesh4.transform.invalidate();
+
+let mesh5 = new Mesh(coneGeometry,
+  createMaterial(require('./texture/1.jpg')));
+container.appendChild(mesh5);
+
+mesh5.transform.position[0] = 4;
+mesh5.transform.position[2] = 2;
+mesh5.transform.invalidate();
 
 let grid = new Grid();
 container.appendChild(grid);

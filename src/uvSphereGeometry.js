@@ -141,7 +141,11 @@ export default class UVSphereGeometry extends Geometry3D {
     this.vertices = vertices;
     this.texCoords = texCoords;
     this.indices = indices;
-    this.calculateNormals();
+    // Instead of calculating normals by calculating indices, we can
+    // just put vertices data to the normals to calculate smooth
+    // normals. (This only applies to sphere though)
+    this.normals = vertices;
+    // this.calculateNormals();
     this.calculateTangents();
   }
 }
