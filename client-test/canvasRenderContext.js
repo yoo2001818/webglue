@@ -62,7 +62,8 @@ export default class CanvasRenderContext extends RenderContext {
     gl.viewport(0, 0, canvas.width, canvas.height);
     this.aspectChanged = true;
   }
-  update(container) {
+  update(container, delta) {
+    this.deltaTime = delta;
     // Set the aspect ratio
     if (this.aspectChanged && this.camera) {
       const { canvas, camera } = this;

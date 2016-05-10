@@ -13,19 +13,6 @@ document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.overflow = 'hidden';
 
-let wireShader = new Shader(
-  require('./shader/wireframe.vert'), require('./shader/wireframe.frag')
-);
-
-let wireMaterial = new Material(wireShader);
-wireMaterial.use = () => ({
-  uColor: new Float32Array([0, 0, 0])
-});
-
-const wireGeometries = {};
-
-let inWireframe = false;
-
 const { container, camera, update: sceneUpdate } = sandboxScene();
 
 let grid = new Grid();
@@ -38,18 +25,33 @@ let controller = new BlenderCameraController(window, camera);
 controller.registerEvents();
 
 let context = new CanvasRenderContext();
+context.camera = camera;
 
-function render() {
-  sceneUpdate();
-  controller.update();
-  context.update(container);
-}
+let beforeTime;
 
-function animate() {
-  render();
+function animate(currentTime) {
+  if (beforeTime == null) beforeTime = currentTime;
+  let delta = (currentTime - beforeTime) / 1000;
+  sceneUpdate(delta);
+  controller.update(delta);
+  context.update(container, delta);
+  beforeTime = currentTime;
   window.requestAnimationFrame(animate);
 }
 window.requestAnimationFrame(animate);
+
+let wireShader = new Shader(
+  require('./shader/wireframe.vert'), require('./shader/wireframe.frag')
+);
+
+let wireMaterial = new Material(wireShader);
+wireMaterial.use = () => ({
+  uColor: new Float32Array([0, 0, 0])
+});
+
+const wireGeometries = {};
+
+let inWireframe = false;
 
 window.addEventListener('keydown', (e) => {
   if (e.keyCode === 71) {

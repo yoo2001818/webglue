@@ -96,9 +96,9 @@ export default function createScene() {
   directionalLight.transform.invalidate();
 
   return {
-    container, camera, update: () => {
+    container, camera, update: (delta) => {
       quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
-          Math.PI / 180 * 2);
+          Math.PI / 180 * 120 * delta);
       mesh.transform.invalidate();
     }
   };

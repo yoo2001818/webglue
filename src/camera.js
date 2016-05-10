@@ -41,11 +41,5 @@ export default class Camera extends Object3D {
       mat4.invert(this.inverseMatrix, this.globalMatrix);
       mat4.multiply(this.pvMatrix, this.projectMatrix, this.inverseMatrix);
     }
-    // TODO We should append camera information to the context, however
-    // Context is not available yet, so it'd be better to use console.log
-    // to debug the object (To check its presence)
-    // console.log('Camera object: ' + this.type);
-    // console.log(this);
-    context.camera = this;
   }
 }

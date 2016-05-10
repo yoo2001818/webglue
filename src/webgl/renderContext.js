@@ -48,6 +48,8 @@ export default class RenderContext {
     this.camera = null;
     this.lightChanged = 0;
     this.cameraChanged = 0;
+    // Time elapsed between two frames. Caller should set this value.
+    this.deltaTime = 1 / 60;
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
   }
@@ -80,7 +82,6 @@ export default class RenderContext {
     this.lights = {};
     // Empty the heap
     while (this.meshes.pop());
-    this.camera = null;
   }
   useCamera(camera) {
     const gl = this.gl;
