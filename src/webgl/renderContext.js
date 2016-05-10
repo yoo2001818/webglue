@@ -22,6 +22,16 @@ export default class RenderContext {
       point: 'uPointLight',
       spot: 'uSpotLight'
     };
+    // Light size uniform offsets.
+    // Currently this uses ivec4, it should be changed if there is more than
+    // 4 types of light.
+    this.lightSizeUniform = 'uLightSize';
+    this.lightSizePos = {
+      ambient: 0,
+      directional: 1,
+      point: 2,
+      spot: 3
+    };
     // We can use a Map instead.
     this.shaders = {};
     this.textures = {};
@@ -118,7 +128,24 @@ export default class RenderContext {
     if (lightUpdateTick != null && lightUpdateTick > this.lightChanged) {
       return;
     }
-    this.bindUniforms(this.lights, shader.uniforms, shader.uniformTypes);
+    // TODO recycle the size buffer
+    let lightSizeVec = new Int32Array(4);
+    for (let type in this.lights) {
+      let typeName = this.lightUniforms[type];
+      if (typeName == null) {
+        throw new Error('Light type ' + type + ' is not specified in ' +
+          'uniform list');
+      }
+      this.bindUniforms(this.lights[type],
+        shader.uniforms[typeName],
+        shader.uniformTypes[typeName]);
+
+      let typeSizePos = this.lightSizePos[type];
+      lightSizeVec[typeSizePos] = this.lights[type].length;
+    }
+    if (shader.uniforms[this.lightSizeUniform]) {
+      this.gl.uniform4iv(shader.uniforms[this.lightSizeUniform], lightSizeVec);
+    }
     this.currentLight[shader.name] = this.renderTickId;
   }
   useShader(shader) {
@@ -157,6 +184,7 @@ export default class RenderContext {
   }
   bindUniforms(values, uniforms, uniformTypes) {
     const gl = this.gl;
+    if (uniforms == null) return;
     for (let name in values) {
       let value = values[name];
       let key = uniforms[name];
@@ -320,11 +348,11 @@ export default class RenderContext {
     this.meshes.push(mesh);
   }
   addLight(light) {
-    let typeName = this.lightUniforms[light.type];
-    if (this.lights[typeName] == null) {
-      this.lights[typeName] = [];
+    if (this.lights[light.type] == null) {
+      this.lights[light.type] = [];
     }
-    this.lights[typeName].push(light.uniforms);
+    this.lights[light.type].push(light.uniforms);
+
     if (light.hasChanged) this.lightChanged = this.renderTickId;
   }
 }

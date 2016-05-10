@@ -42,9 +42,9 @@ struct SpotLight {
   lowp vec2 angle;
 };
 
-const int AMBIENT_LIGHT_SIZE = 2;
+const int AMBIENT_LIGHT_SIZE = 1;
 const int DIRECTIONAL_LIGHT_SIZE = 2;
-const int POINT_LIGHT_SIZE = 8;
+const int POINT_LIGHT_SIZE = 32;
 const int SPOT_LIGHT_SIZE = 2;
 
 uniform sampler2D uTexture;
@@ -54,6 +54,8 @@ uniform AmbientLight uAmbientLight[AMBIENT_LIGHT_SIZE];
 uniform DirectionalLight uDirectionalLight[DIRECTIONAL_LIGHT_SIZE];
 uniform PointLight uPointLight[POINT_LIGHT_SIZE];
 uniform SpotLight uSpotLight[SPOT_LIGHT_SIZE];
+
+uniform ivec4 uLightSize;
 
 uniform lowp vec3 uViewPos;
 
@@ -177,15 +179,19 @@ void main(void) {
 
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < AMBIENT_LIGHT_SIZE; ++i) {
+    if (i >= uLightSize.x) break;
     result += calcAmbient(uAmbientLight[i], matColor);
   }
   for (int i = 0; i < DIRECTIONAL_LIGHT_SIZE; ++i) {
+    if (i >= uLightSize.y) break;
     result += calcDirectional(uDirectionalLight[i], matColor, viewDir);
   }
   for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
+    if (i >= uLightSize.z) break;
     result += calcPoint(uPointLight[i], matColor, viewDir);
   }
   for (int i = 0; i < SPOT_LIGHT_SIZE; ++i) {
+    if (i >= uLightSize.w) break;
     result += calcSpot(uSpotLight[i], matColor, viewDir);
   }
 
