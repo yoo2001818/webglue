@@ -17,8 +17,9 @@ import PointLightMesh from './pointLightMesh';
 import SpotLightMesh from './spotLightMesh';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
+import BlenderCameraController from './blenderCameraController';
 
-import { quat, vec3, mat4 } from 'gl-matrix';
+import { quat, mat4 } from 'gl-matrix';
 
 // Init canvas
 
@@ -88,7 +89,7 @@ wireMaterial.use = () => ({
   uColor: new Float32Array([0, 0, 0])
 });
 
-let wireGeometries = {};
+const wireGeometries = {};
 
 let inWireframe = false;
 
@@ -282,9 +283,10 @@ pointLight2.transform.position[0] = 5;
 pointLight2.transform.position[1] = 3;
 pointLight2.transform.invalidate();
 
-let context = new RenderContext(gl);
+let controller = new BlenderCameraController(window, camera);
+controller.registerEvents();
 
-container.update(context, null);
+let context = new RenderContext(gl);
 
 function handleResize() {
   if (!gl) return;
@@ -294,46 +296,11 @@ function handleResize() {
   render();
 }
 
-function easeInOutQuad (t) {
-  t *= 2;
-  if (t < 1) return t*t/2;
-  t--;
-  return (t*(t-2) - 1) / -2;
-}
-
 function render() {
   quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
       Math.PI / 180 * 2);
   mesh.transform.invalidate();
-  /* quat.rotateY(camera.transform.rotation, camera.transform.rotation,
-      Math.PI / 180 * 1); */
-  if (lerpCounter !== -1) {
-    quat.slerp(camera.transform.rotation,
-      lerpStart, lerpEnd, easeInOutQuad(lerpCounter / 15)
-    );
-    lerpCounter ++;
-    cameraUpdated = true;
-    if (lerpCounter > 15) lerpCounter = -1;
-  }
-  if (cameraUpdated) {
-    if (camera.type === 'ortho') {
-      camera.zoom = radius;
-      camera.invalidate();
-      vec3.transformQuat(camera.transform.position, [0, 0, radius],
-        camera.transform.rotation);
-      vec3.add(camera.transform.position, camera.transform.position,
-        cameraCenter);
-      camera.transform.invalidate();
-    } else {
-      vec3.transformQuat(camera.transform.position, [0, 0, radius],
-        camera.transform.rotation);
-      vec3.add(camera.transform.position, camera.transform.position,
-        cameraCenter);
-      camera.transform.invalidate();
-    }
-    cameraUpdated = false;
-  }
-
+  controller.update();
   context.reset();
   container.update(context, null);
   context.render();
@@ -345,68 +312,7 @@ function animate() {
 }
 window.requestAnimationFrame(animate);
 
-let prevX = 0, prevY = 0, dir = 0;
-let cameraCenter = vec3.fromValues(0, 0, 0);
-let radius = 6;
-let cameraUpdated = true;
-
-let lerpStart = quat.create();
-let lerpEnd = quat.create();
-let lerpCounter = -1;
-
-function handleMouseMove(e) {
-  let offsetX = e.clientX - prevX;
-  let offsetY = e.clientY - prevY;
-  prevX = e.clientX;
-  prevY = e.clientY;
-  if (e.shiftKey) {
-    // Do translation instead - we'd need two vectors to make translation
-    // relative to the camera rotation
-    let vecX = vec3.create();
-    let vecY = vec3.create();
-    vec3.transformQuat(vecX, [-offsetX * radius / 600, 0, 0],
-      camera.transform.rotation);
-    vec3.transformQuat(vecY, [0, offsetY * radius / 600, 0],
-      camera.transform.rotation);
-    vec3.add(cameraCenter, cameraCenter, vecX);
-    vec3.add(cameraCenter, cameraCenter, vecY);
-    vec3.copy(centerPoint.transform.position, cameraCenter);
-    centerPoint.transform.invalidate();
-    cameraUpdated = true;
-    return;
-  }
-  // Global rotation....
-  let rot = quat.create();
-  quat.rotateY(rot, rot,
-      Math.PI / 180 * -offsetX * dir);
-  quat.multiply(camera.transform.rotation, rot, camera.transform.rotation);
-  quat.rotateX(camera.transform.rotation, camera.transform.rotation,
-      Math.PI / 180 * -offsetY);
-  //console.log(quat.dot(def, camera.transform.rotation));
-  //quat.copy(mesh2.transform.rotation, camera.transform.rotation);
-  cameraUpdated = true;
-}
-
-window.addEventListener('mousedown', e => {
-  // Determine if we should go clockwise or anticlockwise.
-  let upLocal = vec3.create();
-  let up = vec3.fromValues(0, 1, 0);
-  vec3.transformQuat(upLocal, [0, 1, 0],
-    camera.transform.rotation);
-  let upDot = vec3.dot(up, upLocal);
-  dir = upDot >= 0 ? 1 : -1;
-  // Set position and register event
-  prevX = e.clientX;
-  prevY = e.clientY;
-  window.addEventListener('mousemove', handleMouseMove);
-});
-
-window.addEventListener('mouseup', () => {
-  window.removeEventListener('mousemove', handleMouseMove);
-});
-
 window.addEventListener('keydown', (e) => {
-  if (e.shiftKey) return;
   if (e.keyCode === 90) {
     // Iterate through all childrens in the container
     container.children.forEach(child => {
@@ -431,54 +337,4 @@ window.addEventListener('keydown', (e) => {
     });
     inWireframe = !inWireframe;
   }
-  if (e.keyCode === 101 || e.keyCode === 53) {
-    if (camera.type === 'persp') {
-      camera.type = 'ortho';
-      camera.near = -100;
-      //camera.far = 100;
-      // statusBar.innerHTML = 'User Ortho';
-    } else {
-      camera.type = 'persp';
-      camera.near = 0.3;
-      //camera.far = 1000;
-      // statusBar.innerHTML = 'User Persp';
-    }
-    camera.invalidate();
-    cameraUpdated = true;
-  }
-  if (e.keyCode === 97 || e.keyCode === 49) {
-    quat.copy(lerpStart, camera.transform.rotation);
-    quat.identity(lerpEnd);
-    if (e.ctrlKey) {
-      quat.rotateY(lerpEnd, lerpEnd, Math.PI);
-    }
-    lerpCounter = 0;
-  }
-  if (e.keyCode === 99 || e.keyCode === 51) {
-    quat.copy(lerpStart, camera.transform.rotation);
-    quat.identity(lerpEnd);
-    quat.rotateY(lerpEnd, lerpEnd, Math.PI / 2);
-    if (e.ctrlKey) {
-      quat.rotateY(lerpEnd, lerpEnd, -Math.PI);
-    }
-    lerpCounter = 0;
-  }
-  if (e.keyCode === 103 || e.keyCode === 55) {
-    quat.copy(lerpStart, camera.transform.rotation);
-    quat.identity(lerpEnd);
-    quat.rotateX(lerpEnd, lerpEnd, -Math.PI / 2);
-    if (e.ctrlKey) {
-      quat.rotateX(lerpEnd, lerpEnd, Math.PI);
-    }
-    lerpCounter = 0;
-  }
-});
-
-window.addEventListener('wheel', e => {
-  if (e.deltaMode === 0) {
-    radius += radius * e.deltaY / 50 / 12;
-  } else {
-    radius += radius * e.deltaY / 50;
-  }
-  cameraUpdated = true;
 });
