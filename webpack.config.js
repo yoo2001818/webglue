@@ -16,7 +16,7 @@ module.exports = {
     extensions: ['', '.js'],
     modulesDirectories: ['node_modules'],
     alias: {
-      webglue: '../src'
+      webglue: path.join(__dirname, 'src')
     }
   },
   // devtool: 'source-map',
