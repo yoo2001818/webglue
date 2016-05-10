@@ -153,11 +153,16 @@ export default class BlenderCameraController {
       if (camera.type === 'ortho') {
         camera.zoom = this.radius;
         camera.invalidate();
+        vec3.transformQuat(camera.transform.position, [0, 0, 100],
+          camera.transform.rotation);
+        vec3.add(camera.transform.position, camera.transform.position,
+          this.center);
+      } else {
+        vec3.transformQuat(camera.transform.position, [0, 0, this.radius],
+          camera.transform.rotation);
+        vec3.add(camera.transform.position, camera.transform.position,
+          this.center);
       }
-      vec3.transformQuat(camera.transform.position, [0, 0, this.radius],
-        camera.transform.rotation);
-      vec3.add(camera.transform.position, camera.transform.position,
-        this.center);
       camera.transform.invalidate();
       this.hasChanged = false;
     }

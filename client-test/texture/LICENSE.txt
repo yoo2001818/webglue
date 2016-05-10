@@ -1,0 +1,14 @@
+1.jpg is obtained from here:
+http://nobiax.deviantart.com/art/Free-3D-textures-pack-45-376958837
+It is provided by Nobiax, released under CC0 1.0 Universal.
+
+2.png is created by myself. I doubt that someone will use it though, but
+you're free to use it unless you try to impersonate me.
+
+3.jpg is obtained from here:
+http://opengameart.org/content/clouds-skybox-1
+
+Anything else is obtained from http://www.textures.com/
+However, since textures.com disallow redistributing, I've removed them from the
+repositiory. Please use placeholder images if you're trying to build the
+project.

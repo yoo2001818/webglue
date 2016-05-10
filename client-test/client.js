@@ -3,23 +3,21 @@ import PhongMaterial from './phongMaterial';
 import Material from 'webglue/material';
 import Texture2D from 'webglue/texture2D';
 import BoxGeometry from 'webglue/boxGeometry';
-import ConeGeometry from 'webglue/coneGeometry';
-import UVSphereGeometry from 'webglue/uvSphereGeometry';
-import CombinedGeometry from 'webglue/combinedGeometry';
+import QuadGeometry from 'webglue/quadGeometry';
+// import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import WireframeGeometry from 'webglue/wireframeGeometry';
-import PointGeometry from './pointGeometry';
 import Mesh from 'webglue/mesh';
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
-import AmbientLight from 'webglue/light/ambient';
-import DirectionalLightMesh from './directionalLightMesh';
+// import AmbientLight from 'webglue/light/ambient';
+// import DirectionalLightMesh from './directionalLightMesh';
 import PointLightMesh from './pointLightMesh';
-import SpotLightMesh from './spotLightMesh';
+// import SpotLightMesh from './spotLightMesh';
 import RenderContext from 'webglue/webgl/renderContext';
 import Grid from './grid';
 import BlenderCameraController from './blenderCameraController';
 
-import { quat, mat4 } from 'gl-matrix';
+import { quat } from 'gl-matrix';
 
 // Init canvas
 
@@ -98,100 +96,62 @@ function createMaterial(image) {
   let material = new PhongMaterial({
     uTexture: texture,
     uMaterial: {
-      specular: new Float32Array([0.8, 0.8, 0.8]),
-      diffuse: new Float32Array([158 / 255, 158 / 255, 166 / 255]),
-      ambient: new Float32Array([88 / 255, 88 / 255, 88 / 255]),
-      shininess: 51.0
+      specular: new Float32Array([0.2, 0.2, 0.2]),
+      diffuse: new Float32Array([1, 1, 1]),
+      ambient: new Float32Array([0.5, 0.5, 0.5]),
+      shininess: 10.0
     }
   });
   return material;
 }
 
-let sphereGeometry = new UVSphereGeometry(32, 16);
-let coneGeometry = new ConeGeometry(16);
-let geometry = new CombinedGeometry([
-  new BoxGeometry(),
-  new BoxGeometry(),
-  new BoxGeometry(),
-  new BoxGeometry()
-], [
-  {
-    aPosition: (() => {
-      let mat = mat4.create();
-      mat4.translate(mat, mat, [0, 2.5, 0]);
-      return mat;
-    })()
-  },
-  {
-    aPosition: (() => {
-      let mat = mat4.create();
-      mat4.scale(mat, mat, [0.5, 1.5, 1]);
-      return mat;
-    })()
-  },
-  {
-    aPosition: (() => {
-      let mat = mat4.create();
-      mat4.translate(mat, mat, [1, -2.25, 0]);
-      mat4.scale(mat, mat, [0.5, 0.75, 1]);
-      return mat;
-    })()
-  },
-  {
-    aPosition: (() => {
-      let mat = mat4.create();
-      mat4.translate(mat, mat, [-1, -2.25, 0]);
-      mat4.scale(mat, mat, [0.5, 0.75, 1]);
-      return mat;
-    })()
-  }
-]);
+let geometry = new BoxGeometry();
+let quadGeom = new QuadGeometry();
 
-let mesh = new Mesh(geometry, createMaterial(require('./texture/1.jpg')));
-let camera = new Camera();
 let container = new Container();
-container.appendChild(mesh);
+
+let camera = new Camera();
 container.appendChild(camera);
 
 camera.aspect = canvas.width / canvas.height;
 //camera.transform.position[2] = 3;
+quat.rotateY(camera.transform.rotation, camera.transform.rotation,
+  Math.PI / 4);
 quat.rotateX(camera.transform.rotation, camera.transform.rotation,
   -Math.PI / 3);
 camera.transform.invalidate();
 
-mesh.transform.position[0] = -2;
-mesh.transform.invalidate();
+let mesh = new Mesh(geometry, createMaterial(require('./texture/wood.jpg')));
+container.appendChild(mesh);
 
-let mesh2 = new Mesh(geometry, createMaterial(require('./texture/2.png')));
+let mesh2 = new Mesh(quadGeom, createMaterial(require('./texture/sand.jpg')));
 container.appendChild(mesh2);
-
-mesh2.transform.position[2] = -1 - Math.sqrt(2);
+mesh2.transform.position[1] = -1;
+mesh2.transform.scale[0] = 5;
+mesh2.transform.scale[2] = 5;
 mesh2.transform.invalidate();
 
-let mesh3 = new Mesh(geometry, createMaterial(require('./texture/3.jpg')));
+let mesh3 = new Mesh(quadGeom, createMaterial(require('./texture/brick.jpg')));
 container.appendChild(mesh3);
-
-mesh3.transform.position[0] = -3;
-mesh3.transform.position[2] = -1 - Math.sqrt(2);
+quat.rotateX(mesh3.transform.rotation, mesh3.transform.rotation,
+  -Math.PI / 2);
+quat.rotateZ(mesh3.transform.rotation, mesh3.transform.rotation,
+  Math.PI);
+mesh3.transform.position[2] = -5;
+mesh3.transform.scale[0] = 5;
+mesh3.transform.scale[2] = 5;
 mesh3.transform.invalidate();
 
-let mesh4 = new Mesh(sphereGeometry,
-  createMaterial(require('./texture/2.png')));
+let mesh4 = new Mesh(quadGeom, createMaterial(require('./texture/brick.jpg')));
 container.appendChild(mesh4);
-
-mesh4.transform.position[0] = 2;
-mesh4.transform.scale[0] = 1.5;
-mesh4.transform.scale[1] = 1.5;
-mesh4.transform.scale[2] = 1.5;
+quat.rotateX(mesh4.transform.rotation, mesh4.transform.rotation,
+  -Math.PI / 2);
+quat.rotateZ(mesh4.transform.rotation, mesh4.transform.rotation,
+  -Math.PI / 2);
+mesh4.transform.position[0] = -5;
+mesh4.transform.scale[0] = 5;
+mesh4.transform.scale[2] = 5;
 mesh4.transform.invalidate();
-
-let mesh5 = new Mesh(coneGeometry,
-  createMaterial(require('./texture/1.jpg')));
-container.appendChild(mesh5);
-
-mesh5.transform.position[0] = 4;
-mesh5.transform.position[2] = 2;
-mesh5.transform.invalidate();
 
 let grid = new Grid();
 container.appendChild(grid);
@@ -199,89 +159,23 @@ container.appendChild(grid);
 quat.rotateX(grid.transform.rotation, grid.transform.rotation, Math.PI / 2);
 grid.transform.invalidate();
 
-let pointGeom = new PointGeometry();
-let pointShader = new Shader(
-  require('./shader/anchorPoint.vert'), require('./shader/anchorPoint.frag')
-);
-let pointMaterial = new Material(pointShader);
-pointMaterial.use = () => ({
-  uCross: new Float32Array([0, 0, 0]),
-  uBorder1: new Float32Array([1, 0, 0]),
-  uBorder2: new Float32Array([1, 1, 1]),
-  uCrossWidth: 1/40,
-  uCrossSize: 40,
-  uCrossStart: 10/40,
-  uRadius: 20/40,
-  uBorderWidth: 1/40
-});
-let centerPoint = new Mesh(pointGeom, pointMaterial);
-container.appendChild(centerPoint);
-
-let ambientLight = new AmbientLight({
+let directionalLight = new PointLightMesh({
   color: new Float32Array([1, 1, 1]),
-  ambient: 0.1
-});
-container.appendChild(ambientLight);
-
-let directionalLight = new DirectionalLightMesh({
-  color: new Float32Array([1, 1, 0.5]),
   ambient: 0.1,
   diffuse: 1,
-  specular: 0.8
+  specular: 0.8,
+  attenuation: 0.0008
 });
 container.appendChild(directionalLight);
 
-directionalLight.transform.position[1] = 4;
+directionalLight.transform.position[1] = 10;
 directionalLight.transform.position[2] = 8;
+directionalLight.transform.position[0] = 8;
 quat.rotateY(directionalLight.transform.rotation,
-  directionalLight.transform.rotation, Math.PI / 2);
+  directionalLight.transform.rotation, Math.PI / 4 * 3);
+quat.rotateZ(directionalLight.transform.rotation,
+  directionalLight.transform.rotation, -Math.PI / 3);
 directionalLight.transform.invalidate();
-
-let spotLight = new SpotLightMesh({
-  color: new Float32Array([0.2, 0.2, 1]),
-  ambient: 0.1,
-  diffuse: 1,
-  specular: 0.8,
-  attenuation: 0.001,
-  angleStart: 12.5 / 180 * Math.PI,
-  angleEnd: 17.5 / 180 * Math.PI
-});
-container.appendChild(spotLight);
-
-spotLight.transform.position[1] = 5.5;
-spotLight.transform.position[2] = -8;
-quat.rotateX(spotLight.transform.rotation,
-  spotLight.transform.rotation, Math.PI / 4);
-quat.rotateY(spotLight.transform.rotation,
-  spotLight.transform.rotation, -Math.PI / 2);
-spotLight.transform.invalidate();
-
-let pointLight = new PointLightMesh({
-  color: new Float32Array([1, 1, 1]),
-  ambient: 0.2,
-  diffuse: 1,
-  specular: 0.8,
-  attenuation: 0.001
-});
-container.appendChild(pointLight);
-
-pointLight.transform.position[0] = -5;
-pointLight.transform.position[1] = 8;
-pointLight.transform.position[2] = 5;
-pointLight.transform.invalidate();
-
-let pointLight2 = new PointLightMesh({
-  color: new Float32Array([1, 0, 0]),
-  ambient: 0.2,
-  diffuse: 1,
-  specular: 0.8,
-  attenuation: 0.01
-});
-container.appendChild(pointLight2);
-
-pointLight2.transform.position[0] = 5;
-pointLight2.transform.position[1] = 3;
-pointLight2.transform.invalidate();
 
 let controller = new BlenderCameraController(window, camera);
 controller.registerEvents();
@@ -313,6 +207,9 @@ function animate() {
 window.requestAnimationFrame(animate);
 
 window.addEventListener('keydown', (e) => {
+  if (e.keyCode === 71) {
+    grid.visible = !grid.visible;
+  }
   if (e.keyCode === 90) {
     // Iterate through all childrens in the container
     container.children.forEach(child => {
