@@ -4,7 +4,7 @@ import WireframeGeometry from 'webglue/wireframeGeometry';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
-import sandboxScene from './scene/sandbox';
+import widgetScene from './scene/widget';
 import BlenderCameraController from './blenderCameraController';
 
 import { quat } from 'gl-matrix';
@@ -13,7 +13,7 @@ document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.overflow = 'hidden';
 
-const { container, camera, update: sceneUpdate } = sandboxScene();
+const { container, camera, update: sceneUpdate } = widgetScene();
 
 let grid = new Grid();
 container.appendChild(grid);
