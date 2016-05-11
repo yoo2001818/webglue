@@ -8,7 +8,8 @@ you're free to use it unless you try to impersonate me.
 3.jpg is obtained from here:
 http://opengameart.org/content/clouds-skybox-1
 
-Anything else is obtained from http://www.textures.com/
-However, since textures.com disallow redistributing, I've removed them from the
-repositiory. Please use placeholder images if you're trying to build the
-project.
+wood.jpg is obtained from here:
+http://opengameart.org/content/2048%C2%B2-wooden-texture
+
+anything else is obtained from here:
+http://opengameart.org/content/50-free-textures-4-normalmaps

@@ -17,9 +17,9 @@ function createMaterial(image) {
   let material = new PhongMaterial({
     uTexture: texture,
     uMaterial: {
-      specular: new Float32Array([0.2, 0.2, 0.2]),
+      specular: new Float32Array([0.4, 0.4, 0.4]),
       diffuse: new Float32Array([1, 1, 1]),
-      ambient: new Float32Array([0.5, 0.5, 0.5]),
+      ambient: new Float32Array([0.2, 0.2, 0.2]),
       shininess: 10.0
     }
   });
@@ -42,7 +42,7 @@ export default function createScene() {
   camera.transform.invalidate();
 
   let mesh = new Mesh(geometry,
-    createMaterial(require('../texture/wood.jpg')));
+    createMaterial(require('../texture/tile.jpg')));
   container.appendChild(mesh);
 
   let mesh2 = new Mesh(quadGeom,
@@ -61,6 +61,7 @@ export default function createScene() {
   quat.rotateZ(mesh3.transform.rotation, mesh3.transform.rotation,
     Math.PI);
   mesh3.transform.position[2] = -5;
+  mesh3.transform.position[1] = 4;
   mesh3.transform.scale[0] = 5;
   mesh3.transform.scale[2] = 5;
   mesh3.transform.invalidate();
@@ -73,13 +74,14 @@ export default function createScene() {
   quat.rotateZ(mesh4.transform.rotation, mesh4.transform.rotation,
     -Math.PI / 2);
   mesh4.transform.position[0] = -5;
+  mesh4.transform.position[1] = 4;
   mesh4.transform.scale[0] = 5;
   mesh4.transform.scale[2] = 5;
   mesh4.transform.invalidate();
 
   let directionalLight = new PointLightMesh({
     color: new Float32Array([1, 1, 1]),
-    ambient: 0.1,
+    ambient: 1,
     diffuse: 1,
     specular: 0.8,
     attenuation: 0.0008
