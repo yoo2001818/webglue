@@ -134,20 +134,20 @@ export default class BlenderCameraController {
   update(delta) {
     const { camera } = this;
     if (this.lerpCounter !== -1) {
+      this.lerpCounter = Math.min(1, this.lerpCounter + delta * 4);
       vec3.lerp(this.center,
         this.lerpStart, this.lerpEnd, easeInOutQuad(this.lerpCounter)
       );
-      this.lerpCounter += delta * 4;
       this.hasChanged = true;
-      if (this.lerpCounter > 1) this.lerpCounter = -1;
+      if (this.lerpCounter >= 1) this.lerpCounter = -1;
     }
     if (this.slerpCounter !== -1) {
+      this.slerpCounter = Math.min(1, this.slerpCounter + delta * 4);
       quat.slerp(camera.transform.rotation,
         this.slerpStart, this.slerpEnd, easeInOutQuad(this.slerpCounter)
       );
-      this.slerpCounter += delta * 4;
       this.hasChanged = true;
-      if (this.slerpCounter > 1) this.slerpCounter = -1;
+      if (this.slerpCounter >= 1) this.slerpCounter = -1;
     }
     if (this.hasChanged) {
       if (camera.type === 'ortho') {
