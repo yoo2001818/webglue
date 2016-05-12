@@ -28,7 +28,10 @@
         "max": 2
       }
     ],
-    "strict": 0,
+    "strict": [
+      2,
+      "never"
+    ],
     "no-console": 0,
     "curly": [
       2,

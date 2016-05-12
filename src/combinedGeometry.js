@@ -33,10 +33,15 @@ export default class CombinedGeometry extends Geometry {
     let typeIndicesSize = {};
     for (let i = 0; i < geometries.length; ++i) {
       let geometry = geometries[i];
-      // TODO Support multi-type geometries, like CombinedGeometry.
-      // (Yes, it can't combine itself)
-      typeIndicesSize[geometry.type] = (typeIndicesSize[geometry.type] || 0) +
-        geometry.indices.length;
+      if (Array.isArray(geometry.type)) {
+        geometry.type.forEach(entry => {
+          typeIndicesSize[entry.type] = (typeIndicesSize[entry.type] || 0) +
+            entry.count;
+        });
+      } else {
+        typeIndicesSize[geometry.type] = (typeIndicesSize[geometry.type] || 0) +
+          geometry.indices.length;
+      }
     }
     // Then, calculate each type's offset. (Order shouldn't really matter)
     let typeIndicesPos = {};
@@ -133,14 +138,25 @@ export default class CombinedGeometry extends Geometry {
           buffer.set(data.data, data.axis * vertPos);
         }
       }
-      // Calculate indices. In order to add vertex position to the indices,
-      // we have to process one index at a time.
-      let indicesPos = typeIndicesPos[geometry.type];
-      for (let j = 0; j < geometry.indices.length; ++j) {
-        this.indices[indicesPos + j] = geometry.indices[j] + vertPos;
+      let types = geometry.type;
+      if (!Array.isArray(geometry.type)) {
+        types = [{
+          type: geometry.type,
+          first: 0,
+          count: geometry.indices.length
+        }];
       }
-      // Finally, increment the pointer.
-      typeIndicesPos[geometry.type] += geometry.indices.length;
+      types.forEach(entry => {
+        // Calculate indices. In order to add vertex position to the indices,
+        // we have to process one index at a time.
+        let indicesPos = typeIndicesPos[entry.type];
+        for (let j = 0; j < entry.count; ++j) {
+          this.indices[indicesPos + j] =
+            geometry.indices[j + entry.first] + vertPos;
+        }
+        // Finally, increment the pointer.
+        typeIndicesPos[entry.type] += entry.count;
+      });
       vertPos += geometry.getVertexCount();
     }
     // ... Set the type.
