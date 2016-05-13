@@ -62,9 +62,38 @@ export default class CombinedGeometry extends Geometry {
     let vertPos = 0;
     for (let i = 0; i < geometries.length; ++i) {
       let geometry = geometries[i];
-      let transform = transforms[i];
+      let transform = (transforms && transforms[i]) || {};
       // Calculate attributes
       let attribData = geometry.getAttributes();
+      for (let key in transform) {
+        if (attribData[key] == null) {
+          // Dump constant data to the buffer...
+          let axis = transform[key].length;
+          let buffer;
+          if (this.attributes[key] == null) {
+            // Create buffer and put data
+            // TODO support other than Float32Array
+            buffer = new Float32Array(axis * verticesCount);
+            // ....Then set the attributes.
+            this.attributes[key] = {
+              axis: axis,
+              data: buffer
+            };
+          } else {
+            // Do a simple type check
+            let combinedData = this.attributes[key];
+            if (combinedData.axis !== axis) {
+              throw new Error('Vertices data axis mismatch');
+            }
+            buffer = combinedData.data;
+            // If everything is okay, continue and put the data.
+          }
+          let size = geometry.getVertexCount();
+          for (let i = 0; i < size; ++i) {
+            buffer.set(transform[key], axis * (vertPos + i));
+          }
+        }
+      }
       for (let key in attribData) {
         let data = attribData[key];
         let buffer;

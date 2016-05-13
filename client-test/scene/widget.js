@@ -37,54 +37,34 @@ export default function createScene() {
 
   let widgetGeom = new CombinedGeometry([
     geom, geom, geom
-  ], [{}, {
+  ], [{
+    aColor: [1, 0, 0]
+  }, {
     aPosition: [
       0, 1, 0, 0,
       0, 0, 1, 0,
       1, 0, 0, 0,
       0, 0, 0, 1
-    ]
+    ],
+    aColor: [0, 1, 0]
   }, {
     aPosition: [
       0, 0, 1, 0,
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 0, 1
-    ]
+    ],
+    aColor: [0, 0, 1]
   }]);
 
   let shader = new Shader(
-    require('../shader/line.vert'), require('../shader/line.frag')
+    require('../shader/widget.vert'), require('../shader/widget.frag')
   );
-  let xMat = new Material(shader);
-  xMat.use = () => ({
-    uColor: new Float32Array([1.0, 0.0, 0.0])
-  });
-  /* let yMat = new Material(shader);
-  yMat.use = () => ({
-    uColor: new Float32Array([0.0, 1.0, 0.0])
-  });
-  let zMat = new Material(shader);
-  zMat.use = () => ({
-    uColor: new Float32Array([0.0, 0.0, 1.0])
-  }); */
+  let material = new Material(shader);
 
-  let mesh = new Mesh(widgetGeom, xMat);
+  let mesh = new Mesh(widgetGeom, material);
   container.appendChild(mesh);
-
-  /* let mesh2 = new Mesh(geom, yMat);
-  container.appendChild(mesh2);
-
-  quat.rotateZ(mesh2.transform.rotation, mesh2.transform.rotation, Math.PI / 2);
-  mesh2.transform.invalidate();
-
-  let mesh3 = new Mesh(geom, zMat);
-  container.appendChild(mesh3);
-
-  quat.rotateY(mesh3.transform.rotation, mesh3.transform.rotation,
-    -Math.PI / 2);
-  mesh3.transform.invalidate(); */
-
+  
   return {
     container, camera, update: () => {
     }
