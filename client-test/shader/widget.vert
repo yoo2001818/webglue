@@ -14,5 +14,6 @@ void main(void) {
   w *= 0.2;
 
   gl_Position = uProjectionView * uModel * vec4(aPosition * w, 1.0);
+  gl_Position.z = -1.0 * gl_Position.w;
   vColor = aColor;
 }

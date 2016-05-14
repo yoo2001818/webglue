@@ -22,5 +22,6 @@ void main(void) {
   );
 
   gl_Position = uProjectionView * billboard * vec4(aPosition * w, 1.0);
+  gl_Position.z = -1.0 * gl_Position.w;
   vColor = aColor;
 }

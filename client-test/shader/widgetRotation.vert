@@ -17,9 +17,9 @@ void main(void) {
   lowp float w = projectionCenter.w;
   w *= 0.2;
 
-  lowp vec4 translation = uView * uModel * vec4(aPosition * w, 0.0);
-  lowp vec4 pos = center + vec4(translation.xy, 0.0, 0.0);
+  lowp vec4 pos = uView * uModel * vec4(aPosition * w, 1.0);
   gl_Position = uProjection * pos;
-  vPosition = (center + translation).xyz;
+  gl_Position.z = -1.0 * gl_Position.w;
+  vPosition = pos.xyz;
   vColor = aColor;
 }
