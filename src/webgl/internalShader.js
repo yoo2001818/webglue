@@ -23,7 +23,9 @@ export default class InternalShader {
     gl.attachShader(program, this.vertexShader);
     gl.attachShader(program, this.fragmentShader);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS) &&
+      !gl.isContextLost()
+    ) {
       throw new Error('Shader program linking failed: ' +
         gl.getProgramInfoLog(program));
     }
@@ -134,7 +136,9 @@ function compileShader(gl, data, type) {
   let shader = gl.createShader(type);
   gl.shaderSource(shader, data);
   gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS) &&
+    !gl.isContextLost()
+  ) {
     throw new Error('Shader compilation failed: ' +
       gl.getShaderInfoLog(shader));
   }

@@ -32,20 +32,11 @@ export default class RenderContext {
       point: 2,
       spot: 3
     };
-    // We can use a Map instead.
-    this.shaders = {};
-    this.textures = {};
-    this.geometries = {};
-    this.currentShader = null;
-    this.currentGeometry = null;
-    this.currentMaterial = {};
-    this.currentCamera = {};
-    this.currentLight = {};
-    this.currentTextures = [];
+    // Reset the GL context data (It's null at this stage though)
+    this.resetContext();
     this.loadingTextures = [];
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-    this.renderTickId = 0;
-    this.textureBindId = 0;
+
     // This properties actually connect to the 'non-platform specific'
     // objects, such as lights, meshes, camera, etc.
     this.lights = {};
@@ -65,6 +56,8 @@ export default class RenderContext {
   }
   render() {
     const gl = this.gl;
+    // Ignore if context is lost.
+    if (gl.isContextLost()) return;
     // Clear current OpenGL context.
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -92,6 +85,38 @@ export default class RenderContext {
     this.lights = {};
     // Empty the heap
     while (this.meshes.pop());
+  }
+  resetContext() {
+    // Remove all the resources and stuff already bound - It's lost in GPU!
+    // We can use a Map instead of object.
+    this.shaders = {};
+    this.textures = {};
+    this.geometries = {};
+    this.currentShader = null;
+    this.currentGeometry = null;
+    this.currentMaterial = {};
+    this.currentCamera = {};
+    this.currentLight = {};
+    this.currentTextures = [];
+    this.renderTickId = 0;
+    this.textureBindId = 0;
+    this.lightChanged = 0;
+    this.cameraChanged = 0;
+
+    const gl = this.gl;
+    this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+    // Enable vao extension, if exists.
+    this.vaoExt = gl.getExtension('OES_vertex_array_object');
+
+    // OpenGL init.
+    // TODO this should be modifiable by the user
+    gl.clearColor(57 / 255, 57 / 255, 57 / 255, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthFunc(gl.LEQUAL);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   }
   useCamera(camera) {
     const gl = this.gl;
