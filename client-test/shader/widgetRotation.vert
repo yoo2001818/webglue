@@ -12,10 +12,16 @@ uniform lowp mat4 uView;
 uniform lowp mat4 uModel;
 
 void main(void) {
-  lowp vec4 center = uView * uModel * vec4(0.0, 0.0, 0.0, 1.0);
-  lowp vec4 projectionCenter = uProjection * center;
-  lowp float w = projectionCenter.w;
-  w *= 0.2;
+  lowp float w;
+  if (uProjection[3].w == 1.0) {
+    // Orthographic projection...
+    w = 1.0 / uProjection[1].y * 0.3;
+  } else {
+    // Prespective projection...
+    lowp vec4 center = uProjectionView * uModel * vec4(0.0, 0.0, 0.0, 1.0);
+    w = center.w;
+    w *= 0.2;
+  }
 
   lowp vec4 pos = uView * uModel * vec4(aPosition * w, 1.0);
   gl_Position = uProjection * pos;
