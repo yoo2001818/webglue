@@ -1,5 +1,19 @@
 #version 100
 
+#define AMBIENT_LIGHT_SIZE 1
+#define DIRECTIONAL_LIGHT_SIZE 2
+#define POINT_LIGHT_SIZE 8
+#define SPOT_LIGHT_SIZE 2
+
+// Shader preprocessor should set this data if required.
+/*
+#define USE_SPECULAR_MAP
+#define USE_DIFFUSE_MAP
+#define USE_EMISSION_MAP
+#define USE_NORMAL_MAP
+#define USE_HEIGHT_MAP
+*/
+
 struct Material {
   lowp vec3 ambient;
   lowp vec3 diffuse;
@@ -42,12 +56,18 @@ struct SpotLight {
   lowp vec2 angle;
 };
 
-const int AMBIENT_LIGHT_SIZE = 1;
-const int DIRECTIONAL_LIGHT_SIZE = 2;
-const int POINT_LIGHT_SIZE = 32;
-const int SPOT_LIGHT_SIZE = 2;
-
-uniform sampler2D uTexture;
+// ANGLE does not support textures in a struct, so we need to pull the textures
+// out. (If we don't, shader won't work on Chrome on Windows)
+#ifdef USE_SPECULAR_MAP
+  uniform sampler2D uSpecularMap;
+#endif
+#ifdef USE_DIFFUSE_MAP
+  uniform sampler2D uDiffuseMap;
+#endif
+#ifdef USE_EMISSION_MAP
+  uniform sampler2D uEmissionMap;
+#endif
+// Normal map and height map is not implemented yet!
 
 uniform Material uMaterial;
 uniform AmbientLight uAmbientLight[AMBIENT_LIGHT_SIZE];
@@ -170,12 +190,20 @@ void main(void) {
   lowp vec3 viewDir = normalize(uViewPos - vFragPos);
 
   MaterialColor matColor;
-  lowp vec4 texture = texture2D(uTexture, vTexCoord);
-
-  matColor.ambient = texture.xyz * uMaterial.ambient;
-  matColor.diffuse = texture.xyz * uMaterial.diffuse;
-
+  matColor.ambient = uMaterial.ambient;
+  matColor.diffuse = uMaterial.diffuse;
   matColor.specular = uMaterial.specular;
+
+  #ifdef USE_DIFFUSE_MAP
+    lowp vec4 diffuseTex = texture2D(uDiffuseMap, vTexCoord);
+    matColor.ambient *= diffuseTex.xyz;
+    matColor.diffuse *= diffuseTex.xyz;
+  #endif
+
+  #ifdef USE_SPECULAR_MAP
+    lowp vec4 specularTex = texture2D(uSpecularMap, vTexCoord);
+    matColor.specular *= specularTex.xyz;
+  #endif
 
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < AMBIENT_LIGHT_SIZE; ++i) {
@@ -194,6 +222,11 @@ void main(void) {
     if (i >= uLightSize.w) break;
     result += calcSpot(uSpotLight[i], matColor, viewDir);
   }
+
+  #ifdef USE_EMISSION_MAP
+    lowp vec4 emissionTex = texture2D(uEmissionMap, vTexCoord);
+    result += emissionTex.xyz;
+  #endif
 
   gl_FragColor = vec4(result, 1.0);
 }

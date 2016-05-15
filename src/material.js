@@ -7,6 +7,9 @@ export default class Material {
     // ....
     this.numberId = ID ++;
   }
+  getShader() {
+    return this.shader;
+  }
   use() {
     // Set material-specific uniforms here.
     // .... Abstraction to the rescue.

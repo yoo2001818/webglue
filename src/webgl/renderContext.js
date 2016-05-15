@@ -42,8 +42,10 @@ export default class RenderContext {
     // objects, such as lights, meshes, camera, etc.
     this.lights = {};
     this.meshes = new Heap((a, b) => {
-      if (a.material.shader.numberId !== b.material.shader.numberId) {
-        return a.material.shader.numberId - b.material.shader.numberId;
+      let aShader = a.material.shader.numberId;
+      let bShader = b.material.shader.numberId;
+      if (aShader != bShader) {
+        return aShader - bShader;
       }
       return a.material.numberId - b.material.numberId;
     });
@@ -203,13 +205,13 @@ export default class RenderContext {
   }
   useMaterial(material) {
     // Use the shader in the material.
-    this.useShader(material.shader);
+    this.useShader(material.getShader());
+    let shader = this.currentShader;
     // If the material is already being used, ignore it.
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
-    if (this.currentMaterial[material.shader.name] === material) return;
+    if (this.currentMaterial[shader.name] === material) return;
     // Then, call the material's use method.
-    let shader = this.currentShader;
     let uniforms = material.use();
     this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
     // Done!

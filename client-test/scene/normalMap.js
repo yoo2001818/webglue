@@ -34,7 +34,6 @@ export default function createScene() {
     attenuation: 0.0008
   });
   container.appendChild(pointLight);
-  pointLight.transform.invalidate();
   pointLight.transform.position[0] = 5;
   pointLight.transform.position[1] = 3;
   pointLight.transform.position[2] = 3;
@@ -43,17 +42,27 @@ export default function createScene() {
 
   let boxGeom = new BoxGeometry();
   let material = new PhongMaterial({
-    uTexture: Texture2D.fromImage(require('../texture/crate.jpg')),
-    uMaterial: {
-      specular: new Float32Array([0.2, 0.2, 0.2]),
-      diffuse: new Float32Array([1, 1, 1]),
-      ambient: new Float32Array([0.2, 0.2, 0.2]),
-      shininess: 10.0
-    }
+    diffuseMap: Texture2D.fromImage(require('../texture/crate.jpg')),
+    specular: new Float32Array([0.2, 0.2, 0.2]),
+    diffuse: new Float32Array([1, 1, 1]),
+    ambient: new Float32Array([0.2, 0.2, 0.2]),
+    shininess: 10.0
   });
 
   let mesh = new Mesh(boxGeom, material);
   container.appendChild(mesh);
+
+  let material2 = new PhongMaterial({
+    specular: new Float32Array([0.5, 0.5, 0.5]),
+    diffuse: new Float32Array([1.0, 1.0, 1.0]),
+    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    shininess: 32.0
+  });
+
+  let mesh2 = new Mesh(boxGeom, material2);
+  container.appendChild(mesh2);
+  mesh2.transform.position[0] = 3;
+  mesh2.transform.invalidate();
 
   return {
     container, camera, update: () => {
