@@ -3,7 +3,9 @@ import Container from 'webglue/container';
 
 import PointLightMesh from '../pointLightMesh';
 import { TranslateWidget } from '../widget';
+import SkyBox from '../skyBox';
 
+import TextureCube from 'webglue/textureCube';
 import Texture2D from 'webglue/texture2D';
 import PhongMaterial from '../phongMaterial';
 import BoxGeometry from 'webglue/boxGeometry';
@@ -67,6 +69,16 @@ export default function createScene() {
   container.appendChild(mesh2);
   mesh2.transform.position[0] = 3;
   mesh2.transform.invalidate();
+
+  let skybox = new SkyBox(TextureCube.fromImage([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ]));
+  container.appendChild(skybox);
 
   return {
     container, camera, update: () => {
