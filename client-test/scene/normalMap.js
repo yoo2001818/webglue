@@ -11,7 +11,9 @@ import PhongMaterial from '../phongMaterial';
 import BoxGeometry from 'webglue/boxGeometry';
 import Mesh from 'webglue/mesh';
 
-import { quat } from 'gl-matrix';
+import UVSphereGeometry from 'webglue/uvSphereGeometry';
+
+import { vec3, quat } from 'gl-matrix';
 
 // A normal map testing scene.
 
@@ -79,6 +81,22 @@ export default function createScene() {
     require('../texture/stormyday/left.jpg')
   ]));
   container.appendChild(skybox);
+
+  let sphereGeom = new UVSphereGeometry(32, 16);
+  let material3 = new PhongMaterial({
+    diffuseMap: Texture2D.fromImage(require('../texture/earth.jpg')),
+    specular: new Float32Array([0.2, 0.2, 0.2]),
+    diffuse: new Float32Array([1, 1, 1]),
+    ambient: new Float32Array([0.2, 0.2, 0.2]),
+    shininess: 10.0
+  });
+
+  let mesh4 = new Mesh(sphereGeom, material3);
+  container.appendChild(mesh4);
+  mesh4.transform.position[0] = -3;
+  // vec3.set(mesh4.transform.scale, 10, 10, 10);
+  mesh4.transform.invalidate();
+
 
   return {
     container, camera, update: () => {

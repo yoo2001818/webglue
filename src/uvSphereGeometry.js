@@ -51,12 +51,12 @@ export default class UVSphereGeometry extends Geometry3D {
       indices[i * 3 + 1] = i * 3 + 1;
       indices[i * 3 + 2] = i * 3 + 2;
       // Texture coords
-      texCoords[i * 6] = i / segments;
-      texCoords[i * 6 + 1] = 1 / (rings - 1);
-      texCoords[i * 6 + 2] = (i + 0.5) / segments;
-      texCoords[i * 6 + 3] = 0;
-      texCoords[i * 6 + 4] = (i + 1) / segments;
-      texCoords[i * 6 + 5] = 1 / (rings - 1);
+      texCoords[i * 6] = 1 - i / segments;
+      texCoords[i * 6 + 1] = 1 - 1 / (rings - 1);
+      texCoords[i * 6 + 2] = 1 - (i + 0.5) / segments;
+      texCoords[i * 6 + 3] = 1;
+      texCoords[i * 6 + 4] = 1 - (i + 1) / segments;
+      texCoords[i * 6 + 5] = 1 - 1 / (rings - 1);
     }
     // Pillar
     for (let j = 0; j < rings - 3; ++j) {
@@ -95,14 +95,14 @@ export default class UVSphereGeometry extends Geometry3D {
         indices[startIndices + 4] = startPos;
         indices[startIndices + 5] = startPos + 2;
         // Texture coords mapping
-        texCoords[startPos * 2] = i / segments;
-        texCoords[startPos * 2 + 1] = (j + 1) / (rings - 1);
-        texCoords[startPos * 2 + 2] = (i + 1) / segments;
-        texCoords[startPos * 2 + 3] = (j + 1) / (rings - 1);
-        texCoords[startPos * 2 + 4] = (i + 1) / segments;
-        texCoords[startPos * 2 + 5] = (j + 2) / (rings - 1);
-        texCoords[startPos * 2 + 6] = i / segments;
-        texCoords[startPos * 2 + 7] = (j + 2) / (rings - 1);
+        texCoords[startPos * 2] = 1 - i / segments;
+        texCoords[startPos * 2 + 1] = 1 - (j + 1) / (rings - 1);
+        texCoords[startPos * 2 + 2] = 1 - (i + 1) / segments;
+        texCoords[startPos * 2 + 3] = 1 - (j + 1) / (rings - 1);
+        texCoords[startPos * 2 + 4] = 1 - (i + 1) / segments;
+        texCoords[startPos * 2 + 5] = 1 - (j + 2) / (rings - 1);
+        texCoords[startPos * 2 + 6] = 1 - i / segments;
+        texCoords[startPos * 2 + 7] = 1 - (j + 2) / (rings - 1);
       }
     }
     // Floor
@@ -131,12 +131,12 @@ export default class UVSphereGeometry extends Geometry3D {
       indices[startIndices + 1] = startPos;
       indices[startIndices + 2] = startPos + 2;
       // Texture coords
-      texCoords[startPos * 2] = i / segments;
-      texCoords[startPos * 2 + 1] = (rings - 2) / (rings - 1);
-      texCoords[startPos * 2 + 2] = (i + 0.5) / segments;
-      texCoords[startPos * 2 + 3] = 1;
-      texCoords[startPos * 2 + 4] = (i + 1) / segments;
-      texCoords[startPos * 2 + 5] = (rings - 2) / (rings - 1);
+      texCoords[startPos * 2] = 1 - i / segments;
+      texCoords[startPos * 2 + 1] = 1 - (rings - 2) / (rings - 1);
+      texCoords[startPos * 2 + 2] = 1 - (i + 0.5) / segments;
+      texCoords[startPos * 2 + 3] = 0;
+      texCoords[startPos * 2 + 4] = 1 - (i + 1) / segments;
+      texCoords[startPos * 2 + 5] = 1 - (rings - 2) / (rings - 1);
     }
     this.vertices = vertices;
     this.texCoords = texCoords;

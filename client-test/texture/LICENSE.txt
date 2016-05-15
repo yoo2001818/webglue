@@ -11,5 +11,12 @@ http://opengameart.org/content/clouds-skybox-1
 wood.jpg is obtained from here:
 http://opengameart.org/content/2048%C2%B2-wooden-texture
 
+earth.jpg is obtained from here:
+http://visibleearth.nasa.gov/view.php?id=73580
+(And yeah, anything related to US government is public domain.)
+
+crate.jpg is obtained from here:
+http://opengameart.org/content/3-crate-textures-w-bump-normal
+
 anything else is obtained from here:
 http://opengameart.org/content/50-free-textures-4-normalmaps
