@@ -1,6 +1,7 @@
 import InternalShader from './internalShader';
 import InternalGeometry from './internalGeometry';
 import InternalTexture from './internalTexture';
+import Metrics from './metrics';
 
 import Heap from 'heap';
 
@@ -53,11 +54,14 @@ export default class RenderContext {
     this.deltaTime = 1 / 60;
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
+
+    this.metrics = new Metrics();
   }
   render() {
     const gl = this.gl;
     // Ignore if context is lost.
     if (gl.isContextLost()) return;
+    this.metrics.reset();
     // Clear current OpenGL context.
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -154,6 +158,7 @@ export default class RenderContext {
       return;
     }
     // TODO recycle the size buffer
+    this.metrics.lights = 0;
     let lightSizeVec = new Int32Array(4);
     for (let type in this.lights) {
       let typeName = this.lightUniforms[type];
@@ -167,6 +172,7 @@ export default class RenderContext {
 
       let typeSizePos = this.lightSizePos[type];
       lightSizeVec[typeSizePos] = this.lights[type].length;
+      this.metrics.lights += this.lights[type].length;
     }
     if (shader.uniforms[this.lightSizeUniform]) {
       this.gl.uniform4iv(shader.uniforms[this.lightSizeUniform], lightSizeVec);
@@ -188,7 +194,9 @@ export default class RenderContext {
       this.shaders[shader.name] = internalShader;
       internalShader.use(this);
       this.currentShader = internalShader;
+      this.metrics.shaders ++;
     }
+    this.metrics.shaderCalls ++;
     // Reset camera location.
     this.useCamera(this.camera);
     this.useLights();
@@ -206,6 +214,7 @@ export default class RenderContext {
     this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
     // Done!
     this.currentMaterial[shader.name] = material;
+    this.metrics.materialCalls ++;
   }
   bindUniforms(values, uniforms, uniformTypes) {
     const gl = this.gl;
@@ -295,7 +304,9 @@ export default class RenderContext {
       this.geometries[geometry.name] = internalGeometry;
       internalGeometry.use(this, geometry);
       this.currentGeometry = internalGeometry;
+      this.metrics.geometries ++;
     }
+    this.metrics.geometryCalls ++;
   }
   useTexture(texture) {
     let internalTexture = this.textures[texture.name];
@@ -304,6 +315,7 @@ export default class RenderContext {
       internalTexture = new InternalTexture();
       internalTexture.upload(this, texture);
       this.textures[texture.name] = internalTexture;
+      this.metrics.textures ++;
     } else {
       // If it exists, we can easily check if the texture already exists on
       // the bank.
@@ -336,6 +348,7 @@ export default class RenderContext {
     internalTexture.unitId = leastId;
     internalTexture.use(this, texture, leastId);
     if (!internalTexture.loaded) this.loadingTextures.push(texture);
+    this.metrics.textureCalls ++;
     return leastId;
   }
   handleLoadingTextures() {
@@ -368,6 +381,7 @@ export default class RenderContext {
     }
     this.useGeometry(mesh.geometry, prevShader);
     this.currentGeometry.render(this, mesh.geometry);
+    this.metrics.meshCalls ++;
   }
   addMesh(mesh) {
     this.meshes.push(mesh);

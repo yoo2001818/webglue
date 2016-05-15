@@ -160,7 +160,11 @@ export default class InternalGeometry {
     const gl = context.gl;
     if (this.ebo !== null) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+      context.metrics.activeVertices += geometry.indices.length;
+    } else {
+      context.metrics.activeVertices += geometry.getVertexCount();
     }
+    context.metrics.vertices += geometry.getVertexCount();
     if (this.typeArray) {
       for (let i = 0; i < this.type.length; ++i) {
         let data = this.type[i];
@@ -175,15 +179,26 @@ export default class InternalGeometry {
           // Or just use array drawing
           gl.drawArrays(data.type, data.first, data.count);
         }
+        if (data.type === TYPES.triangles) {
+          context.metrics.triangles += data.count / 3 | 0;
+        }
+        context.metrics.drawCalls ++;
       }
     } else {
       if (this.ebo !== null) {
         // Draw by elements if indices buffer exists
         gl.drawElements(this.type, geometry.indices.length, this.eboType, 0);
+        if (this.type === TYPES.triangles) {
+          context.metrics.triangles += geometry.indices.length / 3 | 0;
+        }
       } else {
         // Or just use array drawing
         gl.drawArrays(this.type, 0, geometry.getVertexCount());
+        if (this.type === TYPES.triangles) {
+          context.metrics.triangles += geometry.getVertexCount() / 3 | 0;
+        }
       }
+      context.metrics.drawCalls ++;
     }
   }
   dispose(context) {

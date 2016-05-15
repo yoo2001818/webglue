@@ -29,13 +29,39 @@ context.camera = camera;
 
 let beforeTime;
 
+let metrics = document.createElement('div');
+metrics.style.position = 'absolute';
+metrics.style.top = 0;
+metrics.style.left = 0;
+metrics.style.whiteSpace = 'pre';
+metrics.style.background = '#fff';
+document.body.appendChild(metrics);
+
+let fpsCurrent = 0;
+let fpsTotal = 0;
+let fpsCount = 0;
+
 function animate(currentTime) {
   if (beforeTime == null) beforeTime = currentTime;
   let delta = (currentTime - beforeTime) / 1000;
   sceneUpdate(delta);
   controller.update(delta);
   context.update(container, delta);
+  fpsTotal += 1000 / (currentTime - beforeTime);
+  fpsCount ++;
   beforeTime = currentTime;
+  if (fpsCount > 30) {
+    fpsCurrent = fpsTotal / fpsCount;
+    fpsCount = 0;
+    fpsTotal = 0;
+  }
+  let metricData = '';
+  metricData += 'webglue v0.1.0\n';
+  metricData += 'FPS: ' + fpsCurrent.toFixed(2) + '\n';
+  for (let key in context.metrics) {
+    metricData += key + ': ' + context.metrics[key] + '\n';
+  }
+  metrics.innerHTML = metricData;
   window.requestAnimationFrame(animate);
 }
 window.requestAnimationFrame(animate);
