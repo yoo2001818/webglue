@@ -42,7 +42,8 @@ export default function createScene() {
 
   let boxGeom = new BoxGeometry();
   let material = new PhongMaterial({
-    diffuseMap: Texture2D.fromImage(require('../texture/crate.jpg')),
+    normalMap: Texture2D.fromImage(require('../texture/sand-normal.jpg')),
+    diffuseMap: Texture2D.fromImage(require('../texture/sand.jpg')),
     specular: new Float32Array([0.2, 0.2, 0.2]),
     diffuse: new Float32Array([1, 1, 1]),
     ambient: new Float32Array([0.2, 0.2, 0.2]),

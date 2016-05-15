@@ -1,6 +1,6 @@
 import Geometry from './geometry';
 
-import { vec3 } from 'gl-matrix';
+import { vec2, vec3 } from 'gl-matrix';
 
 export default class Geometry3D extends Geometry {
   constructor(name) {
@@ -41,8 +41,8 @@ export default class Geometry3D extends Geometry {
       this.normals.set(uv, vertexId3 * 3);
     }
   }
-  // Recalculate tangents. This is experimental algorithm, so it may be
-  // changed later.
+  // Recalculate tangents. This shouldn't be required if normal map or
+  // height map is not present.
   calculateTangents() {
     if (this.vertices === null) throw new Error('Vertices array is null');
     // If tangent vector array is not present, create one.
@@ -57,13 +57,28 @@ export default class Geometry3D extends Geometry {
       // Calculate tangent vector.
       let origin = this.vertices.slice(vertexId1 * 3, vertexId1 * 3 + 3);
       let p1 = vec3.create();
-      // I'm not sure if this is okay....
       vec3.subtract(p1, this.vertices.slice(vertexId2 * 3, vertexId2 * 3 + 3),
         origin);
+      let p2 = vec3.create();
+      vec3.subtract(p2, this.vertices.slice(vertexId3 * 3, vertexId3 * 3 + 3),
+        origin);
+      let texOrigin = this.texCoords.slice(vertexId1 * 2, vertexId1 * 2 + 2);
+      let texP1 = vec2.create();
+      vec2.subtract(texP1, this.texCoords.slice(vertexId2 * 2,
+        vertexId2 * 2 + 2), texOrigin);
+      let texP2 = vec2.create();
+      vec2.subtract(texP2, this.texCoords.slice(vertexId3 * 2,
+        vertexId3 * 2 + 2), texOrigin);
+      // Honestly I don't know what this does.
+      let f = 1 / (texP1[0] * texP2[1] - texP2[0] * texP1[1]);
+      let tangent = vec3.create();
+      tangent[0] = f * (texP2[1] * p1[0] - texP1[1] * p2[0]);
+      tangent[1] = f * (texP2[1] * p1[1] - texP1[1] * p2[1]);
+      tangent[2] = f * (texP2[1] * p1[2] - texP1[1] * p2[2]);
       // Done! Paste them to those three vertices.
-      this.tangents.set(p1, vertexId1 * 3);
-      this.tangents.set(p1, vertexId2 * 3);
-      this.tangents.set(p1, vertexId3 * 3);
+      this.tangents.set(tangent, vertexId1 * 3);
+      this.tangents.set(tangent, vertexId2 * 3);
+      this.tangents.set(tangent, vertexId3 * 3);
     }
   }
   getAttributes() {

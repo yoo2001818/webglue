@@ -19,7 +19,7 @@ export default class Texture2D extends Texture {
       this.image);
     // Texture configuration comes here
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-      gl.LINEAR_MIPMAP_NEAREST);
+      gl.LINEAR_MIPMAP_LINEAR);
     gl.generateMipmap(gl.TEXTURE_2D);
   }
   static fromImage(url) {
