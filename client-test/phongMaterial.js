@@ -59,6 +59,11 @@ export default class PhongMaterial extends Material {
     // Process features and retrieve (or generate) the shader.
     super(retrieveShader(options));
     this.options = options;
+    if (this.options.heightMap) {
+      this.heightMapScale = new Float32Array([
+        this.options.heightMapScale, this.options.heightMapDecay
+      ]);
+    }
   }
   use() {
     return {
@@ -67,6 +72,7 @@ export default class PhongMaterial extends Material {
       uEmissionMap: this.options.emissionMap,
       uNormalMap: this.options.normalMap,
       uHeightMap: this.options.heightMap,
+      uHeightMapScale: this.heightMapScale,
       uMaterial: this.options
     };
   }

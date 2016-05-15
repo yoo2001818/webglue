@@ -1,5 +1,7 @@
 #version 100
 
+precision lowp float;
+
 #define AMBIENT_LIGHT_SIZE 1
 #define DIRECTIONAL_LIGHT_SIZE 2
 #define POINT_LIGHT_SIZE 8
@@ -70,7 +72,10 @@ struct SpotLight {
 #ifdef USE_NORMAL_MAP
   uniform sampler2D uNormalMap;
 #endif
-// Height map is not implemented yet!
+#ifdef USE_HEIGHT_MAP
+  uniform sampler2D uHeightMap;
+  uniform lowp vec2 uHeightMapScale;
+#endif
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
   #define USE_TANGENT_SPACE
 #endif
@@ -206,6 +211,22 @@ lowp vec3 calcSpot(SpotLight light, MaterialColor matColor, lowp vec3 viewDir,
 
 }
 
+#ifdef USE_HEIGHT_MAP
+  lowp vec2 heightMap(sampler2D heightMap, lowp vec2 texCoords, lowp vec3 viewDir) {
+    if (uHeightMapScale.y != 0.0) {
+      // Cheap but not fancy parallax mapping
+      lowp float angle = min(1.0, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)) * uHeightMapScale.y);
+      lowp float height = 1.0 - texture2D(heightMap, texCoords).r * 2.0;
+      lowp vec2 p = viewDir.xy / viewDir.z * (height * uHeightMapScale.x * angle);
+      return texCoords - p;
+    } else {
+      // Parallax occlusion mapping. Expensive..
+      // TODO
+      return vec2(0.0, 0.0);
+    }
+  }
+#endif
+
 void main(void) {
   #ifdef USE_TANGENT_SPACE
     lowp vec3 viewDir = normalize(vTangentViewPos - vTangentFragPos);
@@ -216,6 +237,15 @@ void main(void) {
     lowp vec3 normal = vNormal;
   #endif
   lowp vec2 texCoord = vTexCoord;
+
+  #ifdef USE_HEIGHT_MAP
+    texCoord = heightMap(uHeightMap, vTexCoord, viewDir);
+    if (texCoord.x > 1.0 || texCoord.y > 1.0 ||
+      texCoord.x < 0.0 || texCoord.y < 0.0
+    ) {
+      discard;
+    }
+  #endif
 
   #ifdef USE_NORMAL_MAP
     normal = (texture2D(uNormalMap, texCoord)).xyz;
