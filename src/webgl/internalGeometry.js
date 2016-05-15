@@ -11,6 +11,13 @@ const TYPES = {
   triangleFan: 6
 };
 
+// TODO Currently it's not possible to disable culling at all.
+const CULL_FACE = {
+  front: 0x0404,
+  back: 0x0405,
+  both: 0x0408
+};
+
 export default class InternalGeometry {
   constructor() {
     this.vbo = null;
@@ -124,16 +131,24 @@ export default class InternalGeometry {
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
+    this.cullFace = CULL_FACE[geometry.cullFace];
   }
   use(context) {
     const gl = context.gl;
     const shader = context.currentShader;
     const name = shader.isShared ? SHARED_ATTRIBUTES : shader.name;
+    if (context.currentCullFace !== this.cullFace) {
+      gl.cullFace(this.cullFace);
+      context.currentCullFace = this.cullFace;
+    }
     // If VAO extension exists, try to use it
     if (context.vaoExt) {
       // If VAO exists, just bind it and return
       if (this.vao[name]) {
         context.vaoExt.bindVertexArrayOES(this.vao[name]);
+        if (this.ebo !== null) {
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+        }
         return;
       } else {
         // If it doesn't, create new one and proceed
@@ -159,7 +174,6 @@ export default class InternalGeometry {
   render(context, geometry) {
     const gl = context.gl;
     if (this.ebo !== null) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
       context.metrics.activeVertices += geometry.indices.length;
     } else {
       context.metrics.activeVertices += geometry.getVertexCount();

@@ -93,6 +93,7 @@ export default class RenderContext {
     while (this.meshes.pop());
   }
   resetContext() {
+    const gl = this.gl;
     // Remove all the resources and stuff already bound - It's lost in GPU!
     // We can use a Map instead of object.
     this.shaders = {};
@@ -104,12 +105,13 @@ export default class RenderContext {
     this.currentCamera = {};
     this.currentLight = {};
     this.currentTextures = [];
+    // This defaults to back
+    this.currentCullFace = gl.BACK;
     this.renderTickId = 0;
     this.textureBindId = 0;
     this.lightChanged = 0;
     this.cameraChanged = 0;
 
-    const gl = this.gl;
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
