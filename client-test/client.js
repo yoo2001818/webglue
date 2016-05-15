@@ -4,7 +4,7 @@ import WireframeGeometry from 'webglue/wireframeGeometry';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
-import widgetScene from './scene/widget';
+import widgetScene from './scene/normalMap';
 import BlenderCameraController from './blenderCameraController';
 
 import { quat } from 'gl-matrix';
