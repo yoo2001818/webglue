@@ -7,6 +7,9 @@ import Grid from './grid';
 import widgetScene from './scene/normalMap';
 import BlenderCameraController from './blenderCameraController';
 
+import PointGeometry from './pointGeometry';
+import { TranslateWidget } from './widget';
+
 import { quat, vec3, mat4 } from 'gl-matrix';
 import { TRANSLATE_AXIS_GEOM as spearGeom } from './widget';
 import geometryRayIntersection from './geom/geometryRayIntersection';
@@ -23,6 +26,27 @@ container.appendChild(grid);
 quat.rotateX(grid.transform.rotation, grid.transform.rotation, Math.PI / 2);
 grid.transform.invalidate();
 
+let pointGeom = new PointGeometry();
+let anchorShader = new Shader(
+  require('./shader/anchorPoint.vert'), require('./shader/anchorPoint.frag')
+);
+let anchorMat = new Material(anchorShader);
+anchorMat.use = () => ({
+  uCross: new Float32Array([0, 0, 0]),
+  uBorder1: new Float32Array([1, 0, 0]),
+  uBorder2: new Float32Array([1, 1, 1]),
+  uCrossWidth: 1/40,
+  uCrossSize: 40,
+  uCrossStart: 10/40,
+  uRadius: 20/40,
+  uBorderWidth: 1/40
+});
+let anchor = new Mesh(pointGeom, anchorMat);
+container.appendChild(anchor);
+
+let translateWidget = new TranslateWidget();
+container.appendChild(translateWidget);
+
 let controller = new BlenderCameraController(window, camera);
 controller.registerEvents();
 
@@ -32,6 +56,7 @@ context.camera = camera;
 let spearList = [];
 
 context.canvas.addEventListener('click', e => {
+  if (e.button !== 0) return;
   const canvas = context.canvas;
   // Convert mouse position to NDC
   let x = (e.clientX - canvas.width / 2) / (canvas.width / 2);
@@ -98,6 +123,27 @@ context.canvas.addEventListener('click', e => {
   mesh.count = 0;
 
   spearList.push(mesh);
+
+  if (minDist !== Infinity) {
+    vec3.copy(anchor.transform.position, near);
+    let delta = vec3.create();
+    vec3.copy(delta, diff);
+    vec3.scale(delta, diff, minDist);
+    vec3.add(anchor.transform.position, anchor.transform.position, delta);
+    anchor.transform.invalidate();
+  } else {
+    // Calculate depth of anchor projected to the camera.
+    let original = vec3.create();
+    vec3.transformMat4(original, anchor.transform.position, camera.pvMatrix);
+    let out = calcWorld(vec3.fromValues(x, y, original[2]));
+    vec3.copy(anchor.transform.position, out);
+    anchor.transform.invalidate();
+  }
+
+  if (minMesh) {
+    vec3.copy(translateWidget.transform.position, minMesh.transform.position);
+    translateWidget.transform.invalidate();
+  }
 });
 
 let beforeTime;

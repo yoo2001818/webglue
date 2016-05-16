@@ -15,13 +15,11 @@ import { quat } from 'gl-matrix';
 function createMaterial(image) {
   let texture = Texture2D.fromImage(image);
   let material = new PhongMaterial({
-    uTexture: texture,
-    uMaterial: {
-      specular: new Float32Array([0.4, 0.4, 0.4]),
-      diffuse: new Float32Array([1, 1, 1]),
-      ambient: new Float32Array([0.2, 0.2, 0.2]),
-      shininess: 10.0
-    }
+    diffuseMap: texture,
+    specular: new Float32Array([0.4, 0.4, 0.4]),
+    diffuse: new Float32Array([1, 1, 1]),
+    ambient: new Float32Array([0.2, 0.2, 0.2]),
+    shininess: 10.0
   });
   return material;
 }

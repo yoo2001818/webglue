@@ -52,7 +52,11 @@ export default class BlenderCameraController {
           Math.PI / 180 * -offsetY);
       this.hasChanged = true;
     });
+    this.node.addEventListener('contextmenu', e => {
+      e.preventDefault();
+    });
     this.node.addEventListener('mousedown', e => {
+      if (e.button !== 1 && e.button !== 2) return;
       this.mouseHeld = true;
       // Determine if we should go clockwise or anticlockwise.
       let upLocal = vec3.create();
@@ -64,9 +68,12 @@ export default class BlenderCameraController {
       // Set position
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
+      e.preventDefault();
     });
-    this.node.addEventListener('mouseup', () => {
+    this.node.addEventListener('mouseup', e => {
+      if (e.button !== 1 && e.button !== 2) return;
       this.mouseHeld = false;
+      e.preventDefault();
     });
     this.node.addEventListener('keydown', e => {
       if (e.shiftKey) return;
@@ -129,6 +136,7 @@ export default class BlenderCameraController {
         this.radius += this.radius * e.deltaY / 50;
       }
       this.hasChanged = true;
+      e.preventDefault();
     });
   }
   update(delta) {

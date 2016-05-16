@@ -2,7 +2,6 @@ import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
 import PointLightMesh from '../pointLightMesh';
-import { TranslateWidget } from '../widget';
 import SkyBox from '../skyBox';
 
 import TextureCube from 'webglue/textureCube';
@@ -26,9 +25,6 @@ export default function createScene() {
   quat.rotateX(camera.transform.rotation, camera.transform.rotation,
     -Math.PI / 4);
   camera.transform.invalidate();
-
-  let translateWidget = new TranslateWidget();
-  container.appendChild(translateWidget);
 
   let pointLight = new PointLightMesh({
     color: new Float32Array([1, 1, 1]),
