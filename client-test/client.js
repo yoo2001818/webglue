@@ -1,6 +1,5 @@
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
-import LineGeometry from './lineGeometry';
 import WireframeGeometry from 'webglue/wireframeGeometry';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
@@ -10,6 +9,7 @@ import BlenderCameraController from './blenderCameraController';
 
 import { quat, vec3, mat4 } from 'gl-matrix';
 import { TRANSLATE_AXIS_GEOM as spearGeom } from './widget';
+import geometryRayIntersection from './geom/geometryRayIntersection';
 
 document.body.style.margin = '0';
 document.body.style.padding = '0';
@@ -31,7 +31,7 @@ context.camera = camera;
 
 let spearList = [];
 
-context.canvas.addEventListener('mousedown', e => {
+context.canvas.addEventListener('click', e => {
   const canvas = context.canvas;
   // Convert mouse position to NDC
   let x = (e.clientX - canvas.width / 2) / (canvas.width / 2);
@@ -54,22 +54,47 @@ context.canvas.addEventListener('mousedown', e => {
   let far = calcWorld(vec3.fromValues(x, y, 1.0));
   let near = calcWorld(vec3.fromValues(x, y, -1.0));
 
-  console.log(far);
-  console.log(near);
+  let diff = vec3.create();
+  vec3.subtract(diff, far, near);
+  vec3.normalize(diff, diff);
+
+  let minMesh = null;
+  let minFace = null;
+  let minDist = Infinity;
+
+  // Perform ray cast to all the meshes
+  container.children.forEach(child => {
+    if (!(child instanceof Mesh)) return;
+    // Global matrix must be updated prior to the collision event
+    let collision = geometryRayIntersection(child.geometry, child.globalMatrix,
+      near, diff);
+    if (collision === null) return;
+    if (minDist > collision.distance) {
+      minMesh = child;
+      minFace = collision.faceId;
+      minDist = collision.distance;
+    }
+  });
+
+  // Now what?
+  console.log(minMesh, minFace, minDist);
 
   // Create line
   let mesh = new Mesh(spearGeom, wireMaterial);
   container.appendChild(mesh);
-
-  let diff = vec3.create();
-  vec3.subtract(diff, far, near);
-  vec3.normalize(diff, diff);
 
   vec3.copy(mesh.transform.position, near);
   quat.rotationTo(mesh.transform.rotation, [1, 0, 0], diff);
   mesh.transform.scale[0] = 1;
   mesh.transform.invalidate();
   mesh.direction = diff;
+  if (minDist !== Infinity) {
+    mesh.distance = minDist - 1;
+    mesh.despawn = false;
+  } else {
+    mesh.distance = 20;
+    mesh.despawn = true;
+  }
   mesh.count = 0;
 
   spearList.push(mesh);
@@ -92,16 +117,22 @@ let fpsCount = 0;
 function animate(currentTime) {
   if (beforeTime == null) beforeTime = currentTime;
   let delta = (currentTime - beforeTime) / 1000;
-  spearList.forEach(spear => {
+  for (let i = 0; i < spearList.length; ++i) {
+    let spear = spearList[i];
+    if (spear.count > spear.distance) continue;
     let dir = vec3.create();
     vec3.scale(dir, spear.direction, delta * 8);
     vec3.add(spear.transform.position, spear.transform.position, dir);
     spear.transform.invalidate();
-    spear.count += delta;
-    if (spear.count > 2) {
-      container.removeChild(spear);
+    spear.count += delta * 8;
+    if (spear.count > spear.distance) {
+      spearList.splice(i, 1);
+      i --;
+      if (spear.despawn) {
+        container.removeChild(spear);
+      }
     }
-  });
+  }
   sceneUpdate(delta);
   controller.update(delta);
   context.update(container, delta);
