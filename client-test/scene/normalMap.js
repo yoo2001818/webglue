@@ -13,7 +13,7 @@ import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
 
-import { vec3, quat } from 'gl-matrix';
+import { quat } from 'gl-matrix';
 
 // A normal map testing scene.
 

@@ -41,7 +41,7 @@ const CONE_GEOM = new ConeGeometry(10);
 const BOX_GEOM = new BoxGeometry();
 const CIRCLE_GEOM = new CircleGeometry(24, 0.7);
 
-const TRANSLATE_AXIS_GEOM = new CombinedGeometry([
+export const TRANSLATE_AXIS_GEOM = new CombinedGeometry([
   LINE_GEOM, CONE_GEOM
 ], [{}, {
   aPosition: [

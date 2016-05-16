@@ -1,5 +1,6 @@
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
+import LineGeometry from './lineGeometry';
 import WireframeGeometry from 'webglue/wireframeGeometry';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
@@ -7,7 +8,8 @@ import Grid from './grid';
 import widgetScene from './scene/normalMap';
 import BlenderCameraController from './blenderCameraController';
 
-import { quat } from 'gl-matrix';
+import { quat, vec3, mat4 } from 'gl-matrix';
+import { TRANSLATE_AXIS_GEOM as spearGeom } from './widget';
 
 document.body.style.margin = '0';
 document.body.style.padding = '0';
@@ -27,6 +29,52 @@ controller.registerEvents();
 let context = new CanvasRenderContext();
 context.camera = camera;
 
+let spearList = [];
+
+context.canvas.addEventListener('mousedown', e => {
+  const canvas = context.canvas;
+  // Convert mouse position to NDC
+  let x = (e.clientX - canvas.width / 2) / (canvas.width / 2);
+  let y = -(e.clientY - canvas.height / 2) / (canvas.height / 2);
+
+  function calcWorld(ndc) {
+    // Invert projection matrix
+    let projInverse = mat4.create();
+    mat4.invert(projInverse, camera.projectMatrix);
+
+    let viewPos = vec3.create();
+    vec3.transformMat4(viewPos, ndc, projInverse);
+
+    // Apply inverse view matrix
+    let worldPos = vec3.create();
+    vec3.transformMat4(worldPos, viewPos, camera.globalMatrix);
+    return worldPos;
+  }
+
+  let far = calcWorld(vec3.fromValues(x, y, 1.0));
+  let near = calcWorld(vec3.fromValues(x, y, -1.0));
+
+  console.log(far);
+  console.log(near);
+
+  // Create line
+  let mesh = new Mesh(spearGeom, wireMaterial);
+  container.appendChild(mesh);
+
+  let diff = vec3.create();
+  vec3.subtract(diff, far, near);
+  vec3.normalize(diff, diff);
+
+  vec3.copy(mesh.transform.position, near);
+  quat.rotationTo(mesh.transform.rotation, [1, 0, 0], diff);
+  mesh.transform.scale[0] = 1;
+  mesh.transform.invalidate();
+  mesh.direction = diff;
+  mesh.count = 0;
+
+  spearList.push(mesh);
+});
+
 let beforeTime;
 
 let metrics = document.createElement('div');
@@ -44,6 +92,16 @@ let fpsCount = 0;
 function animate(currentTime) {
   if (beforeTime == null) beforeTime = currentTime;
   let delta = (currentTime - beforeTime) / 1000;
+  spearList.forEach(spear => {
+    let dir = vec3.create();
+    vec3.scale(dir, spear.direction, delta * 8);
+    vec3.add(spear.transform.position, spear.transform.position, dir);
+    spear.transform.invalidate();
+    spear.count += delta;
+    if (spear.count > 2) {
+      container.removeChild(spear);
+    }
+  });
   sceneUpdate(delta);
   controller.update(delta);
   context.update(container, delta);
