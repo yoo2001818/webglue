@@ -7,7 +7,7 @@ import SkyBox from '../skyBox';
 import TextureCube from 'webglue/textureCube';
 import Texture2D from 'webglue/texture2D';
 import PhongMaterial from '../phongMaterial';
-import BoxGeometry from 'webglue/boxGeometry';
+import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
