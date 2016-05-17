@@ -21,4 +21,7 @@ export default class LineGeometry extends Geometry {
       }
     };
   }
+  getIndices() {
+    return this.indices;
+  }
 }

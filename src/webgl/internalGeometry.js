@@ -111,14 +111,15 @@ export default class InternalGeometry {
     }
     // Done!
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    if (geometry.indices) {
-      if (geometry.indices instanceof Uint8Array) {
+    let geomIndices = geometry.getIndices();
+    if (geomIndices) {
+      if (geomIndices instanceof Uint8Array) {
         this.eboType = gl.UNSIGNED_BYTE;
         this.eboSize = 1;
-      } else if (geometry.indices instanceof Uint16Array) {
+      } else if (geomIndices instanceof Uint16Array) {
         this.eboType = gl.UNSIGNED_SHORT;
         this.eboSize = 2;
-      } else if (geometry.indices instanceof Uint32Array) {
+      } else if (geomIndices instanceof Uint32Array) {
         // TODO OES_element_index_uint extension must be enabled before doing
         // this
         // this.eboType = gl.UNSIGNED_INT;
@@ -128,8 +129,9 @@ export default class InternalGeometry {
       }
       this.ebo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geomIndices, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+      this.eboLength = geomIndices.length;
     }
     this.cullFace = CULL_FACE[geometry.cullFace];
   }
@@ -174,7 +176,7 @@ export default class InternalGeometry {
   render(context, geometry) {
     const gl = context.gl;
     if (this.ebo !== null) {
-      context.metrics.activeVertices += geometry.indices.length;
+      context.metrics.activeVertices += this.eboLength;
     } else {
       context.metrics.activeVertices += geometry.getVertexCount();
     }
@@ -201,9 +203,9 @@ export default class InternalGeometry {
     } else {
       if (this.ebo !== null) {
         // Draw by elements if indices buffer exists
-        gl.drawElements(this.type, geometry.indices.length, this.eboType, 0);
+        gl.drawElements(this.type, this.eboLength, this.eboType, 0);
         if (this.type === TYPES.triangles) {
-          context.metrics.triangles += geometry.indices.length / 3 | 0;
+          context.metrics.triangles += this.eboLength / 3 | 0;
         }
       } else {
         // Or just use array drawing

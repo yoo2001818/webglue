@@ -28,4 +28,7 @@ export default class CircleGeometry extends Geometry {
       }
     };
   }
+  getIndices() {
+    return this.indices;
+  }
 }

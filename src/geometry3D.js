@@ -9,6 +9,7 @@ export default class Geometry3D extends Geometry {
     this.normals = null;
     this.texCoords = null;
     this.tangents = null;
+    this.indices = null;
   }
   getVertexCount() {
     return this.vertices.length / 3 | 0;
@@ -100,5 +101,8 @@ export default class Geometry3D extends Geometry {
         data: this.tangents
       }
     };
+  }
+  getIndices() {
+    return this.indices;
   }
 }

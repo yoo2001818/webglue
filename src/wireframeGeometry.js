@@ -8,6 +8,7 @@ export default class WireframeGeometry extends Geometry {
     this.type = [];
     let originalTypes = [];
     let indicesPos = 0;
+    let geomIndices = geometry.getIndices();
     // First, calculate the size of indices buffer and set the position.
     if (Array.isArray(geometry.type)) {
       for (let i = 0; i < geometry.type.length; ++i) {
@@ -33,21 +34,21 @@ export default class WireframeGeometry extends Geometry {
       if (geometry.type === 'triangles') {
         this.type.push({
           first: indicesPos,
-          count: geometry.indices.length * 2,
+          count: geomIndices.length * 2,
           type: 'lines'
         });
-        indicesPos += geometry.indices.length * 2;
+        indicesPos += geomIndices.length * 2;
       } else {
         this.type.push({
           first: indicesPos,
-          count: geometry.indices.length,
+          count: geomIndices.length,
           type: geometry.type
         });
-        indicesPos += geometry.indices.length;
+        indicesPos += geomIndices.length;
       }
       originalTypes.push({
         first: 0,
-        count: geometry.indices.length,
+        count: geomIndices.length,
         type: geometry.type
       });
     }
@@ -64,17 +65,17 @@ export default class WireframeGeometry extends Geometry {
         for (let j = 0; j < size; ++j) {
           let origPos = origFirst + j * 3;
           let pos = destFirst + j * 6;
-          indices[pos] = geometry.indices[origPos];
-          indices[pos + 1] = geometry.indices[origPos + 1];
-          indices[pos + 2] = geometry.indices[origPos + 1];
-          indices[pos + 3] = geometry.indices[origPos + 2];
-          indices[pos + 4] = geometry.indices[origPos + 2];
-          indices[pos + 5] = geometry.indices[origPos];
+          indices[pos] = geomIndices[origPos];
+          indices[pos + 1] = geomIndices[origPos + 1];
+          indices[pos + 2] = geomIndices[origPos + 1];
+          indices[pos + 3] = geomIndices[origPos + 2];
+          indices[pos + 4] = geomIndices[origPos + 2];
+          indices[pos + 5] = geomIndices[origPos];
         }
       } else {
         // If it's not a triangle, just copy the buffer.
         // Slice copys the whole buffer, so we should avoid it
-        indices.set(geometry.indices.subarray(
+        indices.set(geomIndices.subarray(
           origType.first, origType.count + origType.first), destType.first);
       }
     }
@@ -83,6 +84,9 @@ export default class WireframeGeometry extends Geometry {
   }
   getAttributes() {
     return this.attributes;
+  }
+  getIndices() {
+    return this.indices;
   }
   getVertexCount() {
     return this.vertexCount;

@@ -4,6 +4,7 @@ export default class Geometry2D extends Geometry {
   constructor(name) {
     super(name);
     this.vertices = null;
+    this.indices = null;
   }
   getVertexCount() {
     return this.vertices.length / 2 | 0;
@@ -15,5 +16,8 @@ export default class Geometry2D extends Geometry {
         data: this.vertices
       }
     };
+  }
+  getIndices() {
+    return this.indices;
   }
 }

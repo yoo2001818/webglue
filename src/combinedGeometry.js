@@ -15,7 +15,7 @@ export default class CombinedGeometry extends Geometry {
       before + geometry.getVertexCount()
     , 0);
     let indicesCount = geometries.reduce((before, geometry) =>
-      before + geometry.indices.length
+      before + geometry.getIndices().length
     , 0);
     this.verticesCount = verticesCount;
     // Then, create the indices - We must sort them in types to reduce
@@ -175,13 +175,14 @@ export default class CombinedGeometry extends Geometry {
           count: geometry.indices.length
         }];
       }
+      let geomIndices = geometry.getIndices();
       types.forEach(entry => {
         // Calculate indices. In order to add vertex position to the indices,
         // we have to process one index at a time.
         let indicesPos = typeIndicesPos[entry.type];
         for (let j = 0; j < entry.count; ++j) {
           this.indices[indicesPos + j] =
-            geometry.indices[j + entry.first] + vertPos;
+            geomIndices[j + entry.first] + vertPos;
         }
         // Finally, increment the pointer.
         typeIndicesPos[entry.type] += entry.count;
@@ -200,6 +201,9 @@ export default class CombinedGeometry extends Geometry {
   }
   getVertexCount() {
     return this.verticesCount;
+  }
+  getIndices() {
+    return this.indices;
   }
   getAttributes() {
     return this.attributes;
