@@ -29,6 +29,7 @@ export default class ChannelGeometry extends Geometry {
         throw new Error('Attribute ' + key + ' is not defined');
       }
       let channelIndicesObj = channelIndices[key];
+      if (channelIndicesObj == null) continue;
       // Save indices size if not initialized yet.
       if (indicesSize === -1) {
         indicesSize = channelIndicesObj.length;
@@ -54,6 +55,7 @@ export default class ChannelGeometry extends Geometry {
     // Iterate through each indices and put the attribute data.
     for (let key in channelIndices) {
       let attribute = attribs[key];
+      if (attribute == null) continue;
       let buffer = attribute.data;
       let axis = attribute.axis;
       let originalBuffer = channelAttribs[key].data;
