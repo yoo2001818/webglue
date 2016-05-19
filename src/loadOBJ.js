@@ -60,7 +60,9 @@ export default function loadOBJ(data) {
       let points = args.map(arg => {
         let [vertex, texCoord, normal] = arg.split('/');
         return {
-          vertex: vertex || 0, texCoord: texCoord || 0, normal: normal || 0
+          vertex: vertex - 1,
+          texCoord: texCoord == null ? 0 : texCoord - 1,
+          normal: normal == null ? 0 : normal - 1
         };
       });
       // Assume only 3 vertices have been received.
