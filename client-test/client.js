@@ -11,6 +11,7 @@ import PointGeometry from './pointGeometry';
 import { TranslateWidget } from './widget';
 
 import { quat, vec3, mat4 } from 'gl-matrix';
+import { TRANSLATE_AXIS_GEOM as spearGeom } from './widget';
 import geometryRayIntersection from './util/geometryRayIntersection';
 
 document.body.style.margin = '0';
@@ -52,6 +53,8 @@ controller.registerEvents();
 let context = new CanvasRenderContext();
 context.camera = camera;
 
+let spearList = [];
+
 context.canvas.addEventListener('click', e => {
   if (e.button !== 0) return;
   const canvas = context.canvas;
@@ -81,7 +84,7 @@ context.canvas.addEventListener('click', e => {
   vec3.normalize(diff, diff);
 
   let minMesh = null;
-  // let minFace = null;
+  let minFace = null;
   let minDist = Infinity;
 
   // Perform ray cast to all the meshes
@@ -93,10 +96,33 @@ context.canvas.addEventListener('click', e => {
     if (collision === null) return;
     if (minDist > collision.distance) {
       minMesh = child;
-      // minFace = collision.faceId;
+      minFace = collision.faceId;
       minDist = collision.distance;
     }
   });
+
+  // Now what?
+  console.log(minMesh, minFace, minDist);
+
+  // Create line
+  let mesh = new Mesh(spearGeom, wireMaterial);
+  container.appendChild(mesh);
+
+  vec3.copy(mesh.transform.position, near);
+  quat.rotationTo(mesh.transform.rotation, [1, 0, 0], diff);
+  mesh.transform.scale[0] = 1;
+  mesh.transform.invalidate();
+  mesh.direction = diff;
+  if (minDist !== Infinity) {
+    mesh.distance = minDist - 1;
+    mesh.despawn = false;
+  } else {
+    mesh.distance = 20;
+    mesh.despawn = true;
+  }
+  mesh.count = 0;
+
+  spearList.push(mesh);
 
   if (minDist !== Infinity) {
     vec3.copy(anchor.transform.position, near);
@@ -137,6 +163,22 @@ let fpsCount = 0;
 function animate(currentTime) {
   if (beforeTime == null) beforeTime = currentTime;
   let delta = (currentTime - beforeTime) / 1000;
+  for (let i = 0; i < spearList.length; ++i) {
+    let spear = spearList[i];
+    if (spear.count > spear.distance) continue;
+    let dir = vec3.create();
+    vec3.scale(dir, spear.direction, delta * 8);
+    vec3.add(spear.transform.position, spear.transform.position, dir);
+    spear.transform.invalidate();
+    spear.count += delta * 8;
+    if (spear.count > spear.distance) {
+      spearList.splice(i, 1);
+      i --;
+      if (spear.despawn) {
+        container.removeChild(spear);
+      }
+    }
+  }
   sceneUpdate(delta);
   controller.update(delta);
   context.update(container, delta);
