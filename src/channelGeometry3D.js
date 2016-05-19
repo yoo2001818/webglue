@@ -57,6 +57,54 @@ export default class ChannelGeometry3D extends ChannelGeometry {
     this.normals = normals;
     this.normalIndices = normalIndices;
   }
+  // Calculate smooth normals; This is done by providing 'average' normal
+  // vector to each vertices.
+  calculateSmoothNormals() {
+    if (this.vertices === null) throw new Error('Vertices array is null');
+    let indices = this.vertexIndices;
+    if (indices == null) throw new Error('Position indices is null');
+    // One vec3 per one vertex, since we'll normalize that later.
+    let normals = new Float32Array(this.vertices.length);
+    for (let faceId = 0; faceId < indices.length; faceId += 3) {
+      const vertexId1 = indices[faceId];
+      const vertexId2 = indices[faceId + 1];
+      const vertexId3 = indices[faceId + 2];
+      // Calculate normal vector.
+      let origin = this.vertices.slice(vertexId1 * 3, vertexId1 * 3 + 3);
+      let p1 = vec3.create(), p2 = vec3.create();
+      let uv = vec3.create();
+      vec3.subtract(p1, this.vertices.slice(vertexId2 * 3, vertexId2 * 3 + 3),
+        origin);
+      vec3.subtract(p2, this.vertices.slice(vertexId3 * 3, vertexId3 * 3 + 3),
+        origin);
+      vec3.cross(uv, p1, p2);
+      vec3.normalize(uv, uv);
+      // Done. Store them in normals buffer. 'Average' buffer can be calculated
+      // by adding them all, and normalizing it. So we have to add normal
+      // vector to each vertex in this stage.
+      normals[vertexId1 * 3] = uv[0];
+      normals[vertexId1 * 3 + 1] = uv[1];
+      normals[vertexId1 * 3 + 2] = uv[2];
+      normals[vertexId2 * 3] = uv[0];
+      normals[vertexId2 * 3 + 1] = uv[1];
+      normals[vertexId2 * 3 + 2] = uv[2];
+      normals[vertexId3 * 3] = uv[0];
+      normals[vertexId3 * 3 + 1] = uv[1];
+      normals[vertexId3 * 3 + 2] = uv[2];
+    }
+    // Now, normalize each normal vector.
+    for (let i = 0; i < normals.length; i += 3) {
+      let normal = normals.slice(i, i + 3);
+      vec3.normalize(normal, normal);
+      normals.set(normal, i);
+    }
+    // Done!
+    this.normals = normals;
+    // Normal indices array is EXACTLY same as vertex indices array in this
+    // case; we can just use a copy.
+    this.normalIndices = indices;
+    // Note that we can't use tangents if we use smooth normals. (yet)
+  }
   // Calculate tangents per face.
   calculateTangents() {
     if (this.vertices === null) throw new Error('Vertices array is null');
