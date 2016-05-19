@@ -11,7 +11,7 @@ import PointGeometry from './pointGeometry';
 import { TranslateWidget } from './widget';
 
 import { quat, vec3, mat4 } from 'gl-matrix';
-import geometryRayIntersection from './geom/geometryRayIntersection';
+import geometryRayIntersection from './util/geometryRayIntersection';
 
 document.body.style.margin = '0';
 document.body.style.padding = '0';

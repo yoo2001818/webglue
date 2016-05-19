@@ -11,6 +11,7 @@ import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
+import loadOBJ from 'webglue/loadOBJ';
 
 import { quat } from 'gl-matrix';
 
@@ -67,6 +68,12 @@ export default function createScene() {
   container.appendChild(mesh2);
   mesh2.transform.position[0] = 3;
   mesh2.transform.invalidate();
+
+  let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
+  let mesh3 = new Mesh(objGeom, material2);
+  container.appendChild(mesh3);
+  mesh3.transform.position[1] = 1;
+  mesh3.transform.invalidate();
 
   let skybox = new SkyBox(TextureCube.fromImage([
     require('../texture/stormyday/front.jpg'),
