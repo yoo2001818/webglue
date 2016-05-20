@@ -10,8 +10,10 @@ export default function geometryRayIntersection(geometry, matrix, o, d) {
   let minFaceId = null;
   let minFaceDist = Infinity;
   // Geometry MUST be Geometry3D object
-  let { indices, vertices } = geometry;
+  let indices = geometry.getIndices();
+  let vertices = geometry.getAttributes().aPosition;
   if (indices == null || vertices == null) return false;
+  vertices = vertices.data;
   // TODO it'll be cheaper to cache each vertex.
   for (let faceId = 0; faceId < geometry.indices.length; faceId += 3) {
     const vertexId1 = indices[faceId];
