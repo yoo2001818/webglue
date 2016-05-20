@@ -116,6 +116,10 @@ export default class RenderContext {
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
 
+    // Set drawing buffer size.
+    this.width = gl.drawingBufferWidth;
+    this.height = gl.drawingBufferHeight;
+
     // OpenGL init.
     // TODO this should be modifiable by the user
     gl.clearColor(57 / 255, 57 / 255, 57 / 255, 1.0);
@@ -125,6 +129,11 @@ export default class RenderContext {
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  }
+  setSize(width, height) {
+    this.width = width;
+    this.height = height;
+    this.gl.viewport(0, 0, width, height);
   }
   useCamera(camera) {
     const gl = this.gl;

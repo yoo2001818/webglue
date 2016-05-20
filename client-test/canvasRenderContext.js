@@ -39,7 +39,6 @@ export default class CanvasRenderContext extends RenderContext {
     super(gl);
     this.fillScreen = fillScreen;
     this.canvas = canvasObj;
-    this.aspectChanged = true;
 
     if (fillScreen) {
       window.addEventListener('resize', this.handleResize.bind(this));
@@ -54,23 +53,14 @@ export default class CanvasRenderContext extends RenderContext {
     }, false);
   }
   handleResize() {
-    const { canvas, gl } = this;
+    const { canvas } = this;
     let docSize = getDocumentSize();
     canvas.width = docSize.width;
     canvas.height = docSize.height;
-    if (!gl) return;
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    this.aspectChanged = true;
+    this.setSize(docSize.width, docSize.height);
   }
   update(container, delta) {
     this.deltaTime = delta;
-    // Set the aspect ratio
-    if (this.aspectChanged && this.camera) {
-      const { canvas, camera } = this;
-      camera.aspect = canvas.width / canvas.height;
-      camera.invalidate();
-      this.aspectChanged = false;
-    }
     this.reset();
     container.update(this, null);
     this.render();

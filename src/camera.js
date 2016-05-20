@@ -36,6 +36,11 @@ export default class Camera extends Object3D {
     this.valid = false;
   }
   update(context, parent) {
+    // Reset aspect ratio if it doesn't match.
+    if (this.aspect !== (context.width / context.height)) {
+      this.aspect = context.width / context.height;
+      this.invalidate();
+    }
     super.update(context, parent);
     if (this.hasChanged || (parent && parent.hasChanged)) {
       mat4.invert(this.inverseMatrix, this.globalMatrix);
