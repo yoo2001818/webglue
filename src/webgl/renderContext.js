@@ -2,8 +2,7 @@ import InternalShader from './internalShader';
 import InternalGeometry from './internalGeometry';
 import InternalTexture from './internalTexture';
 import Metrics from './metrics';
-
-import Heap from 'heap';
+import Scene from '../scene';
 
 export default class RenderContext {
   constructor(gl) {
@@ -38,19 +37,7 @@ export default class RenderContext {
     this.loadingTextures = [];
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
-    // This properties actually connect to the 'non-platform specific'
-    // objects, such as lights, meshes, camera, etc.
-    this.lights = {};
-    this.meshes = new Heap((a, b) => {
-      let aShader = a.material.shader.numberId;
-      let bShader = b.material.shader.numberId;
-      if (aShader != bShader) {
-        return aShader - bShader;
-      }
-      return a.material.numberId - b.material.numberId;
-    });
-    this.camera = null;
-    this.lightChanged = 0;
+    this.scene = new Scene();
     this.cameraChanged = 0;
     // Time elapsed between two frames. Caller should set this value.
     this.deltaTime = 1 / 60;
@@ -64,6 +51,7 @@ export default class RenderContext {
     // Ignore if context is lost.
     if (gl.isContextLost()) return;
     this.metrics.reset();
+    this.scene.finalize();
     // Clear current OpenGL context.
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -78,19 +66,14 @@ export default class RenderContext {
       this.useLights();
     }
     // Render every mesh, one at a time.
-    while (!this.meshes.empty()) {
-      this.renderMesh(this.meshes.pop());
+    for (let i = 0; i < this.scene.meshes.length; ++i) {
+      this.renderMesh(this.scene.meshes[i]);
     }
     this.renderTickId ++;
   }
   // Resets current render context.
   reset() {
-    // TODO Instead of doing this, Maybe it'd be better to use the array as a
-    // queue and delete everything at render time?
-    // (Though it won't really matter.)
-    this.lights = {};
-    // Empty the heap
-    while (this.meshes.pop());
+    this.scene.reset();
   }
   resetContext() {
     const gl = this.gl;
@@ -167,25 +150,26 @@ export default class RenderContext {
   useLights() {
     let shader = this.currentShader;
     let lightUpdateTick = this.currentLight[shader.name];
-    if (lightUpdateTick != null && lightUpdateTick > this.lightChanged) {
+    if (lightUpdateTick != null && lightUpdateTick >= this.renderTickId) {
       return;
     }
     // TODO recycle the size buffer
     this.metrics.lights = 0;
     let lightSizeVec = new Int32Array(4);
-    for (let type in this.lights) {
+    let lights = this.scene.lights;
+    for (let type in lights) {
       let typeName = this.lightUniforms[type];
       if (typeName == null) {
         throw new Error('Light type ' + type + ' is not specified in ' +
           'uniform list');
       }
-      this.bindUniforms(this.lights[type],
+      this.bindUniforms(lights[type],
         shader.uniforms[typeName],
         shader.uniformTypes[typeName]);
 
       let typeSizePos = this.lightSizePos[type];
-      lightSizeVec[typeSizePos] = this.lights[type].length;
-      this.metrics.lights += this.lights[type].length;
+      lightSizeVec[typeSizePos] = lights[type].length;
+      this.metrics.lights += lights[type].length;
     }
     if (shader.uniforms[this.lightSizeUniform]) {
       this.gl.uniform4iv(shader.uniforms[this.lightSizeUniform], lightSizeVec);
@@ -396,15 +380,11 @@ export default class RenderContext {
     this.currentGeometry.render(this, mesh.geometry);
     this.metrics.meshCalls ++;
   }
+  // Delegation methodx for compatibility.
   addMesh(mesh) {
-    this.meshes.push(mesh);
+    return this.scene.addMesh(mesh);
   }
   addLight(light) {
-    if (this.lights[light.type] == null) {
-      this.lights[light.type] = [];
-    }
-    this.lights[light.type].push(light.uniforms);
-
-    if (light.hasChanged) this.lightChanged = this.renderTickId;
+    return this.scene.addLight(light);
   }
 }
