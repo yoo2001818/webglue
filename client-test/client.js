@@ -50,7 +50,7 @@ let controller = new BlenderCameraController(window, camera);
 controller.registerEvents();
 
 let context = new CanvasRenderContext();
-context.camera = camera;
+context.mainScene.camera = camera;
 
 context.canvas.addEventListener('click', e => {
   if (e.button !== 0) return;

@@ -33,6 +33,7 @@ export default class Metrics {
     this.vertices = 0;
     this.activeVertices = 0;
     this.triangles = 0;
+    this.lights = 0;
     this.drawCalls = 0;
     this.shaderCalls = 0;
     this.textureCalls = 0;

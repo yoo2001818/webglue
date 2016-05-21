@@ -3,6 +3,7 @@ import InternalGeometry from './internalGeometry';
 import InternalTexture from './internalTexture';
 import Metrics from './metrics';
 import Scene from '../scene';
+import RenderTask from '../renderTask';
 
 export default class RenderContext {
   constructor(gl) {
@@ -37,7 +38,11 @@ export default class RenderContext {
     this.loadingTextures = [];
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
-    this.scene = new Scene();
+    // Remains for compatibility. Will be removed soon.
+    this.mainScene = new Scene();
+    this.tasks = [
+      new RenderTask(this.mainScene)
+    ];
     this.cameraChanged = 0;
     // Time elapsed between two frames. Caller should set this value.
     this.deltaTime = 1 / 60;
@@ -50,30 +55,46 @@ export default class RenderContext {
     const gl = this.gl;
     // Ignore if context is lost.
     if (gl.isContextLost()) return;
-    this.metrics.reset();
-    this.scene.finalize();
-    // Clear current OpenGL context.
-    // TODO Remove stencil buffer?
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this.handleLoadingTextures();
-    if (this.camera.hasChanged) {
-      this.cameraChanged = this.renderTickId;
+    this.metrics.reset();
+    // Read each render task, and perform rendering
+    for (let i = 0; i < this.tasks.length; ++i) {
+      let task = this.tasks[i];
+      let scene = task.scene;
+      // Finalize the scene
+      scene.finalize();
+      if (scene.camera == null) {
+        throw new Error('Camera is not specified in the scene!');
+      }
+      // This is kinda awkward, however this sets the camera information.
+      this.camera = scene.camera;
+      // Construct light buffer data using scene lights
+      this.updateLights(scene.lights);
+      // Clear current OpenGL context. (Is this really necessary?)
+      // TODO Remove stencil buffer?
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      if (scene.camera.hasChanged) {
+        this.cameraChanged = this.renderTickId;
+      }
+      if (this.currentShader && scene.camera.hasChanged) {
+        this.useCamera(scene.camera);
+      }
+      if (this.currentShader) {
+        this.useLights();
+      }
+      // Render every mesh, one at a time.
+      for (let i = 0; i < scene.meshes.length; ++i) {
+        this.renderMesh(scene.meshes[i]);
+      }
+      // Since each render task performs rendering whole scene one time,
+      // (Scene differs though) we have to increment render tick ID in order
+      // to prevent confliction.
+      this.renderTickId ++;
     }
-    if (this.currentShader && this.camera.hasChanged) {
-      this.useCamera(this.camera);
-    }
-    if (this.currentShader) {
-      this.useLights();
-    }
-    // Render every mesh, one at a time.
-    for (let i = 0; i < this.scene.meshes.length; ++i) {
-      this.renderMesh(this.scene.meshes[i]);
-    }
-    this.renderTickId ++;
   }
   // Resets current render context.
   reset() {
-    this.scene.reset();
+    this.mainScene.reset();
   }
   resetContext() {
     const gl = this.gl;
@@ -82,6 +103,9 @@ export default class RenderContext {
     this.shaders = {};
     this.textures = {};
     this.geometries = {};
+    this.lights = {};
+    // User should not set this value - this will be overrided anyway.
+    this.camera = null;
     this.currentShader = null;
     this.currentGeometry = null;
     this.currentMaterial = {};
@@ -147,33 +171,32 @@ export default class RenderContext {
     }
     this.currentCamera[shader.name] = this.renderTickId;
   }
-  useLights() {
-    let shader = this.currentShader;
-    let lightUpdateTick = this.currentLight[shader.name];
-    if (lightUpdateTick != null && lightUpdateTick >= this.renderTickId) {
-      return;
-    }
-    // TODO recycle the size buffer
-    this.metrics.lights = 0;
+  updateLights(lights) {
+    // Construct lights buffer (on CPU) using provided lights data.
     let lightSizeVec = new Int32Array(4);
-    let lights = this.scene.lights;
+    let lightsBuf = {};
     for (let type in lights) {
       let typeName = this.lightUniforms[type];
       if (typeName == null) {
         throw new Error('Light type ' + type + ' is not specified in ' +
           'uniform list');
       }
-      this.bindUniforms(lights[type],
-        shader.uniforms[typeName],
-        shader.uniformTypes[typeName]);
+      lightsBuf[typeName] = lights[type];
 
       let typeSizePos = this.lightSizePos[type];
       lightSizeVec[typeSizePos] = lights[type].length;
       this.metrics.lights += lights[type].length;
     }
-    if (shader.uniforms[this.lightSizeUniform]) {
-      this.gl.uniform4iv(shader.uniforms[this.lightSizeUniform], lightSizeVec);
+    lightsBuf[this.lightSizeUniform] = lightSizeVec;
+    this.lights = lightsBuf;
+  }
+  useLights() {
+    let shader = this.currentShader;
+    let lightUpdateTick = this.currentLight[shader.name];
+    if (lightUpdateTick != null && lightUpdateTick >= this.renderTickId) {
+      return;
     }
+    this.bindUniforms(this.lights, shader.uniforms, shader.uniformTypes);
     this.currentLight[shader.name] = this.renderTickId;
   }
   useShader(shader) {
@@ -382,9 +405,9 @@ export default class RenderContext {
   }
   // Delegation methodx for compatibility.
   addMesh(mesh) {
-    return this.scene.addMesh(mesh);
+    return this.mainScene.addMesh(mesh);
   }
   addLight(light) {
-    return this.scene.addLight(light);
+    return this.mainScene.addLight(light);
   }
 }

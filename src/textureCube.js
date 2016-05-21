@@ -32,8 +32,6 @@ export default class TextureCube extends Texture {
       gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T,
       gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R,
-      gl.CLAMP_TO_EDGE);
   }
   static fromImage(urls) {
     let texture = new TextureCube();
