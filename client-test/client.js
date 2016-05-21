@@ -62,7 +62,7 @@ normalMat.getShader = () => normalMat.shader;
 normalMat.use = () => ({
 });
 context.tasks = [
-  new RenderTask(context.mainScene, 'depth', null, normalMat)
+  new RenderTask(context.mainScene, 'default')
 ];
 
 context.canvas.addEventListener('click', e => {

@@ -12,6 +12,14 @@ export default function loadOBJ(data) {
   let normalIndices = [];
   let texCoordIndices = [];
   let normalSpecified = false;
+  let normalSmooth = false;
+
+  function addFaceIndex(point) {
+    vertexIndices.push(point.vertex);
+    texCoordIndices.push(point.texCoord);
+    normalIndices.push(point.normal);
+  }
+
   // Parser logic starts here.
   let lines = data.split('\n');
   for (let i = 0; i < lines.length; ++i) {
@@ -56,7 +64,6 @@ export default function loadOBJ(data) {
     case 'f': {
       // Face element. Since arbitary amount of polygons is possible,
       // We have to triangulate the polygon if more than 3 vertices are given.
-      // TODO Triangulate polygons
       let points = args.map(arg => {
         let [vertex, texCoord, normal] = arg.split('/');
         return {
@@ -65,13 +72,11 @@ export default function loadOBJ(data) {
           normal: normal == null ? 0 : normal - 1
         };
       });
-      // Assume only 3 vertices have been received.
-      if (points.length !== 3) break;
-      points.forEach(point => {
-        vertexIndices.push(point.vertex);
-        texCoordIndices.push(point.texCoord);
-        normalIndices.push(point.normal);
-      });
+      for (let i = 1; i < points.length - 1; ++i) {
+        addFaceIndex(points[0]);
+        addFaceIndex(points[i]);
+        addFaceIndex(points[i + 1]);
+      }
       break;
     }
     case 'o': {
@@ -81,6 +86,14 @@ export default function loadOBJ(data) {
     }
     case 'g': {
       // Group name, however webglue doesn't support it.
+      break;
+    }
+    case 's': {
+      if (args[0] === 'off' || args[0] === '0') {
+        normalSmooth = false;
+      } else {
+        normalSmooth = true;
+      }
       break;
     }
     }
@@ -97,7 +110,11 @@ export default function loadOBJ(data) {
   geometry.texCoordIndices = new Uint16Array(texCoordIndices);
   // Calculate normal vectors, if not specified.
   if (!normalSpecified) {
-    geometry.calculateNormals();
+    if (normalSmooth) {
+      geometry.calculateSmoothNormals();
+    } else {
+      geometry.calculateNormals();
+    }
   }
   // Calculate tangent vectors.
   geometry.calculateTangents();

@@ -69,12 +69,6 @@ export default function createScene() {
   mesh2.transform.position[0] = 3;
   mesh2.transform.invalidate();
 
-  let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
-  let mesh3 = new Mesh(objGeom, material2);
-  container.appendChild(mesh3);
-  mesh3.transform.position[1] = 1;
-  mesh3.transform.invalidate();
-
   let skybox = new SkyBox(TextureCube.fromImage([
     require('../texture/stormyday/front.jpg'),
     require('../texture/stormyday/back.jpg'),
@@ -94,12 +88,24 @@ export default function createScene() {
     shininess: 10.0
   });
 
-  let mesh4 = new Mesh(sphereGeom, material3);
-  container.appendChild(mesh4);
-  mesh4.transform.position[0] = -3;
+  let mesh3 = new Mesh(sphereGeom, material3);
+  container.appendChild(mesh3);
+  mesh3.transform.position[0] = -3;
   // vec3.set(mesh4.transform.scale, 10, 10, 10);
-  mesh4.transform.invalidate();
+  mesh3.transform.invalidate();
 
+  let material4 = new PhongMaterial({
+    specular: new Float32Array([0.4, 0.4, 0.4]),
+    diffuse: new Float32Array([0.6, 0.6, 0.6]),
+    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    shininess: 30.0
+  });
+
+  let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
+  let mesh4 = new Mesh(objGeom, material4);
+  container.appendChild(mesh4);
+  mesh4.transform.position[1] = 1;
+  mesh4.transform.invalidate();
 
   return {
     container, camera, update: () => {

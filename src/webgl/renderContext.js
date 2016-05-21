@@ -258,8 +258,11 @@ export default class RenderContext {
     // If the material is already being used, ignore it.
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
-    if (this.currentMaterial[shader.name] === material) return true;
-    if (this.currentMode[shader.name] === this.mode) return true;
+    if (this.currentMaterial[shader.name] === material &&
+      this.currentMode[shader.name] === this.mode
+    ) {
+      return true;
+    }
     // Then, call the material's use method.
     let uniforms = material.use(this.mode);
     this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
