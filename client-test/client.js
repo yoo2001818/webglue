@@ -13,6 +13,8 @@ import { TranslateWidget } from './widget';
 import { quat, vec3, mat4 } from 'gl-matrix';
 import geometryRayIntersection from './util/geometryRayIntersection';
 
+import RenderTask from 'webglue/renderTask';
+
 document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.overflow = 'hidden';
@@ -51,6 +53,17 @@ controller.registerEvents();
 
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
+
+let normalShader = new Shader(
+  require('./shader/depth.vert'), require('./shader/depth.frag')
+);
+let normalMat = new Material(normalShader);
+normalMat.getShader = () => normalMat.shader;
+normalMat.use = () => ({
+});
+context.tasks = [
+  new RenderTask(context.mainScene, 'depth', null, normalMat)
+];
 
 context.canvas.addEventListener('click', e => {
   if (e.button !== 0) return;

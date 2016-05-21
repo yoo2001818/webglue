@@ -8,6 +8,7 @@ export default class Scene {
   reset() {
     this.meshes = [];
     this.lights = {};
+    this.tasks = [];
     this.finalized = false;
     // Don't reset the camera - as the user may reuse it.
     // this.camera = null;

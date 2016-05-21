@@ -7,7 +7,9 @@ export default class Material {
     // ....
     this.numberId = ID ++;
   }
-  getShader() {
+  getShader(mode) {
+    // If mode is not default, return null to allow user-defined behavior.
+    if (mode !== 'default') return null;
     return this.shader;
   }
   use() {

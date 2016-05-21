@@ -60,37 +60,51 @@ export default class RenderContext {
     // Read each render task, and perform rendering
     for (let i = 0; i < this.tasks.length; ++i) {
       let task = this.tasks[i];
-      let scene = task.scene;
-      // Finalize the scene
-      scene.finalize();
-      if (scene.camera == null) {
-        throw new Error('Camera is not specified in the scene!');
-      }
-      // This is kinda awkward, however this sets the camera information.
-      this.camera = scene.camera;
-      // Construct light buffer data using scene lights
-      this.updateLights(scene.lights);
-      // Clear current OpenGL context. (Is this really necessary?)
-      // TODO Remove stencil buffer?
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      if (scene.camera.hasChanged) {
-        this.cameraChanged = this.renderTickId;
-      }
-      if (this.currentShader && scene.camera.hasChanged) {
-        this.useCamera(scene.camera);
-      }
-      if (this.currentShader) {
-        this.useLights();
-      }
-      // Render every mesh, one at a time.
-      for (let i = 0; i < scene.meshes.length; ++i) {
-        this.renderMesh(scene.meshes[i]);
-      }
-      // Since each render task performs rendering whole scene one time,
-      // (Scene differs though) we have to increment render tick ID in order
-      // to prevent confliction.
-      this.renderTickId ++;
+      this.renderTask(task);
     }
+  }
+  renderTask(task) {
+    const gl = this.gl;
+    let scene = task.scene;
+    // Finalize the scene
+    scene.finalize();
+    // If sub-task exists, render them first.
+    if (scene.tasks) {
+      for (let i = 0; i < scene.tasks.length; ++i) {
+        let subTask = scene.tasks[i];
+        this.renderTask(subTask);
+      }
+    }
+    if (scene.camera == null) {
+      throw new Error('Camera is not specified in the scene!');
+    }
+    // This is kinda awkward, however this sets the camera information.
+    this.camera = task.camera || scene.camera;
+    // The render mode.
+    this.mode = task.mode;
+    this.defaultMaterial = task.defaultMaterial;
+    // Construct light buffer data using scene lights
+    this.updateLights(scene.lights);
+    // Clear current OpenGL context. (Is this really necessary?)
+    // TODO Remove stencil buffer?
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (scene.camera.hasChanged) {
+      this.cameraChanged = this.renderTickId;
+    }
+    if (this.currentShader && scene.camera.hasChanged) {
+      this.useCamera(scene.camera);
+    }
+    if (this.currentShader) {
+      this.useLights();
+    }
+    // Render every mesh, one at a time.
+    for (let i = 0; i < scene.meshes.length; ++i) {
+      this.renderMesh(scene.meshes[i]);
+    }
+    // Since each render task performs rendering whole scene one time,
+    // (Scene differs though) we have to increment render tick ID in order
+    // to prevent confliction.
+    this.renderTickId ++;
   }
   // Resets current render context.
   reset() {
@@ -103,12 +117,17 @@ export default class RenderContext {
     this.shaders = {};
     this.textures = {};
     this.geometries = {};
-    this.lights = {};
+
     // User should not set this value - this will be overrided anyway.
+    this.lights = {};
     this.camera = null;
+    this.mode = 'default';
+    this.defaultMaterial = null;
+
     this.currentShader = null;
     this.currentGeometry = null;
     this.currentMaterial = {};
+    this.currentMode = {};
     this.currentCamera = {};
     this.currentLight = {};
     this.currentTextures = [];
@@ -222,19 +241,33 @@ export default class RenderContext {
     this.useLights();
   }
   useMaterial(material) {
+    let internalShader = material && material.getShader(this.mode);
+    if (internalShader == null) {
+      // If returned value is null, retry with default shader.
+      if (this.defaultMaterial === material) {
+        // However if provided object is default material, this will cause
+        // an infinite loop. In order to avoid that, if we encounter default
+        // material, consider it failed and return false.
+        return false;
+      }
+      return this.useMaterial(this.defaultMaterial);
+    }
     // Use the shader in the material.
-    this.useShader(material.getShader());
+    this.useShader(internalShader);
     let shader = this.currentShader;
     // If the material is already being used, ignore it.
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
-    if (this.currentMaterial[shader.name] === material) return;
+    if (this.currentMaterial[shader.name] === material) return true;
+    if (this.currentMode[shader.name] === this.mode) return true;
     // Then, call the material's use method.
-    let uniforms = material.use();
+    let uniforms = material.use(this.mode);
     this.bindUniforms(uniforms, shader.uniforms, shader.uniformTypes);
     // Done!
     this.currentMaterial[shader.name] = material;
+    this.currentMode[shader.name] = this.mode;
     this.metrics.materialCalls ++;
+    return true;
   }
   bindUniforms(values, uniforms, uniformTypes) {
     const gl = this.gl;
@@ -389,7 +422,12 @@ export default class RenderContext {
   }
   renderMesh(mesh) {
     let prevShader = this.currentShader;
-    this.useMaterial(mesh.material);
+    // Try setting the material.
+    if (!this.useMaterial(mesh.material)) {
+      // If it failed, this means that no material is available - just don't
+      // render the mesh.
+      return;
+    }
     // Set the model matrix and stuff.
     const uniforms = this.currentShader.uniforms;
     const gl = this.gl;
