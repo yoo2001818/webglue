@@ -1,4 +1,5 @@
 import ChannelGeometry from './channelGeometry';
+import createIndicesArray from './util/createIndicesArray';
 
 import { vec2, vec3 } from 'gl-matrix';
 
@@ -28,10 +29,7 @@ export default class ChannelGeometry3D extends ChannelGeometry {
     if (indices == null) throw new Error('Position indices is null');
     // One vec3 per one face. so indices / 3 * 3.
     let normals = new Float32Array(indices.length);
-    // If there are more than 65536 vertices, we need to use Uint32Array.
-    // (Since ChannelGeometry supports converting it, we don't need to care
-    // about WebGL extension's presence.)
-    let normalIndices = new Uint16Array(indices.length);
+    let normalIndices = createIndicesArray(indices.length / 3, indices.length);
     let normalId = 0;
     for (let faceId = 0; faceId < indices.length; faceId += 3) {
       const vertexId1 = indices[faceId];
@@ -114,10 +112,8 @@ export default class ChannelGeometry3D extends ChannelGeometry {
     if (texIndices == null) throw new Error('Texture indices is null');
     // One vec3 per one face. so indices / 3 * 3.
     let tangents = new Float32Array(posIndices.length);
-    // If there are more than 65536 vertices, we need to use Uint32Array.
-    // (Since ChannelGeometry supports converting it, we don't need to care
-    // about WebGL extension's presence.)
-    let tangentIndices = new Uint16Array(posIndices.length);
+    let tangentIndices = createIndicesArray(posIndices.length / 3,
+      posIndices.length);
     let tangentId = 0;
     for (let faceId = 0; faceId < posIndices.length; faceId += 3) {
       const vertexId1 = posIndices[faceId];

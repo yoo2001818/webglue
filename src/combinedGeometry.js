@@ -1,4 +1,5 @@
 import Geometry from './geometry';
+import createIndicesArray from './util/createIndicesArray';
 
 import { vec2, vec3, vec4 } from 'gl-matrix';
 
@@ -20,14 +21,7 @@ export default class CombinedGeometry extends Geometry {
     this.verticesCount = verticesCount;
     // Then, create the indices - We must sort them in types to reduce
     // draw calls.
-    if (verticesCount <= 65536) {
-      this.indices = new Uint16Array(indicesCount);
-    } else {
-      // Handle overflow, however, WebGL doesn't support Uint32Array without
-      // extensions. ... But the extension is available on 98% of total devices
-      // that support WebGL, so it won't be a problem.
-      this.indices = new Uint32Array(indicesCount);
-    }
+    this.indices = createIndicesArray(verticesCount, indicesCount);
     // Calculate total indices per type, this should be more efficient than
     // creating buffer for each type.
     let typeIndicesSize = {};

@@ -1,4 +1,5 @@
 import Geometry from './geometry';
+import createIndicesArray from './util/createIndicesArray';
 
 // ChannelGeometry allows to specify each attribute index separately in a
 // vertex. (Indices must specify the vertex index per attribute.)
@@ -49,9 +50,7 @@ export default class ChannelGeometry extends Geometry {
       };
     }
     // Then, populate the indices array.
-    // TODO This will overflow if there are more than 65536 vertices.
-    // Also, use Uint8Array if possible.
-    indices = new Uint16Array(indicesSize);
+    indices = createIndicesArray(vertexCount, indicesSize);
     // Iterate through each indices and put the attribute data.
     for (let key in channelIndices) {
       let attribute = attribs[key];

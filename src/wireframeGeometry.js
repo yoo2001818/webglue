@@ -1,4 +1,5 @@
 import Geometry from './geometry';
+import createIndicesArray from './util/createIndicesArray';
 
 export default class WireframeGeometry extends Geometry {
   constructor(geometry, name) {
@@ -53,7 +54,7 @@ export default class WireframeGeometry extends Geometry {
       });
     }
     // Then, write the indices onto it.
-    let indices = new Uint16Array(indicesPos);
+    let indices = createIndicesArray(indicesPos, indicesPos);
     for (let i = 0; i < this.type.length; ++i) {
       let destType = this.type[i];
       let origType = originalTypes[i];

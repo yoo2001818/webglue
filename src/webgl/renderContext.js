@@ -48,6 +48,8 @@ export default class RenderContext {
     this.deltaTime = 1 / 60;
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
+    // Enable uint extension.
+    this.uintExt = gl.getExtension('OES_element_index_uint');
 
     this.metrics = new Metrics();
   }

@@ -122,8 +122,11 @@ export default class InternalGeometry {
       } else if (geomIndices instanceof Uint32Array) {
         // TODO OES_element_index_uint extension must be enabled before doing
         // this
-        // this.eboType = gl.UNSIGNED_INT;
-        throw new Error('Uint32Array indices is not supported yet');
+        if (context.uintExt == null) {
+          throw new Error('Uint32Array indices is not supported by the device');
+        }
+        this.eboType = gl.UNSIGNED_INT;
+        this.eboSize = 4;
       } else {
         throw new Error('Unsupported indices array type');
       }
