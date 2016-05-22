@@ -80,15 +80,15 @@ export default class ChannelGeometry3D extends ChannelGeometry {
       // Done. Store them in normals buffer. 'Average' buffer can be calculated
       // by adding them all, and normalizing it. So we have to add normal
       // vector to each vertex in this stage.
-      normals[vertexId1 * 3] = uv[0];
-      normals[vertexId1 * 3 + 1] = uv[1];
-      normals[vertexId1 * 3 + 2] = uv[2];
-      normals[vertexId2 * 3] = uv[0];
-      normals[vertexId2 * 3 + 1] = uv[1];
-      normals[vertexId2 * 3 + 2] = uv[2];
-      normals[vertexId3 * 3] = uv[0];
-      normals[vertexId3 * 3 + 1] = uv[1];
-      normals[vertexId3 * 3 + 2] = uv[2];
+      normals[vertexId1 * 3] += uv[0];
+      normals[vertexId1 * 3 + 1] += uv[1];
+      normals[vertexId1 * 3 + 2] += uv[2];
+      normals[vertexId2 * 3] += uv[0];
+      normals[vertexId2 * 3 + 1] += uv[1];
+      normals[vertexId2 * 3 + 2] += uv[2];
+      normals[vertexId3 * 3] += uv[0];
+      normals[vertexId3 * 3 + 1] += uv[1];
+      normals[vertexId3 * 3 + 2] += uv[2];
     }
     // Now, normalize each normal vector.
     for (let i = 0; i < normals.length; i += 3) {

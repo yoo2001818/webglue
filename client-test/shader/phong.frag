@@ -234,7 +234,7 @@ void main(void) {
     lowp vec3 normal = vec3(0.0, 0.0, 1.0);
   #else
     lowp vec3 viewDir = normalize(uViewPos - vFragPos);
-    lowp vec3 normal = vNormal;
+    lowp vec3 normal = normalize(vNormal);
   #endif
   lowp vec2 texCoord = vTexCoord;
 
