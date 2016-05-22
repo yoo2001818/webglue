@@ -6,6 +6,8 @@ import SkyBox from '../skyBox';
 
 import TextureCube from 'webglue/textureCube';
 import Texture2D from 'webglue/texture2D';
+import Shader from 'webglue/shader';
+import Material from 'webglue/material';
 import PhongMaterial from '../phongMaterial';
 import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
@@ -69,14 +71,16 @@ export default function createScene() {
   mesh2.transform.position[0] = 3;
   mesh2.transform.invalidate();
 
-  let skybox = new SkyBox(TextureCube.fromImage([
+  let skyboxTexture = TextureCube.fromImage([
     require('../texture/stormyday/front.jpg'),
     require('../texture/stormyday/back.jpg'),
     require('../texture/stormyday/up.jpg'),
     require('../texture/stormyday/down.jpg'),
     require('../texture/stormyday/right.jpg'),
     require('../texture/stormyday/left.jpg')
-  ]));
+  ]);
+
+  let skybox = new SkyBox(skyboxTexture);
   container.appendChild(skybox);
 
   let sphereGeom = new UVSphereGeometry(32, 16);
@@ -94,11 +98,22 @@ export default function createScene() {
   // vec3.set(mesh4.transform.scale, 10, 10, 10);
   mesh3.transform.invalidate();
 
+  /*
   let material4 = new PhongMaterial({
     specular: new Float32Array([0.4, 0.4, 0.4]),
     diffuse: new Float32Array([0.6, 0.6, 0.6]),
     ambient: new Float32Array([0.1, 0.1, 0.1]),
     shininess: 30.0
+  });
+  */
+  let shader4 = new Shader(
+    require('../shader/reflection.vert'),
+    require('../shader/reflection.frag')
+  );
+
+  let material4 = new Material(shader4);
+  material4.use = () => ({
+    uTexture: skyboxTexture
   });
 
   let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
