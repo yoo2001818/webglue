@@ -371,7 +371,7 @@ export default class RenderContext {
     // Create new texture object if it doesn't exist.
     if (internalTexture == null) {
       internalTexture = new InternalTexture();
-      internalTexture.upload(this, texture);
+      internalTexture.init(this, texture);
       this.textures[texture.name] = internalTexture;
       this.metrics.textures ++;
     } else {
@@ -422,7 +422,7 @@ export default class RenderContext {
         i --;
         continue;
       }
-      internalTexture.load(this, texture, index);
+      internalTexture.upload(this, texture, index);
     }
   }
   renderMesh(mesh) {
