@@ -88,7 +88,8 @@ export default class InternalTexture {
       if (texture.target === '2d') {
         if (texture.source == null) {
           // Source is not provided; create empty texture.
-          gl.texImage2D(this.target, 0, format, width, height, 0, format, type);
+          gl.texImage2D(this.target, 0, format, width, height, 0, format, type,
+            null);
         } else {
           // This assumes that the source is not ArrayBufferView.
           gl.texImage2D(this.target, 0, format, format, type, texture.source);
@@ -109,7 +110,7 @@ export default class InternalTexture {
       }
       // Now set the textue properties..
       for (let key in texture.options) {
-        if (key === 'mipmap') {
+        if (key === 'mipmap' && texture.options[key]) {
           gl.generateMipmap(this.target);
           continue;
         }

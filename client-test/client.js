@@ -1,6 +1,13 @@
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import WireframeGeometry from 'webglue/wireframeGeometry';
+
+import UniQuadGeometry from 'webglue/uniQuadGeometry';
+import Framebuffer from 'webglue/framebuffer';
+import Texture from 'webglue/texture';
+import Scene from 'webglue/scene';
+import Camera from 'webglue/camera';
+
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
@@ -54,15 +61,36 @@ controller.registerEvents();
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
 
-let normalShader = new Shader(
-  require('./shader/depth.vert'), require('./shader/depth.frag')
-);
-let normalMat = new Material(normalShader);
-normalMat.getShader = () => normalMat.shader;
-normalMat.use = () => ({
+// Build post-processing scene
+let outTexture = new Texture(null, 'rgb', 'uint8', {
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  wrapS: 'clamp',
+  wrapT: 'clamp',
+  mipmap: false
 });
+
+let postProcess = new Scene();
+let uniQuad = new UniQuadGeometry();
+
+let postShader = new Shader(
+  require('./shader/invert.vert'), require('./shader/invert.frag')
+);
+let postMat = new Material(postShader);
+postMat.getShader = () => postMat.shader;
+postMat.use = () => ({
+  uTexture: outTexture
+});
+
+// TODO Implement availability to set null instead
+postProcess.camera = new Camera();
+
+let postMesh = new Mesh(uniQuad, postMat);
+postMesh.update(postProcess);
+
 context.tasks = [
-  new RenderTask(context.mainScene, 'default')
+  new RenderTask(context.mainScene, 'default', new Framebuffer(outTexture)),
+  new RenderTask(postProcess, 'default')
 ];
 
 context.canvas.addEventListener('click', e => {

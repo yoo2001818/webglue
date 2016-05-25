@@ -1,6 +1,8 @@
 import InternalShader from './internalShader';
 import InternalGeometry from './internalGeometry';
 import InternalTexture from './internalTexture';
+import InternalFramebuffer from './internalFramebuffer';
+import InternalRenderbuffer from './internalRenderbuffer';
 import Metrics from './metrics';
 import Scene from '../scene';
 import RenderTask from '../renderTask';
@@ -36,7 +38,6 @@ export default class RenderContext {
     // Reset the GL context data (It's null at this stage though)
     this.resetContext();
     this.loadingTextures = [];
-    this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
     // Remains for compatibility. Will be removed soon.
     this.mainScene = new Scene();
@@ -46,10 +47,6 @@ export default class RenderContext {
     this.cameraChanged = 0;
     // Time elapsed between two frames. Caller should set this value.
     this.deltaTime = 1 / 60;
-    // Enable vao extension, if exists.
-    this.vaoExt = gl.getExtension('OES_vertex_array_object');
-    // Enable uint extension.
-    this.uintExt = gl.getExtension('OES_element_index_uint');
 
     this.metrics = new Metrics();
   }
@@ -80,6 +77,7 @@ export default class RenderContext {
     if (scene.camera == null) {
       throw new Error('Camera is not specified in the scene!');
     }
+    this.useFramebuffer(task.target);
     // This is kinda awkward, however this sets the camera information.
     this.camera = task.camera || scene.camera;
     // The render mode.
@@ -119,6 +117,7 @@ export default class RenderContext {
     this.shaders = {};
     this.textures = {};
     this.geometries = {};
+    this.framebuffers = {};
 
     // User should not set this value - this will be overrided anyway.
     this.lights = {};
@@ -133,6 +132,7 @@ export default class RenderContext {
     this.currentCamera = {};
     this.currentLight = {};
     this.currentTextures = [];
+    this.currentFramebuffer = null;
     // This defaults to back
     this.currentCullFace = gl.BACK;
     this.renderTickId = 0;
@@ -141,8 +141,11 @@ export default class RenderContext {
     this.cameraChanged = 0;
 
     this.maxTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
     // Enable vao extension, if exists.
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
+    // Enable uint extension.
+    this.uintExt = gl.getExtension('OES_element_index_uint');
 
     // Set drawing buffer size.
     this.width = gl.drawingBufferWidth;
@@ -424,6 +427,53 @@ export default class RenderContext {
       }
       internalTexture.upload(this, texture, index);
     }
+  }
+  getRenderbuffer(renderbuffer) {
+    // TODO Implement renderbuffer loading
+    return null;
+  }
+  getTexture(texture) {
+    let internalTexture = this.textures[texture.name];
+    // TODO Check screen size
+    // If already loaded, we can silently ignore that.
+    if (internalTexture && internalTexture.loaded) {
+      return internalTexture.texture;
+    } else {
+      // Otherwise, initialize texture. Maybe binding and reverting can be
+      // faster, however I'll test it later. TODO
+      this.useTexture(texture);
+      return this.textures[texture.name].texture;
+    }
+  }
+  useFramebuffer(framebuffer) {
+    if (this.currentFramebuffer === null && framebuffer == null) {
+      // Default framebuffer - don't do anything.
+      return;
+    }
+    if (this.currentFramebuffer !== null && framebuffer != null &&
+      framebuffer.name === this.currentFramebuffer.name
+    ) {
+      // Ignore if framebuffer is already being used.
+      // However we have to do resizing textures, etc.
+      return;
+    }
+    const gl = this.gl;
+    if (framebuffer == null) {
+      // Default framebuffer doesn't need anything - we just bind them.
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      this.currentFramebuffer = null;
+      return;
+    }
+    let internalFramebuffer = this.framebuffers[framebuffer.name];
+    if (internalFramebuffer == null) {
+      // Create framebuffer object if it doesn't exists.
+      internalFramebuffer = new InternalFramebuffer();
+      internalFramebuffer.upload(this, framebuffer);
+      this.framebuffers[framebuffer.name] = internalFramebuffer;
+    }
+    // Use the framebuffer - done!
+    internalFramebuffer.use(this, framebuffer);
+    this.currentFramebuffer = framebuffer.name;
   }
   renderMesh(mesh) {
     let prevShader = this.currentShader;
