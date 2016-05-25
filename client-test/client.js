@@ -63,8 +63,8 @@ context.mainScene.camera = camera;
 
 // Build post-processing scene
 let outTexture = new Texture(null, 'rgb', 'uint8', {
-  minFilter: 'nearest',
-  magFilter: 'nearest',
+  minFilter: 'linear',
+  magFilter: 'linear',
   wrapS: 'clamp',
   wrapT: 'clamp',
   mipmap: false

@@ -78,8 +78,24 @@ export default class RenderContext {
       throw new Error('Camera is not specified in the scene!');
     }
     this.useFramebuffer(task.target);
+    // Set viewport to framebuffer sizes.
+    let width;
+    let height;
+    if (task.target != null) {
+      let framebuffer = this.currentFramebuffer;
+      gl.viewport(0, 0, framebuffer.width, framebuffer.height);
+      width = framebuffer.width;
+      height = framebuffer.height;
+    } else {
+      // Or just use screen size.
+      gl.viewport(0, 0, this.width, this.height);
+      width = this.width;
+      height = this.height;
+    }
     // This is kinda awkward, however this sets the camera information.
     this.camera = task.camera || scene.camera;
+    // Validate camera aspect ratio.
+    this.camera.validateAspect(width / height);
     // The render mode.
     this.mode = task.mode;
     this.defaultMaterial = task.defaultMaterial;
@@ -164,7 +180,6 @@ export default class RenderContext {
   setSize(width, height) {
     this.width = width;
     this.height = height;
-    this.gl.viewport(0, 0, width, height);
   }
   useCamera(camera) {
     const gl = this.gl;
@@ -437,12 +452,12 @@ export default class RenderContext {
     // TODO Check screen size
     // If already loaded, we can silently ignore that.
     if (internalTexture && internalTexture.loaded) {
-      return internalTexture.texture;
+      return internalTexture;
     } else {
       // Otherwise, initialize texture. Maybe binding and reverting can be
       // faster, however I'll test it later. TODO
       this.useTexture(texture);
-      return this.textures[texture.name].texture;
+      return this.textures[texture.name];
     }
   }
   useFramebuffer(framebuffer) {
@@ -473,7 +488,7 @@ export default class RenderContext {
     }
     // Use the framebuffer - done!
     internalFramebuffer.use(this, framebuffer);
-    this.currentFramebuffer = framebuffer.name;
+    this.currentFramebuffer = internalFramebuffer;
   }
   renderMesh(mesh) {
     let prevShader = this.currentShader;
