@@ -64,54 +64,66 @@ export default class InternalTexture {
     // This is true if the texture is fully loaded - otherwise it's false.
     this.loaded = false;
     this.lastUsed = 0;
+    // Decides whether if it should update every frame or not.
+    this.update = texture.width == null || texture.height == null;
 
     // Width and height information for framebuffers.
     this.width = null;
     this.height = null;
   }
+  reupload(context, texture, unit) {
+    const gl = context.gl;
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(this.target, this.texture);
+    // Perform texture logic - this is really cumbersome.
+    let format = FORMATS[texture.format];
+    let type = TYPES[texture.type];
+
+    let width = texture.width || context.width;
+    let height = texture.height || context.height;
+    if (texture.source && texture.source.width != null) {
+      width = texture.source.width;
+      height = texture.source.height;
+    }
+
+    if (texture.target === '2d') {
+      if (texture.source == null) {
+        // Source is not provided; create empty texture.
+        gl.texImage2D(this.target, 0, format, width, height, 0, format, type,
+          null);
+      } else {
+        // This assumes that the source is not ArrayBufferView.
+        gl.texImage2D(this.target, 0, format, format, type, texture.source);
+      }
+    } else {
+      // Cube map. Basically, we have to do upload 6 times.
+      for (let i = 0; i < 6; ++i) {
+        if (texture.source == null) {
+          // Source is not provided; create empty texture.
+          gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format,
+            width, height, 0, format, type);
+        } else {
+          // This assumes that the source is not ArrayBufferView.
+          gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format,
+            format, type, texture.source[i]);
+        }
+      }
+    }
+
+    this.width = width;
+    this.height = height;
+    this.loaded = true;
+    // It'd make no sense to create mipmap every time - so ignore mipmap
+    // this case.
+  }
   upload(context, texture, unit) {
     const gl = context.gl;
     if (!this.loaded && texture.isLoaded()) {
-      gl.activeTexture(gl.TEXTURE0 + unit);
-      gl.bindTexture(this.target, this.texture);
-      // Perform texture logic - this is really cumbersome.
-      let format = FORMATS[texture.format];
-      let type = TYPES[texture.type];
-
-      let width = texture.width || context.width;
-      let height = texture.height || context.height;
-      if (texture.source && texture.source.width != null) {
-        width = texture.source.width;
-        height = texture.source.height;
-      }
-
-      if (texture.target === '2d') {
-        if (texture.source == null) {
-          // Source is not provided; create empty texture.
-          gl.texImage2D(this.target, 0, format, width, height, 0, format, type,
-            null);
-        } else {
-          // This assumes that the source is not ArrayBufferView.
-          gl.texImage2D(this.target, 0, format, format, type, texture.source);
-        }
-      } else {
-        // Cube map. Basically, we have to do upload 6 times.
-        for (let i = 0; i < 6; ++i) {
-          if (texture.source == null) {
-            // Source is not provided; create empty texture.
-            gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format,
-              width, height, 0, format, type);
-          } else {
-            // This assumes that the source is not ArrayBufferView.
-            gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format,
-              format, type, texture.source[i]);
-          }
-        }
-      }
+      this.reupload(context, texture, unit);
       // Now set the textue properties..
       for (let key in texture.options) {
-        if (key === 'mipmap' && texture.options[key]) {
-          gl.generateMipmap(this.target);
+        if (key === 'mipmap') {
+          if (texture.options[key]) gl.generateMipmap(this.target);
           continue;
         }
         if (key === 'maxAnisotropy') {
@@ -121,10 +133,6 @@ export default class InternalTexture {
         gl.texParameteri(this.target, OPTIONS_KEY[key],
           OPTIONS_VALUE[texture.options[key]]);
       }
-
-      this.width = width;
-      this.height = height;
-      this.loaded = true;
     }
   }
   use(context, texture, unit) {

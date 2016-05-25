@@ -95,7 +95,7 @@ export default class RenderContext {
     // This is kinda awkward, however this sets the camera information.
     this.camera = task.camera || scene.camera;
     // Validate camera aspect ratio.
-    this.camera.validateAspect(width / height);
+    let aspectChanged = this.camera.validateAspect(width / height);
     // The render mode.
     this.mode = task.mode;
     this.defaultMaterial = task.defaultMaterial;
@@ -104,7 +104,7 @@ export default class RenderContext {
     // Clear current OpenGL context. (Is this really necessary?)
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    if (scene.camera.hasChanged) {
+    if (scene.camera.hasChanged || aspectChanged) {
       this.cameraChanged = this.renderTickId;
     }
     if (this.currentShader && scene.camera.hasChanged) {
@@ -384,7 +384,7 @@ export default class RenderContext {
     }
     this.metrics.geometryCalls ++;
   }
-  useTexture(texture) {
+  useTexture(texture, reupload = false) {
     let internalTexture = this.textures[texture.name];
     // Create new texture object if it doesn't exist.
     if (internalTexture == null) {
@@ -398,6 +398,9 @@ export default class RenderContext {
       if (internalTexture.unitId !== -1) {
         // Update LRU age data to latest age
         internalTexture.lastUsed = this.textureBindId ++;
+        if (reupload) {
+          internalTexture.reupload(this, texture, internalTexture.unitId);
+        }
         return internalTexture.unitId;
       }
       // If not, just proceed to upload step.
@@ -423,6 +426,7 @@ export default class RenderContext {
     this.currentTextures[leastId] = internalTexture;
     internalTexture.unitId = leastId;
     internalTexture.use(this, texture, leastId);
+    if (reupload) internalTexture.reupload(this, texture, leastId);
     if (!internalTexture.loaded) this.loadingTextures.push(texture);
     this.metrics.textureCalls ++;
     return leastId;
@@ -452,6 +456,17 @@ export default class RenderContext {
     // TODO Check screen size
     // If already loaded, we can silently ignore that.
     if (internalTexture && internalTexture.loaded) {
+      if (texture.source == null &&
+        (texture.width == null || texture.height == null)
+      ) {
+        // Check screen size
+        if (internalTexture.width !== this.width ||
+          internalTexture.height !== this.height
+        ) {
+          // Reupload texture data if size mismatches
+          this.useTexture(texture, true);
+        }
+      }
       return internalTexture;
     } else {
       // Otherwise, initialize texture. Maybe binding and reverting can be

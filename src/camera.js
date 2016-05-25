@@ -44,7 +44,9 @@ export default class Camera extends Object3D {
       // This is calculated at the update time; however this should be done
       // now.
       mat4.multiply(this.pvMatrix, this.projectMatrix, this.inverseMatrix);
+      return true;
     }
+    return false;
   }
   update(context, parent) {
     super.update(context, parent);
