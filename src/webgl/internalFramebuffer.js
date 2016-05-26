@@ -27,47 +27,78 @@ export default class InternalFramebuffer {
     this.name = framebuffer.name;
     this.framebuffer = gl.createFramebuffer();
   }
+  getAttachment(context, target) {
+    const gl = context.gl;
+    if (target.format === 'depth') return gl.DEPTH_ATTACHMENT;
+    if (target.format === 'stencil') return gl.STENCIL_ATTACHMENT;
+    if (target.format === 'depthStencil') return gl.DEPTH_STENCIL_ATTACHMENT;
+    return gl.COLOR_ATTACHMENT0;
+  }
+  useTarget(context, target, isColor, swap) {
+    const gl = context.gl;
+    // Since depth and color attachment's size should be same,
+    // we can safely assume that framebuffer's size is same as color
+    // attachment's size.
+    if (target instanceof Renderbuffer) {
+      let internalBuffer = context.getRenderbuffer(target);
+      if (swap) {
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
+          this.getAttachment(context, target), gl.RENDERBUFFER,
+          internalBuffer.buffer);
+      }
+      if (isColor) {
+        this.width = internalBuffer.width;
+        this.height = internalBuffer.height;
+        this.colorUpdate = internalBuffer.update;
+      } else {
+        this.depthUpdate = internalBuffer.update;
+      }
+    } else if (target instanceof Texture) {
+      let internalTexture = context.getTexture(target);
+      if (swap) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER,
+          this.getAttachment(context, target), gl.TEXTURE_2D,
+          internalTexture.texture, 0);
+      }
+      if (isColor) {
+        this.width = internalTexture.width;
+        this.height = internalTexture.height;
+        this.colorUpdate = internalTexture.update;
+      } else {
+        this.depthUpdate = internalTexture.update;
+      }
+    } else if (target != null) {
+      let internalTexture = context.getTexture(target.texture);
+      let texTarget = TEXTURE_TARGETS[target.target];
+      if (swap) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER,
+          this.getAttachment(context, target.texture), texTarget,
+          internalTexture.texture, 0);
+      }
+      if (isColor) {
+        this.width = internalTexture.width;
+        this.height = internalTexture.height;
+        this.colorUpdate = internalTexture.update;
+      } else {
+        this.depthUpdate = internalTexture.update;
+      }
+    }
+  }
   use(context, framebuffer) {
     const gl = context.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     // Attach framebuffer data, if available.
     // TODO we have to handle WEBGL_draw_buffers extension too
-    // TODO We have to handle texture resizes too
-    if (this.color !== framebuffer.color || this.colorUpdate) {
-      // Since depth and color attachment's size should be same,
-      // we can safely assume that framebuffer's size is same as color
-      // attachment's size.
-      if (framebuffer.color instanceof Renderbuffer) {
-        let renderbuffer = framebuffer.color;
-        let internalBuffer = context.getRenderbuffer(renderbuffer);
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
-          gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, internalBuffer.buffer);
-        this.width = internalBuffer.width;
-        this.height = internalBuffer.height;
-        this.colorUpdate = true;
-      } else if (framebuffer.color instanceof Texture) {
-        // Assume 2D texture is bound
-        let texture = framebuffer.color;
-        let internalTexture = context.getTexture(texture);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER,
-          gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, internalTexture.texture, 0);
-        this.width = internalTexture.width;
-        this.height = internalTexture.height;
-        this.colorUpdate = internalTexture.update;
-      } else if (framebuffer != null) {
-        let texture = framebuffer.color.texture;
-        let internalTexture = context.getTexture(texture);
-        let target = TEXTURE_TARGETS[framebuffer.color.target];
-        gl.framebufferTexture2D(gl.FRAMEBUFFER,
-          gl.COLOR_ATTACHMENT0, target, internalTexture.texture, 0);
-        this.width = internalTexture.width;
-        this.height = internalTexture.height;
-        this.colorUpdate = internalTexture.update;
-      }
+    let swapColor = this.color !== framebuffer.color;
+    if (swapColor || this.colorUpdate) {
+      this.useTarget(context, framebuffer.color, true, swapColor);
       this.color = framebuffer.color;
     }
-    // Ignore depth target for now.
-    // TODO We have to implement it anyway
+    let swapDepth = this.depth !== framebuffer.depth;
+    if (swapDepth || this.depthUpdate) {
+      this.useTarget(context, framebuffer.depth, false, swapDepth);
+      this.depth = framebuffer.depth;
+    }
   }
   dispose(context) {
     const gl = context.gl;

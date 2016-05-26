@@ -47,7 +47,7 @@ export default class InternalTexture {
   constructor() {
     this.texture = null;
     this.name = null;
-    this.type = null;
+    this.target = null;
     this.update = false;
     this.lastUsed = 0;
     this.unitId = -1;

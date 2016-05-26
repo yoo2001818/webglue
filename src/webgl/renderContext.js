@@ -134,6 +134,7 @@ export default class RenderContext {
     this.textures = {};
     this.geometries = {};
     this.framebuffers = {};
+    this.renderbuffers = {};
 
     // User should not set this value - this will be overrided anyway.
     this.lights = {};
@@ -452,8 +453,24 @@ export default class RenderContext {
     }
   }
   getRenderbuffer(renderbuffer) {
-    // TODO Implement renderbuffer loading
-    return null;
+    let internalRenderbuffer = this.renderbuffers[renderbuffer.name];
+    if (internalRenderbuffer && internalRenderbuffer.loaded) {
+      if (renderbuffer.width == null || renderbuffer.height == null) {
+        // Check screen size
+        if (internalRenderbuffer.width !== this.width ||
+          internalRenderbuffer.height !== this.height
+        ) {
+          internalRenderbuffer.reupload(this, renderbuffer);
+        }
+      }
+      return internalRenderbuffer;
+    } else {
+      // Create render buffer.
+      internalRenderbuffer = new InternalRenderbuffer();
+      internalRenderbuffer.upload(this, renderbuffer);
+      this.renderbuffers[renderbuffer.name] = internalRenderbuffer;
+    }
+    return internalRenderbuffer;
   }
   getTexture(texture) {
     let internalTexture = this.textures[texture.name];

@@ -5,6 +5,7 @@ import WireframeGeometry from 'webglue/wireframeGeometry';
 import UniQuadGeometry from 'webglue/uniQuadGeometry';
 import Framebuffer from 'webglue/framebuffer';
 import Texture from 'webglue/texture';
+import Renderbuffer from 'webglue/renderbuffer';
 import Scene from 'webglue/scene';
 import Camera from 'webglue/camera';
 
@@ -80,7 +81,8 @@ let postMat = new Material(postShader);
 postMat.getShader = () => postMat.shader;
 postMat.use = () => ({
   uTexture: outTexture,
-  uTextureOffset: () => new Float32Array([1 / context.width, 1 / context.height])
+  uTextureOffset: () => new Float32Array(
+    [1 / context.width, 1 / context.height])
 });
 
 // TODO Implement availability to set null instead
@@ -90,7 +92,9 @@ let postMesh = new Mesh(uniQuad, postMat);
 postMesh.update(postProcess);
 
 context.tasks = [
-  new RenderTask(context.mainScene, 'default', new Framebuffer(outTexture)),
+  new RenderTask(context.mainScene, 'default',
+    new Framebuffer(outTexture, new Renderbuffer('depth'))
+  ),
   new RenderTask(postProcess, 'default')
 ];
 
