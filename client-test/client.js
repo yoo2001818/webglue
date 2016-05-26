@@ -74,12 +74,13 @@ let postProcess = new Scene();
 let uniQuad = new UniQuadGeometry();
 
 let postShader = new Shader(
-  require('./shader/invert.vert'), require('./shader/invert.frag')
+  require('./shader/invert.vert'), require('./shader/sobel.frag')
 );
 let postMat = new Material(postShader);
 postMat.getShader = () => postMat.shader;
 postMat.use = () => ({
-  uTexture: outTexture
+  uTexture: outTexture,
+  uTextureOffset: () => new Float32Array([1 / context.width, 1 / context.height])
 });
 
 // TODO Implement availability to set null instead

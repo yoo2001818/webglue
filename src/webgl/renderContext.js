@@ -300,6 +300,10 @@ export default class RenderContext {
       let key = uniforms[name];
       let typeId = uniformTypes[name];
       if (key == null) continue;
+      // If function is provided, execute that function to retrieve the value.
+      if (typeof value === 'function') {
+        value = value();
+      }
       // I'm not sure if this is good way to do it... Probably bad.
       if (!(key instanceof WebGLUniformLocation)) {
         // Array can be handled with this too
