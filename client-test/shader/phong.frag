@@ -118,6 +118,14 @@ lowp vec2 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
     spec = pow(specAngle, uMaterial.shininess);
   }
 
+  if (lambertian > 0.8) lambertian = 0.8;
+  else if (lambertian > 0.4) lambertian = 0.6;
+  else if (lambertian > 0.0) lambertian = 0.3;
+  else lambertian = 0.0;
+
+  if (spec > 0.8) spec = 1.0;
+  else spec = 0.0;
+
   return vec2(lambertian, spec);
 }
 

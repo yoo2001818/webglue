@@ -71,29 +71,55 @@ let outTexture = new Texture(null, 'rgb', 'uint8', {
   mipmap: false
 });
 
+let normalTexture = new Texture(null, 'rgb', 'uint8', {
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  wrapS: 'clamp',
+  wrapT: 'clamp',
+  mipmap: false
+});
+let depthTexture = new Texture(null, 'depth', 'uint16', {
+  minFilter: 'nearest',
+  magFilter: 'nearest',
+  wrapS: 'clamp',
+  wrapT: 'clamp',
+  mipmap: false
+});
+
 let postProcess = new Scene();
 let uniQuad = new UniQuadGeometry();
 
 let postShader = new Shader(
-  require('./shader/invert.vert'), require('./shader/sobel.frag')
+  require('./shader/invert.vert'), require('./shader/border.frag')
 );
 let postMat = new Material(postShader);
 postMat.getShader = () => postMat.shader;
 postMat.use = () => ({
   uTexture: outTexture,
+  uNormalTexture: normalTexture,
+  uDepthTexture: depthTexture,
   uTextureOffset: () => new Float32Array(
     [1 / context.width, 1 / context.height])
 });
 
 // TODO Implement availability to set null instead
-postProcess.camera = new Camera();
+postProcess.camera = camera;
 
 let postMesh = new Mesh(uniQuad, postMat);
 postMesh.update(postProcess);
 
+let normalShader = new Shader(
+  require('./shader/normal.vert'), require('./shader/normal.frag')
+);
+let normalMat = new Material(normalShader);
+normalMat.getShader = () => normalMat.shader;
+
 context.tasks = [
   new RenderTask(context.mainScene, 'default',
-    new Framebuffer(outTexture, new Renderbuffer('depth'))
+    new Framebuffer(outTexture, depthTexture)
+  ),
+  new RenderTask(context.mainScene, 'normal',
+    new Framebuffer(normalTexture, depthTexture), normalMat
   ),
   new RenderTask(postProcess, 'default')
 ];

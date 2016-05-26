@@ -100,9 +100,9 @@ export default function createScene() {
 
 
   let material4 = new PhongMaterial({
-    specular: new Float32Array([0.3, 0.3, 0.3]),
-    diffuse: new Float32Array([0.8, 0.8, 0.8]),
-    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    specular: new Float32Array([0.1, 0.1, 0.1]),
+    diffuse: new Float32Array([0.6, 0.6, 0.6]),
+    ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 30.0
   });
 
