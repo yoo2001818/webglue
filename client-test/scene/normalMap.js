@@ -44,15 +44,15 @@ export default function createScene() {
     ambient: 1,
     diffuse: 1,
     specular: 0.8,
-    attenuation: 0.0008,
+    attenuation: 0.0004,
     camera: {
       fov: Math.PI / 180 * 60,
       near: 0.6,
       far: 50
     },
     framebuffer: {
-      width: 1024,
-      height: 1024,
+      width: 512,
+      height: 512,
       mode: 'depth',
       defaultMaterial: shadowMat
     }
@@ -79,7 +79,7 @@ export default function createScene() {
     diffuseMap: Texture2D.fromImage(require('../texture/crate.jpg')),
     specular: new Float32Array([0.2, 0.2, 0.2]),
     diffuse: new Float32Array([1, 1, 1]),
-    ambient: new Float32Array([0.2, 0.2, 0.2]),
+    ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 10.0
   });
 
@@ -88,8 +88,8 @@ export default function createScene() {
 
   let material2 = new PhongMaterial({
     specular: new Float32Array([0.5, 0.5, 0.5]),
-    diffuse: new Float32Array([1.0, 1.0, 1.0]),
-    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    diffuse: new Float32Array([0.5, 0.5, 0.5]),
+    ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 32.0
   });
 
@@ -101,9 +101,11 @@ export default function createScene() {
   let quadGeom = new QuadGeometry();
 
   let material5 = new PhongMaterial({
-    specular: new Float32Array([0.5, 0.5, 0.5]),
-    diffuse: new Float32Array([1.0, 1.0, 1.0]),
-    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    diffuseMap: Texture2D.fromImage(require('../texture/stone.jpg')),
+    normalMap: Texture2D.fromImage(require('../texture/stone-normal.jpg')),
+    specular: new Float32Array([0.3, 0.3, 0.3]),
+    diffuse: new Float32Array([0.5, 0.5, 0.5]),
+    ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 32.0
   });
 
@@ -142,14 +144,14 @@ export default function createScene() {
   mesh3.transform.invalidate();
 
 
-  let material4 = new PhongMaterial({
+  /*let material4 = new PhongMaterial({
     specular: new Float32Array([0.3, 0.3, 0.3]),
     diffuse: new Float32Array([0.8, 0.8, 0.8]),
-    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 30.0
-  });
+  });*/
 
-  /*let shader4 = new Shader(
+  let shader4 = new Shader(
     require('../shader/reflection.vert'),
     require('../shader/reflection.frag')
   );
@@ -157,7 +159,7 @@ export default function createScene() {
   let material4 = new Material(shader4);
   material4.use = () => ({
     uTexture: skyboxTexture
-  });*/
+  });
 
   let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
   let mesh4 = new Mesh(objGeom, material4);

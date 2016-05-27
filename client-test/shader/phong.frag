@@ -4,7 +4,7 @@ precision lowp float;
 
 #define AMBIENT_LIGHT_SIZE 1
 #define DIRECTIONAL_LIGHT_SIZE 2
-#define POINT_LIGHT_SIZE 8
+#define POINT_LIGHT_SIZE 2
 #define POINT_SHADOW_LIGHT_SIZE 2
 #define SPOT_LIGHT_SIZE 2
 
@@ -213,7 +213,7 @@ lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor,
   ) {
     shadow = 0.0;
   } else {
-    lightPos.z -= 0.0005;
+    lightPos.z -= 0.0008;
     lowp float lightDepth = texture2D(light.shadowMap, lightPos.xy).r;
     shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
   }
