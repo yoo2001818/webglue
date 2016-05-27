@@ -11,6 +11,7 @@ uniform mat4 uModel;
 uniform mat3 uModelInvTransp;
 
 varying lowp vec2 vTexCoord;
+varying lowp vec3 vPosition;
 
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
   // Use tangent-space normal. This is more expensive than world-space one.
@@ -49,4 +50,5 @@ void main(void) {
     vFragPos = fragPos.xyz;
     vNormal = normalize(uModelInvTransp * aNormal);
   #endif
+  vPosition = (uModel * vec4(aPosition, 1.0)).xyz;
 }

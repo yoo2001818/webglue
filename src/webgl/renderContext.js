@@ -23,18 +23,15 @@ export default class RenderContext {
       ambient: 'uAmbientLight',
       directional: 'uDirectionalLight',
       point: 'uPointLight',
-      spot: 'uSpotLight'
+      spot: 'uSpotLight',
+      pointShadow: 'uPointShadowLight'
     };
     // Light size uniform offsets.
-    // Currently this uses ivec4, it should be changed if there is more than
-    // 4 types of light.
+    // Currently this uses ivec4 array, however it can be changed later.
     this.lightSizeUniform = 'uLightSize';
-    this.lightSizePos = {
-      ambient: 0,
-      directional: 1,
-      point: 2,
-      spot: 3
-    };
+    this.lightSizePos = [
+      'ambient', 'directional', 'point', 'spot', 'pointShadow'
+    ];
     // Reset the GL context data (It's null at this stage though)
     this.resetContext();
     this.loadingTextures = [];
@@ -59,19 +56,20 @@ export default class RenderContext {
     // Read each render task, and perform rendering
     for (let i = 0; i < this.tasks.length; ++i) {
       let task = this.tasks[i];
-      this.renderTask(task);
+      this.renderTask(task, this.mainScene, true);
     }
   }
-  renderTask(task) {
+  renderTask(task, parentScene, followSub) {
     const gl = this.gl;
-    let scene = task.scene;
+    let scene = task.scene || parentScene;
     // Finalize the scene
     scene.finalize();
     // If sub-task exists, render them first.
-    if (scene.tasks) {
+    if (scene.tasks && followSub) {
       for (let i = 0; i < scene.tasks.length; ++i) {
         let subTask = scene.tasks[i];
-        this.renderTask(subTask);
+        if (subTask === task) continue;
+        this.renderTask(subTask, scene, scene !== (subTask.scene || scene));
       }
     }
     if (scene.camera == null) {
@@ -95,7 +93,7 @@ export default class RenderContext {
     // This is kinda awkward, however this sets the camera information.
     this.camera = task.camera || scene.camera;
     // Validate camera aspect ratio.
-    let aspectChanged = this.camera.validateAspect(width / height);
+    this.camera.validateAspect(width / height);
     // The render mode.
     this.mode = task.mode;
     this.defaultMaterial = task.defaultMaterial;
@@ -104,11 +102,9 @@ export default class RenderContext {
     // Clear current OpenGL context. (Is this really necessary?)
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    if (scene.camera.hasChanged || aspectChanged) {
-      this.cameraChanged = this.renderTickId;
-    }
-    if (this.currentShader && scene.camera.hasChanged) {
-      this.useCamera(scene.camera);
+    this.cameraChanged = this.renderTickId;
+    if (this.currentShader && this.camera.hasChanged) {
+      this.useCamera(this.camera);
     }
     if (this.currentShader) {
       this.useLights();
@@ -215,7 +211,10 @@ export default class RenderContext {
   }
   updateLights(lights) {
     // Construct lights buffer (on CPU) using provided lights data.
-    let lightSizeVec = new Int32Array(4);
+    let lightSizeVec = [];
+    for (let i = 0; i < this.lightSizePos.length; i += 4) {
+      lightSizeVec.push(new Int32Array(4));
+    }
     let lightsBuf = {};
     for (let type in lights) {
       let typeName = this.lightUniforms[type];
@@ -225,8 +224,8 @@ export default class RenderContext {
       }
       lightsBuf[typeName] = lights[type];
 
-      let typeSizePos = this.lightSizePos[type];
-      lightSizeVec[typeSizePos] = lights[type].length;
+      let typeSizePos = this.lightSizePos.indexOf(type);
+      lightSizeVec[typeSizePos >> 2][typeSizePos % 4] = lights[type].length;
       this.metrics.lights += lights[type].length;
     }
     lightsBuf[this.lightSizeUniform] = lightSizeVec;
@@ -348,13 +347,13 @@ export default class RenderContext {
         gl.uniform1f(key, value);
         break;
       case gl.FLOAT_MAT2:
-        gl.uniformMatrix2fv(key, value);
+        gl.uniformMatrix2fv(key, false, value);
         break;
       case gl.FLOAT_MAT3:
-        gl.uniformMatrix3fv(key, value);
+        gl.uniformMatrix3fv(key, false, value);
         break;
       case gl.FLOAT_MAT4:
-        gl.uniformMatrix4fv(key, value);
+        gl.uniformMatrix4fv(key, false, value);
         break;
       case gl.SAMPLER_2D:
       case gl.SAMPLER_CUBE:
@@ -549,11 +548,14 @@ export default class RenderContext {
     this.currentGeometry.render(this, mesh.geometry);
     this.metrics.meshCalls ++;
   }
-  // Delegation methodx for compatibility.
+  // Delegation methods for compatibility.
   addMesh(mesh) {
     return this.mainScene.addMesh(mesh);
   }
   addLight(light) {
     return this.mainScene.addLight(light);
+  }
+  addTask(task) {
+    return this.mainScene.addTask(task);
   }
 }

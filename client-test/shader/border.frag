@@ -12,7 +12,6 @@ uniform lowp vec2 uTextureOffset;
 uniform lowp mat4 uProjection;
 
 lowp vec4 topColor;
-
 lowp float getDepth(sampler2D sampler, lowp vec2 pos) {
   lowp float value = texture2D(sampler, pos).x;
 
@@ -102,7 +101,6 @@ vec3 hsv2rgb(vec3 c) {
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
-
 void main() {
   topColor.w = 10000000.0;
   lowp float sobelDiff =

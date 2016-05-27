@@ -57,7 +57,7 @@ export default class InternalGeometry {
       let typeId = 0;
       let size = 0;
       if (entry.data == null) {
-        throw new Error('Vertex data cannot be null');
+        continue;
       }
       if (entry.data.length !== entry.axis * vertexCount) {
         throw new Error('Vertex data size mismatch');

@@ -5,6 +5,7 @@ precision lowp float;
 #define AMBIENT_LIGHT_SIZE 1
 #define DIRECTIONAL_LIGHT_SIZE 2
 #define POINT_LIGHT_SIZE 8
+#define POINT_SHADOW_LIGHT_SIZE 2
 #define SPOT_LIGHT_SIZE 2
 
 // Shader preprocessor should set this data if required.
@@ -49,6 +50,17 @@ struct PointLight {
   lowp vec4 intensity;
 };
 
+struct PointShadowLight {
+  lowp vec3 position;
+
+  lowp vec3 color;
+  lowp vec4 intensity;
+
+  lowp mat4 shadowMatrix;
+  // TODO This is not supported by ANGLE (Chrome on Windows).
+  sampler2D shadowMap;
+};
+
 struct SpotLight {
   lowp vec3 position;
   lowp vec3 direction;
@@ -85,12 +97,14 @@ uniform AmbientLight uAmbientLight[AMBIENT_LIGHT_SIZE];
 uniform DirectionalLight uDirectionalLight[DIRECTIONAL_LIGHT_SIZE];
 uniform PointLight uPointLight[POINT_LIGHT_SIZE];
 uniform SpotLight uSpotLight[SPOT_LIGHT_SIZE];
+uniform PointShadowLight uPointShadowLight[POINT_SHADOW_LIGHT_SIZE];
 
-uniform ivec4 uLightSize;
+uniform ivec4 uLightSize[2];
 
 uniform lowp vec3 uViewPos;
 
 varying lowp vec2 vTexCoord;
+varying lowp vec3 vPosition;
 #ifdef USE_TANGENT_SPACE
   varying lowp mat3 vTangent;
   varying lowp vec3 vTangentViewPos;
@@ -117,14 +131,6 @@ lowp vec2 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
 
     spec = pow(specAngle, uMaterial.shininess);
   }
-
-  if (lambertian > 0.8) lambertian = 0.8;
-  else if (lambertian > 0.4) lambertian = 0.6;
-  else if (lambertian > 0.0) lambertian = 0.3;
-  else lambertian = 0.0;
-
-  if (spec > 0.8) spec = 1.0;
-  else spec = 0.0;
 
   return vec2(lambertian, spec);
 }
@@ -170,6 +176,52 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   // Combine everything together
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
   result += matColor.specular * light.intensity.b * phong.y;
+  result += matColor.ambient * light.intensity.r;
+  result *= attenuation;
+  result *= light.color;
+
+  return result;
+}
+
+lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor,
+  lowp vec3 viewDir, lowp vec3 normal
+) {
+  #ifdef USE_TANGENT_SPACE
+    lowp vec3 lightDir = vTangent * light.position - vTangentFragPos;
+  #else
+    lowp vec3 lightDir = light.position - vFragPos;
+  #endif
+
+  lowp float distance = length(lightDir);
+  lightDir = lightDir / distance;
+
+  // Attenuation
+  lowp float attenuation = 1.0 / ( 1.0 +
+    light.intensity.w * (distance * distance));
+
+  lowp vec2 phong = calcPhong(lightDir, viewDir, normal);
+
+  // Shadow
+  lowp vec4 lightPos4 = light.shadowMatrix * vec4(vPosition, 1.0);
+  lowp vec3 lightPos = lightPos4.xyz / lightPos4.w;
+  lightPos = lightPos * 0.5 + 0.5;
+
+  lowp float shadow;
+
+  if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
+    lightPos.y < 0.0 || lightPos.y > 1.0
+  ) {
+    shadow = 0.0;
+  } else {
+    lightPos.z -= 0.0005;
+    lowp float lightDepth = texture2D(light.shadowMap, lightPos.xy).r;
+    shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
+  }
+
+  // Combine everything together
+  lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
+  result += matColor.specular * light.intensity.b * phong.y;
+  result *= 1.0 - shadow;
   result += matColor.ambient * light.intensity.r;
   result *= attenuation;
   result *= light.color;
@@ -280,20 +332,26 @@ void main(void) {
 
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < AMBIENT_LIGHT_SIZE; ++i) {
-    if (i >= uLightSize.x) break;
+    if (i == uLightSize[0].x) break;
     result += calcAmbient(uAmbientLight[i], matColor);
   }
   for (int i = 0; i < DIRECTIONAL_LIGHT_SIZE; ++i) {
-    if (i >= uLightSize.y) break;
+    if (i == uLightSize[0].y) break;
     result += calcDirectional(uDirectionalLight[i], matColor, viewDir, normal);
   }
   for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
-    if (i >= uLightSize.z) break;
+    if (i == uLightSize[0].z) break;
     result += calcPoint(uPointLight[i], matColor, viewDir, normal);
   }
   for (int i = 0; i < SPOT_LIGHT_SIZE; ++i) {
-    if (i >= uLightSize.w) break;
+    if (i == uLightSize[0].w) break;
     result += calcSpot(uSpotLight[i], matColor, viewDir, normal);
+  }
+  for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
+    // TODO This should be fixed; Due to some unknown reason GLSL doesn't
+    // process ivec4 arrays.
+    if (i == 2) break;
+    result += calcPointShadow(uPointShadowLight[i], matColor, viewDir, normal);
   }
 
   #ifdef USE_EMISSION_MAP

@@ -1,7 +1,8 @@
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
-import PointLightMesh from '../pointLightMesh';
+import PointShadowLight from 'webglue/light/pointShadow';
+import PointShadowLightMesh from '../pointShadowLightMesh';
 import SkyBox from '../skyBox';
 
 import TextureCube from 'webglue/textureCube';
@@ -9,13 +10,14 @@ import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import PhongMaterial from '../phongMaterial';
+import QuadGeometry from 'webglue/quadGeometry';
 import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import loadOBJ from 'webglue/loadOBJ';
 
-import { quat } from 'gl-matrix';
+import { quat, vec3 } from 'gl-matrix';
 
 // A normal map testing scene.
 
@@ -29,19 +31,44 @@ export default function createScene() {
     -Math.PI / 4);
   camera.transform.invalidate();
 
-  let pointLight = new PointLightMesh({
+  let shadowShader = new Shader(
+    require('../shader/empty.vert'),
+    require('../shader/empty.frag')
+  );
+
+  let shadowMat = new Material(shadowShader);
+  shadowMat.getShader = () => shadowShader;
+
+  let pointLight = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),
     ambient: 1,
     diffuse: 1,
     specular: 0.8,
-    attenuation: 0.0008
-  });
+    attenuation: 0.0008,
+    camera: {
+      fov: Math.PI / 180 * 60,
+      near: 0.6,
+      far: 50
+    },
+    framebuffer: {
+      width: 1024,
+      height: 1024,
+      mode: 'depth',
+      defaultMaterial: shadowMat
+    }
+  }));
   container.appendChild(pointLight);
-  pointLight.transform.position[0] = 5;
-  pointLight.transform.position[1] = 3;
-  pointLight.transform.position[2] = 3;
+  pointLight.transform.position[0] = 10;
+  pointLight.transform.position[1] = 6;
+  pointLight.transform.position[2] = 6;
+  quat.rotationTo(pointLight.transform.rotation, [1, 0, 0],
+    (() => {
+      let vec = vec3.create();
+      vec3.normalize(vec, pointLight.transform.position);
+      vec3.scale(vec, vec, -1);
+      return vec;
+    })());
   pointLight.transform.invalidate();
-
 
   let boxGeom = new BoxGeometry();
   let material = new PhongMaterial({
@@ -70,6 +97,22 @@ export default function createScene() {
   container.appendChild(mesh2);
   mesh2.transform.position[0] = 3;
   mesh2.transform.invalidate();
+
+  let quadGeom = new QuadGeometry();
+
+  let material5 = new PhongMaterial({
+    specular: new Float32Array([0.5, 0.5, 0.5]),
+    diffuse: new Float32Array([1.0, 1.0, 1.0]),
+    ambient: new Float32Array([0.1, 0.1, 0.1]),
+    shininess: 32.0
+  });
+
+  let mesh5 = new Mesh(quadGeom, material5);
+  container.appendChild(mesh5);
+  mesh5.transform.position[1] = -1;
+  mesh5.transform.scale[0] = 10;
+  mesh5.transform.scale[2] = 10;
+  mesh5.transform.invalidate();
 
   let skyboxTexture = TextureCube.fromImage([
     require('../texture/stormyday/front.jpg'),
@@ -100,9 +143,9 @@ export default function createScene() {
 
 
   let material4 = new PhongMaterial({
-    specular: new Float32Array([0.1, 0.1, 0.1]),
-    diffuse: new Float32Array([0.6, 0.6, 0.6]),
-    ambient: new Float32Array([0.5, 0.5, 0.5]),
+    specular: new Float32Array([0.3, 0.3, 0.3]),
+    diffuse: new Float32Array([0.8, 0.8, 0.8]),
+    ambient: new Float32Array([0.1, 0.1, 0.1]),
     shininess: 30.0
   });
 
@@ -124,6 +167,10 @@ export default function createScene() {
 
   return {
     container, camera, update: () => {
+      mesh3.transform.position[0] = Math.cos(Date.now() / 500) * 5;
+      mesh3.transform.position[1] = Math.abs(Math.sin(Date.now() / 150) * 2);
+      mesh3.transform.position[2] = Math.sin(Date.now() / 500) * 5;
+      mesh3.transform.invalidate();
     }
   };
 }

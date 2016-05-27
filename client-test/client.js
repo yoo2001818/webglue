@@ -71,21 +71,6 @@ let outTexture = new Texture(null, 'rgb', 'uint8', {
   mipmap: false
 });
 
-let normalTexture = new Texture(null, 'rgb', 'uint8', {
-  minFilter: 'nearest',
-  magFilter: 'nearest',
-  wrapS: 'clamp',
-  wrapT: 'clamp',
-  mipmap: false
-});
-let depthTexture = new Texture(null, 'depth', 'uint16', {
-  minFilter: 'nearest',
-  magFilter: 'nearest',
-  wrapS: 'clamp',
-  wrapT: 'clamp',
-  mipmap: false
-});
-
 let postProcess = new Scene();
 let uniQuad = new UniQuadGeometry();
 
@@ -96,8 +81,6 @@ let postMat = new Material(postShader);
 postMat.getShader = () => postMat.shader;
 postMat.use = () => ({
   uTexture: outTexture,
-  uNormalTexture: normalTexture,
-  uDepthTexture: depthTexture,
   uTextureOffset: () => new Float32Array(
     [1 / context.width, 1 / context.height])
 });
@@ -115,13 +98,7 @@ let normalMat = new Material(normalShader);
 normalMat.getShader = () => normalMat.shader;
 
 context.tasks = [
-  new RenderTask(context.mainScene, 'default',
-    new Framebuffer(outTexture, depthTexture)
-  ),
-  new RenderTask(context.mainScene, 'normal',
-    new Framebuffer(normalTexture, depthTexture), normalMat
-  ),
-  new RenderTask(postProcess, 'default')
+  new RenderTask(context.mainScene, 'default')
 ];
 
 context.canvas.addEventListener('click', e => {

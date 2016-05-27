@@ -3,15 +3,16 @@ import { mat4 } from 'gl-matrix';
 import Object3D from './object3D';
 
 export default class Camera extends Object3D {
-  constructor() {
+  constructor(options) {
     super();
-    this.type = 'persp';
     this.aspect = 1;
-    this.near = 0.3;
-    this.far = 1000;
-    this.fov = Math.PI / 180 * 70;
-    this.zoom = 1;
-    this.valid = false;
+    this.options = Object.assign({
+      type: 'persp',
+      near: 0.3,
+      far: 1000,
+      fov: Math.PI / 180 * 70,
+      zoom: 1
+    }, options);
     this.projectMatrix = mat4.create();
     this.inverseMatrix = mat4.create();
     this.pvMatrix = mat4.create();
@@ -19,14 +20,14 @@ export default class Camera extends Object3D {
   validate() {
     let hasChanged = super.validate() || !this.valid;
     if (!this.valid) {
-      if (this.type === 'ortho') {
+      if (this.options.type === 'ortho') {
         mat4.ortho(this.projectMatrix,
-          -this.aspect * this.zoom, this.aspect * this.zoom,
-          -1 * this.zoom, 1 * this.zoom,
-          this.near, this.far);
+          -this.aspect * this.options.zoom, this.aspect * this.options.zoom,
+          -1 * this.options.zoom, 1 * this.options.zoom,
+          this.options.near, this.options.far);
       } else {
-        mat4.perspective(this.projectMatrix, this.fov, this.aspect,
-          this.near, this.far);
+        mat4.perspective(this.projectMatrix, this.options.fov, this.aspect,
+          this.options.near, this.options.far);
       }
       this.valid = true;
     }

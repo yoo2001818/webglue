@@ -24,7 +24,7 @@ export default class Light extends Object3D {
   update(context, parent) {
     super.update(context, parent);
     if (this.hasChanged) {
-      this.uniforms = this.use();
+      this.uniforms = this.use(context, parent);
     }
     if (this.visible) {
       context.addLight(this);

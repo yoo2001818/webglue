@@ -85,14 +85,14 @@ export default class BlenderCameraController {
       }
       // Persp - Ortho swap
       if (e.keyCode === 101 || e.keyCode === 53) {
-        if (camera.type === 'persp') {
-          camera.type = 'ortho';
-          camera.near = -100;
+        if (camera.options.type === 'persp') {
+          camera.options.type = 'ortho';
+          camera.options.near = -100;
           //camera.far = 100;
           // statusBar.innerHTML = 'User Ortho';
         } else {
-          camera.type = 'persp';
-          camera.near = 0.3;
+          camera.options.type = 'persp';
+          camera.options.near = 0.3;
           //camera.far = 1000;
           // statusBar.innerHTML = 'User Persp';
         }
@@ -158,8 +158,8 @@ export default class BlenderCameraController {
       if (this.slerpCounter >= 1) this.slerpCounter = -1;
     }
     if (this.hasChanged) {
-      if (camera.type === 'ortho') {
-        camera.zoom = this.radius;
+      if (camera.options.type === 'ortho') {
+        camera.options.zoom = this.radius;
         camera.invalidate();
         vec3.transformQuat(camera.transform.position, [0, 0, 100],
           camera.transform.rotation);

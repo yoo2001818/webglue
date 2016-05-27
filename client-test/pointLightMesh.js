@@ -3,7 +3,6 @@ import LineGeometry from './lineGeometry';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import Mesh from 'webglue/mesh';
-import PointLight from 'webglue/light/point';
 import Container from 'webglue/container';
 
 import { vec3, vec4, quat, mat4 } from 'gl-matrix';
@@ -32,9 +31,10 @@ lineMaterial.use = () => ({
 });
 
 export default class PointLightMesh extends Container {
-  constructor(options) {
+  constructor(light) {
     super();
-    this.appendChild(new PointLight(options));
+    this.light = light;
+    this.appendChild(light);
     this.appendChild(new Mesh(pointGeom, pointMaterial));
     this.guideLine = new Mesh(lineGeom, lineMaterial);
     this.appendChild(this.guideLine);

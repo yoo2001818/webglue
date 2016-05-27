@@ -22,6 +22,9 @@ export default class Scene {
     }
     this.lights[light.type].push(light.uniforms);
   }
+  addTask(task) {
+    this.tasks.push(task);
+  }
   finalize() {
     // Called by RenderContext to sort the meshes, etc.
     if (this.finalized) return;
