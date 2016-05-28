@@ -13,7 +13,7 @@ import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
 import widgetScene from './scene/normalMap';
-import BlenderCameraController from './blenderCameraController';
+import FPSCameraController from './fpsCameraController';
 
 import PointGeometry from './pointGeometry';
 import { TranslateWidget } from './widget';
@@ -56,11 +56,11 @@ container.appendChild(anchor);
 let translateWidget = new TranslateWidget();
 container.appendChild(translateWidget);
 
-let controller = new BlenderCameraController(window, camera);
-controller.registerEvents();
-
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
+
+let controller = new FPSCameraController(context.canvas, window, camera);
+controller.registerEvents();
 
 // Build post-processing scene
 let outTexture = new Texture(null, 'rgb', 'uint8', {
@@ -100,6 +100,8 @@ normalMat.getShader = () => normalMat.shader;
 context.tasks = [
   new RenderTask(context.mainScene, 'default')
 ];
+
+let selectedMesh = null;
 
 context.canvas.addEventListener('click', e => {
   if (e.button !== 0) return;
@@ -164,8 +166,7 @@ context.canvas.addEventListener('click', e => {
   }
 
   if (minMesh) {
-    vec3.copy(translateWidget.transform.position, minMesh.transform.position);
-    translateWidget.transform.invalidate();
+    selectedMesh = minMesh;
   }
 });
 
@@ -186,7 +187,15 @@ let fpsCount = 0;
 function animate(currentTime) {
   if (beforeTime == null) beforeTime = currentTime;
   let delta = (currentTime - beforeTime) / 1000;
+
   sceneUpdate(delta);
+
+  if (selectedMesh) {
+    vec3.copy(translateWidget.transform.position,
+      selectedMesh.transform.position);
+    translateWidget.transform.invalidate();
+  }
+
   controller.update(delta);
   context.update(container, delta);
   fpsTotal += 1000 / (currentTime - beforeTime);
