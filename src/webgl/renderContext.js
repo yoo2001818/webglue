@@ -222,11 +222,27 @@ export default class RenderContext {
         throw new Error('Light type ' + type + ' is not specified in ' +
           'uniform list');
       }
-      lightsBuf[typeName] = lights[type];
+      let lightsArray = lights[type];
+      lightsBuf[typeName] = lightsArray;
+
+      // Iterate through lights array and process global variables.
+      for (let i = 0; i < lightsArray.length; ++i) {
+        let light = lightsArray[i];
+        if (light.globals == null) continue;
+        for (let key in light.globals) {
+          // Check if lightsBuf has that key - create empty array if there
+          // is not.
+          if (lightsBuf[key] == null) {
+            lightsBuf[key] = [];
+          }
+          // Insert the global variable to the array.
+          lightsBuf[key].push(light.globals[key]);
+        }
+      }
 
       let typeSizePos = this.lightSizePos.indexOf(type);
-      lightSizeVec[typeSizePos >> 2][typeSizePos % 4] = lights[type].length;
-      this.metrics.lights += lights[type].length;
+      lightSizeVec[typeSizePos >> 2][typeSizePos % 4] = lightsArray.length;
+      this.metrics.lights += lightsArray.length;
     }
     lightsBuf[this.lightSizeUniform] = lightSizeVec;
     this.lights = lightsBuf;

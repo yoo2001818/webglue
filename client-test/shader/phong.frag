@@ -2,11 +2,11 @@
 
 precision lowp float;
 
-#define AMBIENT_LIGHT_SIZE 1
-#define DIRECTIONAL_LIGHT_SIZE 2
-#define POINT_LIGHT_SIZE 2
-#define POINT_SHADOW_LIGHT_SIZE 2
-#define SPOT_LIGHT_SIZE 2
+#define AMBIENT_LIGHT_SIZE 0
+#define DIRECTIONAL_LIGHT_SIZE 0
+#define POINT_LIGHT_SIZE 0
+#define POINT_SHADOW_LIGHT_SIZE 1
+#define SPOT_LIGHT_SIZE 0
 
 // Shader preprocessor should set this data if required.
 /*
@@ -57,8 +57,6 @@ struct PointShadowLight {
   lowp vec4 intensity;
 
   lowp mat4 shadowMatrix;
-  // TODO This is not supported by ANGLE (Chrome on Windows).
-  sampler2D shadowMap;
 };
 
 struct SpotLight {
@@ -93,11 +91,24 @@ struct SpotLight {
 #endif
 
 uniform Material uMaterial;
-uniform AmbientLight uAmbientLight[AMBIENT_LIGHT_SIZE];
-uniform DirectionalLight uDirectionalLight[DIRECTIONAL_LIGHT_SIZE];
-uniform PointLight uPointLight[POINT_LIGHT_SIZE];
-uniform SpotLight uSpotLight[SPOT_LIGHT_SIZE];
-uniform PointShadowLight uPointShadowLight[POINT_SHADOW_LIGHT_SIZE];
+#if AMBIENT_LIGHT_SIZE > 0
+  uniform AmbientLight uAmbientLight[AMBIENT_LIGHT_SIZE];
+#endif
+#if DIRECTIONAL_LIGHT_SIZE > 0
+  uniform DirectionalLight uDirectionalLight[DIRECTIONAL_LIGHT_SIZE];
+#endif
+#if POINT_LIGHT_SIZE > 0
+  uniform PointLight uPointLight[POINT_LIGHT_SIZE];
+#endif
+#if SPOT_LIGHT_SIZE > 0
+  uniform SpotLight uSpotLight[SPOT_LIGHT_SIZE];
+#endif
+#if POINT_SHADOW_LIGHT_SIZE > 0
+  uniform PointShadowLight uPointShadowLight[POINT_SHADOW_LIGHT_SIZE];
+  // This is a workaround for Chrome on Windows (ANGLE), since ANGLE doesn't
+  // support samplers in a struct.
+  uniform sampler2D uPointShadowLightShadowMap[POINT_SHADOW_LIGHT_SIZE];
+#endif
 
 uniform ivec4 uLightSize[2];
 
@@ -183,8 +194,8 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   return result;
 }
 
-lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor,
-  lowp vec3 viewDir, lowp vec3 normal
+lowp vec3 calcPointShadow(PointShadowLight light, sampler2D shadowMap,
+  MaterialColor matColor, lowp vec3 viewDir, lowp vec3 normal
 ) {
   #ifdef USE_TANGENT_SPACE
     lowp vec3 lightDir = vTangent * light.position - vTangentFragPos;
@@ -214,7 +225,7 @@ lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor,
     shadow = 0.0;
   } else {
     lightPos.z -= 0.0008;
-    lowp float lightDepth = texture2D(light.shadowMap, lightPos.xy).r;
+    lowp float lightDepth = texture2D(shadowMap, lightPos.xy).r;
     shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
   }
 
@@ -331,28 +342,39 @@ void main(void) {
   #endif
 
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
-  for (int i = 0; i < AMBIENT_LIGHT_SIZE; ++i) {
-    if (i == uLightSize[0].x) break;
-    result += calcAmbient(uAmbientLight[i], matColor);
-  }
-  for (int i = 0; i < DIRECTIONAL_LIGHT_SIZE; ++i) {
-    if (i == uLightSize[0].y) break;
-    result += calcDirectional(uDirectionalLight[i], matColor, viewDir, normal);
-  }
-  for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
-    if (i == uLightSize[0].z) break;
-    result += calcPoint(uPointLight[i], matColor, viewDir, normal);
-  }
-  for (int i = 0; i < SPOT_LIGHT_SIZE; ++i) {
-    if (i == uLightSize[0].w) break;
-    result += calcSpot(uSpotLight[i], matColor, viewDir, normal);
-  }
-  for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
-    // TODO This should be fixed; Due to some unknown reason GLSL doesn't
-    // process ivec4 arrays.
-    if (i == 2) break;
-    result += calcPointShadow(uPointShadowLight[i], matColor, viewDir, normal);
-  }
+  #if AMBIENT_LIGHT_SIZE > 0
+    for (int i = 0; i < AMBIENT_LIGHT_SIZE; ++i) {
+      if (i == uLightSize[0].x) break;
+      result += calcAmbient(uAmbientLight[i], matColor);
+    }
+  #endif
+  #if DIRECTIONAL_LIGHT_SIZE > 0
+    for (int i = 0; i < DIRECTIONAL_LIGHT_SIZE; ++i) {
+      if (i == uLightSize[0].y) break;
+      result += calcDirectional(uDirectionalLight[i], matColor, viewDir, normal);
+    }
+  #endif
+  #if POINT_LIGHT_SIZE > 0
+    for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
+      if (i == uLightSize[0].z) break;
+      result += calcPoint(uPointLight[i], matColor, viewDir, normal);
+    }
+  #endif
+  #if SPOT_LIGHT_SIZE > 0
+    for (int i = 0; i < SPOT_LIGHT_SIZE; ++i) {
+      if (i == uLightSize[0].w) break;
+      result += calcSpot(uSpotLight[i], matColor, viewDir, normal);
+    }
+  #endif
+  #if POINT_SHADOW_LIGHT_SIZE > 0
+    for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
+      // TODO This should be fixed; Due to some unknown reason GLSL doesn't
+      // process ivec4 arrays.
+      if (i == 1) break;
+      result += calcPointShadow(uPointShadowLight[i],
+        uPointShadowLightShadowMap[i], matColor, viewDir, normal);
+    }
+  #endif
 
   #ifdef USE_EMISSION_MAP
     lowp vec4 emissionTex = texture2D(uEmissionMap, texCoord);

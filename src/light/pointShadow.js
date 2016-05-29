@@ -54,7 +54,10 @@ export default class PointShadowLight extends Light {
         this.options.attenuation
       ]),
       shadowMatrix: this.camera.pvMatrix,
-      shadowMap: this.depthTexture
+      shadowMap: this.depthTexture,
+      globals: {
+        uPointShadowLightShadowMap: this.depthTexture
+      }
     };
   }
   update(context, parent) {
