@@ -368,9 +368,7 @@ void main(void) {
   #endif
   #if POINT_SHADOW_LIGHT_SIZE > 0
     for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
-      // TODO This should be fixed; Due to some unknown reason GLSL doesn't
-      // process ivec4 arrays.
-      if (i == 1) break;
+      if (i == uLightSize[1].x) break;
       result += calcPointShadow(uPointShadowLight[i],
         uPointShadowLightShadowMap[i], matColor, viewDir, normal);
     }
