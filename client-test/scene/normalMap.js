@@ -41,8 +41,8 @@ export default function createScene() {
 
   let pointLight = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),
-    ambient: 1,
-    diffuse: 1,
+    ambient: 0.5,
+    diffuse: 0.8,
     specular: 0.8,
     attenuation: 0.0004,
     camera: {
@@ -69,6 +69,37 @@ export default function createScene() {
       return vec;
     })());
   pointLight.transform.invalidate();
+
+  let pointLight2 = new PointShadowLightMesh(new PointShadowLight({
+    color: new Float32Array([1, 1, 1]),
+    ambient: 0.5,
+    diffuse: 0.8,
+    specular: 0.8,
+    attenuation: 0.0004,
+    camera: {
+      fov: Math.PI / 180 * 60,
+      near: 0.6,
+      far: 50
+    },
+    framebuffer: {
+      width: 512,
+      height: 512,
+      mode: 'depth',
+      defaultMaterial: shadowMat
+    }
+  }));
+  container.appendChild(pointLight2);
+  pointLight2.transform.position[0] = -10;
+  pointLight2.transform.position[1] = 6;
+  pointLight2.transform.position[2] = -6;
+  quat.rotationTo(pointLight2.transform.rotation, [1, 0, 0],
+    (() => {
+      let vec = vec3.create();
+      vec3.normalize(vec, pointLight2.transform.position);
+      vec3.scale(vec, vec, -1);
+      return vec;
+    })());
+  pointLight2.transform.invalidate();
 
   let boxGeom = new BoxGeometry();
   let material = new PhongMaterial({

@@ -102,8 +102,7 @@ export default class RenderContext {
     // Clear current OpenGL context. (Is this really necessary?)
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    this.cameraChanged = this.renderTickId;
-    if (this.currentShader && this.camera.hasChanged) {
+    if (this.currentShader) {
       this.useCamera(this.camera);
     }
     if (this.currentShader) {
@@ -185,7 +184,7 @@ export default class RenderContext {
     const shader = this.currentShader;
     const uniforms = shader.uniforms;
     let cameraUpdateTick = this.currentCamera[shader.name];
-    if (cameraUpdateTick != null && cameraUpdateTick > this.cameraChanged) {
+    if (cameraUpdateTick != null && cameraUpdateTick > this.renderTickId) {
       return;
     }
     // Set current camera. Basically it sets some uniform stuff.
