@@ -1,5 +1,7 @@
 #version 100
 
+#define POINT_SHADOW_LIGHT_SIZE 2
+
 attribute vec3 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aTangent;
@@ -13,6 +15,20 @@ uniform mat3 uModelInvTransp;
 varying lowp vec2 vTexCoord;
 varying lowp vec3 vPosition;
 
+struct PointShadowLight {
+  lowp vec3 position;
+
+  lowp vec3 color;
+  lowp vec4 intensity;
+
+  lowp mat4 shadowMatrix;
+};
+
+#if POINT_SHADOW_LIGHT_SIZE > 0
+  varying lowp vec4 vPointShadowLightPos[POINT_SHADOW_LIGHT_SIZE];
+  uniform PointShadowLight uPointShadowLight[POINT_SHADOW_LIGHT_SIZE];
+#endif
+
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
   // Use tangent-space normal. This is more expensive than world-space one.
   varying lowp mat3 vTangent;
@@ -24,6 +40,11 @@ varying lowp vec3 vPosition;
   varying lowp vec3 vFragPos;
   varying lowp vec3 vNormal;
 #endif
+
+void calcPointShadow(int index) {
+  vec4 perspPos = uPointShadowLight[0].shadowMatrix * vec4(vPosition, 1.0);
+  vPointShadowLightPos[0] = perspPos;
+}
 
 void main(void) {
   vec4 fragPos = uModel * vec4(aPosition, 1.0);
@@ -51,4 +72,7 @@ void main(void) {
     vNormal = normalize(uModelInvTransp * aNormal);
   #endif
   vPosition = (uModel * vec4(aPosition, 1.0)).xyz;
+  #if POINT_SHADOW_LIGHT_SIZE > 0
+    calcPointShadow(0);
+  #endif
 }

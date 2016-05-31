@@ -108,6 +108,8 @@ uniform Material uMaterial;
   // This is a workaround for Chrome on Windows (ANGLE), since ANGLE doesn't
   // support samplers in a struct.
   uniform sampler2D uPointShadowLightShadowMap[POINT_SHADOW_LIGHT_SIZE];
+  // Cache light position to varying to improve performance.
+  varying lowp vec4 vPointShadowLightPos[POINT_SHADOW_LIGHT_SIZE];
 #endif
 
 uniform ivec4 uLightSize[2];
@@ -194,9 +196,10 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   return result;
 }
 
-lowp vec3 calcPointShadow(PointShadowLight light, sampler2D shadowMap,
-  MaterialColor matColor, lowp vec3 viewDir, lowp vec3 normal
+lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 viewDir,
+  lowp vec3 normal
 ) {
+  PointShadowLight light = uPointShadowLight[index];
   #ifdef USE_TANGENT_SPACE
     lowp vec3 lightDir = vTangent * light.position - vTangentFragPos;
   #else
@@ -213,7 +216,7 @@ lowp vec3 calcPointShadow(PointShadowLight light, sampler2D shadowMap,
   lowp vec2 phong = calcPhong(lightDir, viewDir, normal);
 
   // Shadow
-  lowp vec4 lightPos4 = light.shadowMatrix * vec4(vPosition, 1.0);
+  lowp vec4 lightPos4 = vPointShadowLightPos[index];
   lowp vec3 lightPos = lightPos4.xyz / lightPos4.w;
   lightPos = lightPos * 0.5 + 0.5;
 
@@ -225,7 +228,8 @@ lowp vec3 calcPointShadow(PointShadowLight light, sampler2D shadowMap,
     shadow = 0.0;
   } else {
     lightPos.z -= 0.0008;
-    lowp float lightDepth = texture2D(shadowMap, lightPos.xy).r;
+    lowp float lightDepth = texture2D(uPointShadowLightShadowMap[index],
+      lightPos.xy).r;
     shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
   }
 
@@ -369,8 +373,7 @@ void main(void) {
   #if POINT_SHADOW_LIGHT_SIZE > 0
     for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
       if (i == uLightSize[1].x) break;
-      result += calcPointShadow(uPointShadowLight[i],
-        uPointShadowLightShadowMap[i], matColor, viewDir, normal);
+      result += calcPointShadow(i, matColor, viewDir, normal);
     }
   #endif
 
