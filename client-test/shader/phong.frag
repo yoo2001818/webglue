@@ -199,7 +199,7 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
 lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 viewDir,
   lowp vec3 normal
 ) {
-  PointShadowLight light = uPointShadowLight[index];
+  PointShadowLight light = uPointShadowLight[0];
   #ifdef USE_TANGENT_SPACE
     lowp vec3 lightDir = vTangent * light.position - vTangentFragPos;
   #else
@@ -216,7 +216,7 @@ lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 vie
   lowp vec2 phong = calcPhong(lightDir, viewDir, normal);
 
   // Shadow
-  lowp vec4 lightPos4 = vPointShadowLightPos[index];
+  lowp vec4 lightPos4 = vPointShadowLightPos[0];
   lowp vec3 lightPos = lightPos4.xyz / lightPos4.w;
   lightPos = lightPos * 0.5 + 0.5;
 
@@ -228,7 +228,7 @@ lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 vie
     shadow = 0.0;
   } else {
     lightPos.z -= 0.0008;
-    lowp float lightDepth = texture2D(uPointShadowLightShadowMap[index],
+    lowp float lightDepth = texture2D(uPointShadowLightShadowMap[0],
       lightPos.xy).r;
     shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
   }
