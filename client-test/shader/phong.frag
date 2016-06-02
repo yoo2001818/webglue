@@ -196,6 +196,27 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   return result;
 }
 
+lowp float decodeRGBToFloat(lowp vec3 v) {
+  return dot(v, vec3(1.0, 1.0 / 255.0, 1.0 / 65025.0));
+}
+
+lowp float decodeRGToFloat(lowp vec2 v) {
+  return dot(v, vec2(1.0, 1.0 / 255.0));
+}
+
+lowp float linstep(lowp float low, lowp float high, lowp float v) {
+  return clamp((v - low) / (high - low), 0.0, 1.0);
+}
+
+lowp float lerpShadow(lowp float depth, lowp float moment, lowp float compare) {
+  if (compare <= depth) return 1.0;
+  float p = smoothstep(compare - 0.0008, compare, depth);
+  float variance = max(moment - depth * depth, 0.0001);
+  float d = compare - depth;
+  float pMax = variance / (variance + d * d);
+  return max(p, pMax);
+}
+
 lowp float calcShadow(sampler2D shadowMap, lowp vec4 shadowCoord) {
   lowp vec3 lightPos = shadowCoord.xyz / shadowCoord.w;
   lightPos = lightPos * 0.5 + 0.5;
@@ -205,12 +226,12 @@ lowp float calcShadow(sampler2D shadowMap, lowp vec4 shadowCoord) {
   if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
     lightPos.y < 0.0 || lightPos.y > 1.0
   ) {
-    shadow = 0.0;
+    shadow = 1.0;
   } else {
-    lightPos.z -= 0.0008;
-    lowp float lightDepth = texture2D(shadowMap,
-      lightPos.xy).r;
-    shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
+    lowp vec4 lightValue = texture2D(shadowMap,
+      lightPos.xy);
+    lowp float lightDepth = decodeRGToFloat(lightValue.rg);
+    shadow = lerpShadow(lightDepth, decodeRGToFloat(lightValue.ba), lightPos.z);
   }
   return shadow;
 }
@@ -239,7 +260,7 @@ lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor, lowp v
   // Combine everything together
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
   result += matColor.specular * light.intensity.b * phong.y;
-  result *= 1.0 - shadow;
+  result *= shadow;
   result += matColor.ambient * light.intensity.r;
   result *= attenuation;
   result *= light.color;

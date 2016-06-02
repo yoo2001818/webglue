@@ -32,8 +32,8 @@ export default function createScene() {
   camera.transform.invalidate();
 
   let shadowShader = new Shader(
-    require('../shader/empty.vert'),
-    require('../shader/empty.frag')
+    require('../shader/shadow.vert'),
+    require('../shader/shadow.frag')
   );
 
   let shadowMat = new Material(shadowShader);
@@ -47,12 +47,12 @@ export default function createScene() {
     attenuation: 0.0004,
     camera: {
       fov: Math.PI / 180 * 60,
-      near: 0.6,
-      far: 50
+      near: 2,
+      far: 26
     },
     framebuffer: {
-      width: 512,
-      height: 512,
+      width: 256,
+      height: 256,
       mode: 'depth',
       defaultMaterial: shadowMat
     }

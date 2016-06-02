@@ -158,8 +158,8 @@ export default class RenderContext {
     this.vaoExt = gl.getExtension('OES_vertex_array_object');
     // Enable uint extension.
     this.uintExt = gl.getExtension('OES_element_index_uint');
-    // Enable depth extension.
-    this.depthExt = gl.getExtension('WEBGL_depth_texture');
+    // Enable standard derivatives extension.
+    this.derivativesExt = gl.getExtension('OES_standard_derivatives');
 
     // Set drawing buffer size.
     this.width = gl.drawingBufferWidth;

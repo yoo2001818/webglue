@@ -15,18 +15,18 @@ export default class PointShadowLight extends Light {
     quat.rotateY(this.camera.transform.rotation, this.camera.transform.rotation,
       -Math.PI / 2);
     this.camera.transform.invalidate();
-    this.depthTexture = new Texture(null, 'depth', 'uint16', {
-      minFilter: 'nearest',
-      magFilter: 'nearest',
+    this.depthBuffer = new Renderbuffer('depth',
+      options.framebuffer.width, options.framebuffer.height);
+    this.colorTexture = new Texture(null, 'rgba', 'uint8', {
+      minFilter: 'linear',
+      magFilter: 'linear',
       wrapS: 'clamp',
       wrapT: 'clamp',
       mipmap: false
     });
-    this.depthTexture.width = options.framebuffer.width;
-    this.depthTexture.height = options.framebuffer.height;
-    this.colorBuffer = new Renderbuffer('rgb565',
-      options.framebuffer.width, options.framebuffer.height);
-    this.framebuffer = new Framebuffer(this.colorBuffer, this.depthTexture);
+    this.colorTexture.width = options.framebuffer.width;
+    this.colorTexture.height = options.framebuffer.height;
+    this.framebuffer = new Framebuffer(this.colorTexture, this.depthBuffer);
     this.renderTask = new RenderTask(null, options.framebuffer.mode,
       this.framebuffer, options.framebuffer.defaultMaterial);
     this.renderTask.camera = this.camera;
@@ -54,9 +54,9 @@ export default class PointShadowLight extends Light {
         this.options.attenuation
       ]),
       shadowMatrix: this.camera.pvMatrix,
-      shadowMap: this.depthTexture,
+      shadowMap: this.colorTexture,
       globals: {
-        uPointShadowLightShadowMap: this.depthTexture
+        uPointShadowLightShadowMap: this.colorTexture
       }
     };
   }
