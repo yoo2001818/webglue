@@ -196,10 +196,28 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   return result;
 }
 
-lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 viewDir,
-  lowp vec3 normal
+lowp float calcShadow(sampler2D shadowMap, lowp vec4 shadowCoord) {
+  lowp vec3 lightPos = shadowCoord.xyz / shadowCoord.w;
+  lightPos = lightPos * 0.5 + 0.5;
+
+  lowp float shadow;
+
+  if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
+    lightPos.y < 0.0 || lightPos.y > 1.0
+  ) {
+    shadow = 0.0;
+  } else {
+    lightPos.z -= 0.0008;
+    lowp float lightDepth = texture2D(shadowMap,
+      lightPos.xy).r;
+    shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
+  }
+  return shadow;
+}
+
+lowp vec3 calcPointShadow(PointShadowLight light, MaterialColor matColor, lowp vec3 viewDir,
+  lowp vec3 normal, sampler2D shadowMap, lowp vec4 shadowCoord
 ) {
-  PointShadowLight light = uPointShadowLight[0];
   #ifdef USE_TANGENT_SPACE
     lowp vec3 lightDir = vTangent * light.position - vTangentFragPos;
   #else
@@ -216,22 +234,7 @@ lowp vec3 calcPointShadow(const int index, MaterialColor matColor, lowp vec3 vie
   lowp vec2 phong = calcPhong(lightDir, viewDir, normal);
 
   // Shadow
-  lowp vec4 lightPos4 = vPointShadowLightPos[0];
-  lowp vec3 lightPos = lightPos4.xyz / lightPos4.w;
-  lightPos = lightPos * 0.5 + 0.5;
-
-  lowp float shadow;
-
-  if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
-    lightPos.y < 0.0 || lightPos.y > 1.0
-  ) {
-    shadow = 0.0;
-  } else {
-    lightPos.z -= 0.0008;
-    lowp float lightDepth = texture2D(uPointShadowLightShadowMap[0],
-      lightPos.xy).r;
-    shadow = lightPos.z > lightDepth ? 1.0 : 0.0;
-  }
+  lowp float shadow = calcShadow(shadowMap, shadowCoord);
 
   // Combine everything together
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
@@ -373,7 +376,8 @@ void main(void) {
   #if POINT_SHADOW_LIGHT_SIZE > 0
     for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
       if (i == uLightSize[1].x) break;
-      result += calcPointShadow(i, matColor, viewDir, normal);
+      result += calcPointShadow(uPointShadowLight[i], matColor, viewDir, normal,
+        uPointShadowLightShadowMap[i], vPointShadowLightPos[i]);
     }
   #endif
 

@@ -41,11 +41,6 @@ struct PointShadowLight {
   varying lowp vec3 vNormal;
 #endif
 
-void calcPointShadow(int index) {
-  vec4 perspPos = uPointShadowLight[0].shadowMatrix * vec4(vPosition, 1.0);
-  vPointShadowLightPos[0] = perspPos;
-}
-
 void main(void) {
   vec4 fragPos = uModel * vec4(aPosition, 1.0);
   gl_Position = uProjectionView * fragPos;
@@ -73,6 +68,9 @@ void main(void) {
   #endif
   vPosition = (uModel * vec4(aPosition, 1.0)).xyz;
   #if POINT_SHADOW_LIGHT_SIZE > 0
-    calcPointShadow(0);
+    for (int i = 0; i < POINT_SHADOW_LIGHT_SIZE; ++i) {
+      vPointShadowLightPos[i] =
+        uPointShadowLight[i].shadowMatrix * vec4(vPosition, 1.0);
+    }
   #endif
 }
