@@ -13,6 +13,7 @@ export default class Object3D {
   }
   update(context, parent) {
     this.hasChanged = this.validate();
+    if (parent && parent.hasChanged) this.hasChanged = true;
     // Parent should call children's update function after updating its
     // components, without ticking valid variable.
     if (this.hasChanged || (parent && parent.hasChanged)) {

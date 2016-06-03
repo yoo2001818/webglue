@@ -41,7 +41,7 @@ export default function createScene() {
 
   let pointLight = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),
-    ambient: 1,
+    ambient: 0.2,
     diffuse: 1,
     specular: 0.8,
     attenuation: 0.0004,
@@ -101,8 +101,6 @@ export default function createScene() {
   let quadGeom = new QuadGeometry();
 
   let material5 = new PhongMaterial({
-    diffuseMap: Texture2D.fromImage(require('../texture/stone.jpg')),
-    normalMap: Texture2D.fromImage(require('../texture/stone-normal.jpg')),
     specular: new Float32Array([0.3, 0.3, 0.3]),
     diffuse: new Float32Array([0.5, 0.5, 0.5]),
     ambient: new Float32Array([0.5, 0.5, 0.5]),
@@ -144,13 +142,13 @@ export default function createScene() {
   mesh3.transform.invalidate();
 
 
-  /*let material4 = new PhongMaterial({
+  let material4 = new PhongMaterial({
     specular: new Float32Array([0.3, 0.3, 0.3]),
     diffuse: new Float32Array([0.8, 0.8, 0.8]),
     ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 30.0
-  });*/
-
+  });
+  /*
   let shader4 = new Shader(
     require('../shader/reflection.vert'),
     require('../shader/reflection.frag')
@@ -160,7 +158,7 @@ export default function createScene() {
   material4.use = () => ({
     uTexture: skyboxTexture
   });
-
+  */
   let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
   let mesh4 = new Mesh(objGeom, material4);
   container.appendChild(mesh4);
@@ -173,6 +171,17 @@ export default function createScene() {
       mesh3.transform.position[1] = Math.abs(Math.sin(Date.now() / 150) * 2);
       mesh3.transform.position[2] = Math.sin(Date.now() / 500) * 5;
       mesh3.transform.invalidate();
+      pointLight.transform.position[0] = Math.cos(Date.now() / 800) * 10;
+      pointLight.transform.position[1] = 6;
+      pointLight.transform.position[2] = Math.sin(Date.now() / 800) * 10;
+      quat.rotationTo(pointLight.transform.rotation, [1, 0, 0],
+        (() => {
+          let vec = vec3.create();
+          vec3.normalize(vec, pointLight.transform.position);
+          vec3.scale(vec, vec, -1);
+          return vec;
+        })());
+      pointLight.transform.invalidate();
     }
   };
 }
