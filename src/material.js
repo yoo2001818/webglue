@@ -6,6 +6,9 @@ export default class Material {
     this.name = name || Symbol('material_' + (Math.random() * 1000 | 0));
     // ....
     this.numberId = ID ++;
+    // If it dynamically changes (i.e. contains function value), this should
+    // be true.
+    this.update = false;
   }
   getShader(mode) {
     // If mode is not default, return null to allow user-defined behavior.

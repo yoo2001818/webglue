@@ -10,6 +10,7 @@ import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import PhongMaterial from '../phongMaterial';
+import UniQuadGeometry from 'webglue/uniQuadGeometry';
 import QuadGeometry from 'webglue/quadGeometry';
 import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
@@ -51,8 +52,8 @@ export default function createScene() {
       far: 26
     },
     framebuffer: {
-      width: 256,
-      height: 256,
+      width: 512,
+      height: 512,
       mode: 'depth',
       defaultMaterial: shadowMat
     }
@@ -164,6 +165,28 @@ export default function createScene() {
   container.appendChild(mesh4);
   mesh4.transform.position[1] = 1;
   mesh4.transform.invalidate();
+
+  let shader6 = new Shader(
+    require('../shader/screen.vert'),
+    require('../shader/screen.frag')
+  );
+
+  let material6 = new Material(shader6);
+  material6.use = () => ({
+    uTexture: pointLight.light.colorTexture,
+    uScreenSize: (context) => new Float32Array([
+      context.width, context.height
+    ]),
+    uTextureSize: () => new Float32Array([
+      pointLight.light.colorTexture.width,
+      pointLight.light.colorTexture.height
+    ])
+  });
+  material6.update = true;
+
+  let uniQuadGeom = new UniQuadGeometry();
+  let mesh6 = new Mesh(uniQuadGeom, material6);
+  container.appendChild(mesh6);
 
   return {
     container, camera, update: () => {

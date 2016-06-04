@@ -296,7 +296,8 @@ export default class RenderContext {
     // (However, since we don't have a 'InternalMaterial', it's alright to
     // check like this)
     if (this.currentMaterial[shader.name] === material &&
-      this.currentMode[shader.name] === this.mode
+      this.currentMode[shader.name] === this.mode &&
+      !material.update
     ) {
       return true;
     }
@@ -319,7 +320,7 @@ export default class RenderContext {
       if (key == null) continue;
       // If function is provided, execute that function to retrieve the value.
       if (typeof value === 'function') {
-        value = value();
+        value = value(this);
       }
       // I'm not sure if this is good way to do it... Probably bad.
       if (!(key instanceof WebGLUniformLocation)) {

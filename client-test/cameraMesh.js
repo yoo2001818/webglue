@@ -41,7 +41,13 @@ export default class CameraMesh extends Mesh {
     if (this.camera && this.camera.hasChanged) {
       vec3.copy(this.transform.position, this.camera.transform.position);
       if (this.camera.options.type === 'persp') {
-        this.transform.scale[0] = 1 / Math.tan(this.camera.options.fov / 2);
+        let fl = 1 / Math.tan(this.camera.options.fov / 2);
+        /*
+        this.transform.scale[0] = this.camera.options.far;
+        this.transform.scale[1] = this.camera.options.far / fl;
+        this.transform.scale[2] = this.camera.options.far / fl;
+        */
+        this.transform.scale[0] = fl;
       }
       this.transform.invalidate();
     }
