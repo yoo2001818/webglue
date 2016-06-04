@@ -47,7 +47,7 @@ export default function createScene() {
     specular: 0.8,
     attenuation: 0.0004,
     camera: {
-      fov: Math.PI / 180 * 60,
+      fov: Math.PI / 180 * 70,
       near: 2,
       far: 26
     },
@@ -59,17 +59,6 @@ export default function createScene() {
     }
   }));
   container.appendChild(pointLight);
-  pointLight.transform.position[0] = 10;
-  pointLight.transform.position[1] = 6;
-  pointLight.transform.position[2] = 6;
-  quat.rotationTo(pointLight.transform.rotation, [1, 0, 0],
-    (() => {
-      let vec = vec3.create();
-      vec3.normalize(vec, pointLight.transform.position);
-      vec3.scale(vec, vec, -1);
-      return vec;
-    })());
-  pointLight.transform.invalidate();
 
   let boxGeom = new BoxGeometry();
   let material = new PhongMaterial({
@@ -197,13 +186,18 @@ export default function createScene() {
       pointLight.transform.position[0] = Math.cos(Date.now() / 800) * 10;
       pointLight.transform.position[1] = 6;
       pointLight.transform.position[2] = Math.sin(Date.now() / 800) * 10;
-      quat.rotationTo(pointLight.transform.rotation, [1, 0, 0],
-        (() => {
-          let vec = vec3.create();
-          vec3.normalize(vec, pointLight.transform.position);
-          vec3.scale(vec, vec, -1);
-          return vec;
-        })());
+      // Building transform matrix and quaternion from it doesn't seem to
+      // work well, so I've decided to use euler rotation (pitch, yaw).
+      let viewDir = vec3.create();
+      vec3.normalize(viewDir, pointLight.transform.position);
+      vec3.scale(viewDir, viewDir, -1);
+      let pitch = Math.asin(viewDir[1]);
+      let yaw = Math.atan2(-viewDir[2], viewDir[0]);
+      quat.identity(pointLight.transform.rotation);
+      quat.rotateY(pointLight.transform.rotation, pointLight.transform.rotation,
+        yaw);
+      quat.rotateZ(pointLight.transform.rotation, pointLight.transform.rotation,
+        pitch);
       pointLight.transform.invalidate();
     }
   };
