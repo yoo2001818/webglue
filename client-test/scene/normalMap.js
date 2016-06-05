@@ -56,6 +56,10 @@ export default function createScene() {
       height: 512,
       mode: 'depth',
       defaultMaterial: shadowMat
+    },
+    task: {
+      frontFace: 'ccw',
+      clearColor: [1, 1, 1, 1]
     }
   }));
   container.appendChild(pointLight);

@@ -7,6 +7,28 @@ import Metrics from './metrics';
 import Scene from '../scene';
 import RenderTask from '../renderTask';
 
+const CULL_FACE = {
+  front: 0x0404,
+  back: 0x0405,
+  both: 0x0408
+};
+
+const FRONT_FACE = {
+  cw: 0x0900,
+  ccw: 0x0901
+};
+
+const DEPTH_STENCIL_TEST = {
+  never: 0x0200,
+  always: 0x0207,
+  less: 0x0201,
+  equal: 0x0202,
+  lequal: 0x0203,
+  greater: 0x0204,
+  gequal: 0x0206,
+  notequal: 0x0205
+};
+
 export default class RenderContext {
   constructor(gl) {
     this.gl = gl;
@@ -32,6 +54,19 @@ export default class RenderContext {
     this.lightSizePos = [
       'ambient', 'directional', 'point', 'spot', 'pointShadow'
     ];
+    // Default WebGL context options.
+    this.defaultOptions = {
+      clearColor: [57 / 255, 57 / 255, 57 / 255, 1],
+      // clearDepth: 1,
+      // clearStencil: 0,
+      // colorMask: [true, true, true, true],
+      cullFace: 'back',
+      frontFace: 'ccw',
+      // blend: false,
+      depthTest: 'lequal'
+      // scissorTest: false,
+      // stencilTest: false
+    };
     // Reset the GL context data (It's null at this stage though)
     this.resetContext();
     this.loadingTextures = [];
@@ -99,6 +134,8 @@ export default class RenderContext {
     this.defaultMaterial = task.defaultMaterial;
     // Construct light buffer data using scene lights
     this.updateLights(scene.lights);
+    // Set current OpenGL state if scene's options exist.
+    this.setOptions(task.options || this.defaultOptions);
     // Clear current OpenGL context. (Is this really necessary?)
     // TODO Remove stencil buffer?
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -165,15 +202,47 @@ export default class RenderContext {
     this.width = gl.drawingBufferWidth;
     this.height = gl.drawingBufferHeight;
 
-    // OpenGL init.
-    // TODO this should be modifiable by the user
-    gl.clearColor(57 / 255, 57 / 255, 57 / 255, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.depthFunc(gl.LEQUAL);
+    // Set current options information to default state.
+    this.currentOptions = {
+      cullFace: false,
+      depthTest: false
+    };
+    // Actually set the options at WebGL side.
+    this.setOptions(this.defaultOptions);
+
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  }
+  setOptions(options) {
+    const gl = this.gl;
+    // Set WebGL options and write it to the currentOptions.
+    // TODO Each geometry / mesh / material can have different value for this -
+    // we have to process this per-mesh. (Especially culling; all other values
+    // can be processed only by render context or mesh, however culling acts
+    // like XOR.)
+    for (let key in options) {
+      let value = options[key];
+      let previous = this.currentOptions[key];
+      if (previous === value) continue;
+      // I hate this so much.
+      switch (key) {
+      case 'clearColor':
+        gl.clearColor.apply(gl, value);
+        break;
+      case 'cullFace':
+        if (previous === false) gl.enable(gl.CULL_FACE);
+        if (value === false) gl.disable(gl.CULL_FACE);
+        gl.cullFace(CULL_FACE[value]);
+        break;
+      case 'frontFace':
+        gl.frontFace(FRONT_FACE[value]);
+        break;
+      case 'depthTest':
+        if (previous === false) gl.enable(gl.DEPTH_TEST);
+        if (value === false) gl.disable(gl.DEPTH_TEST);
+        gl.depthFunc(DEPTH_STENCIL_TEST[value]);
+        break;
+      }
+    }
   }
   setSize(width, height) {
     this.width = width;

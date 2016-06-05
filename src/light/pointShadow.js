@@ -28,7 +28,7 @@ export default class PointShadowLight extends Light {
     this.colorTexture.height = options.framebuffer.height;
     this.framebuffer = new Framebuffer(this.colorTexture, this.depthBuffer);
     this.renderTask = new RenderTask(null, options.framebuffer.mode,
-      this.framebuffer, options.framebuffer.defaultMaterial);
+      this.framebuffer, options.framebuffer.defaultMaterial, options.task);
     this.renderTask.camera = this.camera;
     this.options = options;
   }
