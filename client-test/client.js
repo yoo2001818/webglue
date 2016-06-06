@@ -3,17 +3,14 @@ import Material from 'webglue/material';
 import WireframeGeometry from 'webglue/wireframeGeometry';
 
 import UniQuadGeometry from 'webglue/uniQuadGeometry';
-import Framebuffer from 'webglue/framebuffer';
 import Texture from 'webglue/texture';
-import Renderbuffer from 'webglue/renderbuffer';
 import Scene from 'webglue/scene';
-import Camera from 'webglue/camera';
 
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
 import widgetScene from './scene/normalMap';
-import FPSCameraController from './fpsCameraController';
+import BlenderCameraController from './blenderCameraController';
 
 import PointGeometry from './pointGeometry';
 import { TranslateWidget } from './widget';
@@ -59,7 +56,7 @@ container.appendChild(translateWidget);
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
 
-let controller = new FPSCameraController(context.canvas, window, camera);
+let controller = new BlenderCameraController(window, camera);
 controller.registerEvents();
 
 // Build post-processing scene
