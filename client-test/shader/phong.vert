@@ -1,6 +1,6 @@
 #version 100
 
-#define POINT_SHADOW_LIGHT_SIZE 2
+#define POINT_SHADOW_LIGHT_SIZE 1
 
 attribute vec3 aPosition;
 attribute vec3 aNormal;

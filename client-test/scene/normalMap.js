@@ -10,7 +10,7 @@ import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import PhongMaterial from '../phongMaterial';
-import UniQuadGeometry from 'webglue/uniQuadGeometry';
+// import UniQuadGeometry from 'webglue/uniQuadGeometry';
 import QuadGeometry from 'webglue/quadGeometry';
 import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
@@ -136,13 +136,14 @@ export default function createScene() {
   mesh3.transform.invalidate();
 
 
-  /*let material4 = new PhongMaterial({
+  let material4 = new PhongMaterial({
     specular: new Float32Array([0.3, 0.3, 0.3]),
     diffuse: new Float32Array([0.8, 0.8, 0.8]),
     ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 30.0
-  });*/
+  });
 
+  /*
   let shader4 = new Shader(
     require('../shader/reflection.vert'),
     require('../shader/reflection.frag')
@@ -152,14 +153,15 @@ export default function createScene() {
   material4.use = () => ({
     uTexture: skyboxTexture
   });
-  
+  */
+
   let objGeom = loadOBJ(require('../geom/theater2.obj'));
   let mesh4 = new Mesh(objGeom, material4);
   container.appendChild(mesh4);
   mesh4.transform.position[1] = 1;
   mesh4.transform.invalidate();
 
-  let shader6 = new Shader(
+  /*let shader6 = new Shader(
     require('../shader/screen.vert'),
     require('../shader/screen.frag')
   );
@@ -179,7 +181,7 @@ export default function createScene() {
 
   let uniQuadGeom = new UniQuadGeometry();
   let mesh6 = new Mesh(uniQuadGeom, material6);
-  container.appendChild(mesh6);
+  container.appendChild(mesh6);*/
 
   return {
     container, camera, update: () => {
@@ -187,9 +189,9 @@ export default function createScene() {
       mesh3.transform.position[1] = Math.abs(Math.sin(Date.now() / 150) * 2);
       mesh3.transform.position[2] = Math.sin(Date.now() / 500) * 5;
       mesh3.transform.invalidate();
-      pointLight.transform.position[0] = Math.cos(Date.now() / 800) * 10;
+      pointLight.transform.position[0] = 1;
       pointLight.transform.position[1] = 6;
-      pointLight.transform.position[2] = Math.sin(Date.now() / 800) * 10;
+      pointLight.transform.position[2] = 10;
       // Building transform matrix and quaternion from it doesn't seem to
       // work well, so I've decided to use euler rotation (pitch, yaw).
       let viewDir = vec3.create();
