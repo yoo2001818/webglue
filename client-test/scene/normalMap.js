@@ -136,13 +136,13 @@ export default function createScene() {
   mesh3.transform.invalidate();
 
 
-  let material4 = new PhongMaterial({
+  /*let material4 = new PhongMaterial({
     specular: new Float32Array([0.3, 0.3, 0.3]),
     diffuse: new Float32Array([0.8, 0.8, 0.8]),
     ambient: new Float32Array([0.5, 0.5, 0.5]),
     shininess: 30.0
-  });
-  /*
+  });*/
+
   let shader4 = new Shader(
     require('../shader/reflection.vert'),
     require('../shader/reflection.frag')
@@ -152,8 +152,8 @@ export default function createScene() {
   material4.use = () => ({
     uTexture: skyboxTexture
   });
-  */
-  let objGeom = loadOBJ(require('../geom/wt-teapot.obj'));
+  
+  let objGeom = loadOBJ(require('../geom/theater2.obj'));
   let mesh4 = new Mesh(objGeom, material4);
   container.appendChild(mesh4);
   mesh4.transform.position[1] = 1;
