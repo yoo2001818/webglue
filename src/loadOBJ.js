@@ -2,7 +2,7 @@ import ChannelGeometry3D from './channelGeometry3D';
 
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
-export default function loadOBJ(data) {
+export default function loadOBJ(data, separate = false) {
   // Parser machine state
   let objName = 'OBJ_' + (Math.random() * 1000 | 0);
   let vertices = [];
@@ -13,11 +13,40 @@ export default function loadOBJ(data) {
   let texCoordIndices = [];
   let normalSpecified = false;
   let normalSmooth = false;
+  let geometries = [];
 
   function addFaceIndex(point) {
     vertexIndices.push(point.vertex);
     texCoordIndices.push(point.texCoord);
     normalIndices.push(point.normal);
+  }
+
+  function finalizeGeometry() {
+    let geometry = new ChannelGeometry3D(Symbol(objName));
+
+    geometry.vertices = new Float32Array(vertices);
+    geometry.normals = new Float32Array(normals);
+    geometry.texCoords = new Float32Array(texCoords);
+
+    geometry.vertexIndices = new Uint16Array(vertexIndices);
+    geometry.normalIndices = new Uint16Array(normalIndices);
+    geometry.texCoordIndices = new Uint16Array(texCoordIndices);
+    // Calculate normal vectors, if not specified.
+    if (!normalSpecified) {
+      if (normalSmooth) {
+        geometry.calculateSmoothNormals();
+      } else {
+        geometry.calculateNormals();
+      }
+    }
+    // Calculate tangent vectors.
+    geometry.calculateTangents();
+    // Add geometry to output geometries list.
+    geometries.push(geometry);
+    // Empty current indices buffer.
+    vertexIndices = [];
+    normalIndices = [];
+    texCoordIndices = [];
   }
 
   // Parser logic starts here.
@@ -80,6 +109,11 @@ export default function loadOBJ(data) {
       break;
     }
     case 'o': {
+      // Finalize current buffer if separation is enabled and buffer is not
+      // empty.
+      if (separate && vertexIndices.length > 0) {
+        finalizeGeometry();
+      }
       // User defined object name
       objName = args.join(' ');
       break;
@@ -99,25 +133,8 @@ export default function loadOBJ(data) {
     }
   }
   // End of file - Build geometry object.
-  let geometry = new ChannelGeometry3D(Symbol(objName));
-
-  geometry.vertices = new Float32Array(vertices);
-  geometry.normals = new Float32Array(normals);
-  geometry.texCoords = new Float32Array(texCoords);
-
-  geometry.vertexIndices = new Uint16Array(vertexIndices);
-  geometry.normalIndices = new Uint16Array(normalIndices);
-  geometry.texCoordIndices = new Uint16Array(texCoordIndices);
-  // Calculate normal vectors, if not specified.
-  if (!normalSpecified) {
-    if (normalSmooth) {
-      geometry.calculateSmoothNormals();
-    } else {
-      geometry.calculateNormals();
-    }
-  }
-  // Calculate tangent vectors.
-  geometry.calculateTangents();
+  if (vertexIndices.length > 0) finalizeGeometry();
   // All done! return the geometry object.
-  return geometry;
+  if (!separate) return geometries[0];
+  return geometries;
 }

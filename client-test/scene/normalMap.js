@@ -1,7 +1,7 @@
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
-import PointShadowLight from 'webglue/light/pointShadow';
+import PointShadowLight from 'webglue/light/point';
 import PointShadowLightMesh from '../pointShadowLightMesh';
 import SkyBox from '../skyBox';
 
@@ -143,23 +143,23 @@ export default function createScene() {
     shininess: 30.0
   });
 
-  /*
-  let shader4 = new Shader(
+  let shader7 = new Shader(
     require('../shader/reflection.vert'),
     require('../shader/reflection.frag')
   );
 
-  let material4 = new Material(shader4);
-  material4.use = () => ({
+  let material7 = new Material(shader7);
+  material7.use = () => ({
     uTexture: skyboxTexture
   });
-  */
 
-  let objGeom = loadOBJ(require('../geom/theater2.obj'));
-  let mesh4 = new Mesh(objGeom, material4);
-  container.appendChild(mesh4);
-  mesh4.transform.position[1] = 1;
-  mesh4.transform.invalidate();
+  let objGeom = loadOBJ(require('../geom/theater2.obj'), true);
+  objGeom.forEach((geom, i) => {
+    let mesh4 = new Mesh(geom, i % 2 === 0 ? material4 : material7);
+    container.appendChild(mesh4);
+    mesh4.transform.position[1] = 1;
+    mesh4.transform.invalidate();
+  });
 
   /*let shader6 = new Shader(
     require('../shader/screen.vert'),
