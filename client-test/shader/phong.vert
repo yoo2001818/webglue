@@ -61,7 +61,7 @@ void main(void) {
     );
     vTangent = tangent;
     vTangentViewPos = tangent * uViewPos;
-    vTangentFragPos = tangent * aNormal.xyz;
+    vTangentFragPos = tangent * aPosition.xyz;
   #else
     vFragPos = fragPos.xyz;
     vNormal = normalize(uModelInvTransp * aNormal);

@@ -5,6 +5,7 @@ import ChannelGeometry3D from './channelGeometry3D';
 export default function loadOBJ(data, separate = false) {
   // Parser machine state
   let objName = 'OBJ_' + (Math.random() * 1000 | 0);
+  let objMaterial = null;
   let vertices = [];
   let normals = [];
   let texCoords = [];
@@ -42,7 +43,9 @@ export default function loadOBJ(data, separate = false) {
     // Calculate tangent vectors.
     geometry.calculateTangents();
     // Add geometry to output geometries list.
-    geometries.push(geometry);
+    geometries.push({
+      geometry, name: objName, material: objMaterial
+    });
     // Empty current indices buffer.
     vertexIndices = [];
     normalIndices = [];
@@ -116,6 +119,11 @@ export default function loadOBJ(data, separate = false) {
       }
       // User defined object name
       objName = args.join(' ');
+      break;
+    }
+    case 'usemtl': {
+      // Material name.
+      objMaterial = args.join(' ');
       break;
     }
     case 'g': {

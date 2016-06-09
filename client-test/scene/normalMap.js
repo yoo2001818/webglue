@@ -135,27 +135,33 @@ export default function createScene() {
   // vec3.set(mesh4.transform.scale, 10, 10, 10);
   mesh3.transform.invalidate();
 
-
-  let material4 = new PhongMaterial({
-    specular: new Float32Array([0.3, 0.3, 0.3]),
-    diffuse: new Float32Array([0.8, 0.8, 0.8]),
-    ambient: new Float32Array([0.5, 0.5, 0.5]),
-    shininess: 30.0
-  });
-
-  let shader7 = new Shader(
-    require('../shader/reflection.vert'),
-    require('../shader/reflection.frag')
-  );
-
-  let material7 = new Material(shader7);
-  material7.use = () => ({
-    uTexture: skyboxTexture
-  });
+  let theaterMaterials = {
+    BlackPlastic: new PhongMaterial({
+      specular: new Float32Array([0.21337, 0.21337, 0.21337]),
+      diffuse: new Float32Array([0.05136, 0.05295, 0.05630]),
+      ambient: new Float32Array([0.1, 0.1, 0.1]),
+      shininess: 96
+    }),
+    RedFabric: new PhongMaterial({
+      specular: new Float32Array([0.14, 0.06, 0.06]),
+      diffuse: new Float32Array([0.69510, 0.01153, 0.01153]),
+      ambient: new Float32Array([0.1, 0.02, 0.02]),
+      shininess: 7.843
+    }),
+    RedFabricNormalMap: new PhongMaterial({
+      // normalMap: Texture2D.fromImage(require('../texture/theaterlowpoly.png')),
+      specular: new Float32Array([0.14, 0.06, 0.06]),
+      diffuse: new Float32Array([0.69510, 0.01153, 0.01153]),
+      ambient: new Float32Array([0.1, 0.02, 0.02]),
+      shininess: 7.843
+    })
+  };
 
   let objGeom = loadOBJ(require('../geom/theater2.obj'), true);
-  objGeom.forEach((geom, i) => {
-    let mesh4 = new Mesh(geom, i % 2 === 0 ? material4 : material7);
+  objGeom.forEach(geom => {
+    console.log(geom.material);
+    let mesh4 = new Mesh(geom.geometry,
+      theaterMaterials[geom.material]);
     container.appendChild(mesh4);
     mesh4.transform.position[1] = 1;
     mesh4.transform.invalidate();
