@@ -48,7 +48,7 @@ export default class Geometry3D extends Geometry {
     if (this.vertices === null) throw new Error('Vertices array is null');
     // If tangent vector array is not present, create one.
     if (this.tangents === null) {
-      this.tangents = new Float32Array(this.vertices.length);
+      this.tangents = new Float32Array(this.vertices.length / 3 * 4);
     }
     // Uh, maybe the variable names are too verbose. I think.
     for (let faceId = 0; faceId < this.indices.length; faceId += 3) {
@@ -72,14 +72,31 @@ export default class Geometry3D extends Geometry {
         vertexId3 * 2 + 2), texOrigin);
       // Honestly I don't know what this does.
       let f = 1 / (texP1[0] * texP2[1] - texP2[0] * texP1[1]);
-      let tangent = vec3.create();
+      let tangent = new Float32Array(4);
       tangent[0] = f * (texP2[1] * p1[0] - texP1[1] * p2[0]);
       tangent[1] = f * (texP2[1] * p1[1] - texP1[1] * p2[1]);
       tangent[2] = f * (texP2[1] * p1[2] - texP1[1] * p2[2]);
+      // Calculate bi-tangent. To save vertex array, it can be calculated in
+      // vertex shader; however we have to specify the cross order to get right
+      // result. This can be done by using a modifier... I think.
+      // To calculate modifier, we have to calculate dot product with
+      // bi-tangent from vertex shader and bi-tangent we calculated.
+      let normal = vec3.create();
+      vec3.cross(normal, p1, p2);
+      vec3.normalize(normal, normal);
+      let leftBitangent = vec3.create();
+      vec3.cross(leftBitangent, tangent, normal);
+      // Then calculate bi-tangent with texture coords.
+      let bitangent = vec3.create();
+      bitangent[0] = f * (texP2[0] * p1[0] - texP1[0] * p2[0]);
+      bitangent[1] = f * (texP2[0] * p1[1] - texP1[0] * p2[1]);
+      bitangent[2] = f * (texP2[0] * p1[2] - texP1[0] * p2[2]);
+      let modifier = vec3.dot(bitangent, leftBitangent);
+      tangent[3] = modifier < 0 ? -1 : 1;
       // Done! Paste them to those three vertices.
-      this.tangents.set(tangent, vertexId1 * 3);
-      this.tangents.set(tangent, vertexId2 * 3);
-      this.tangents.set(tangent, vertexId3 * 3);
+      this.tangents.set(tangent, vertexId1 * 4);
+      this.tangents.set(tangent, vertexId2 * 4);
+      this.tangents.set(tangent, vertexId3 * 4);
     }
   }
   getAttributes() {
@@ -97,7 +114,7 @@ export default class Geometry3D extends Geometry {
         data: this.texCoords
       },
       aTangent: {
-        axis: 3,
+        axis: 4,
         data: this.tangents
       }
     };

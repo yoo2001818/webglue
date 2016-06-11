@@ -149,7 +149,7 @@ export default function createScene() {
       shininess: 7.843
     }),
     RedFabricNormalMap: new PhongMaterial({
-      // normalMap: Texture2D.fromImage(require('../texture/theaterlowpoly.png')),
+      normalMap: Texture2D.fromImage(require('../texture/theaterlowpoly.png')),
       specular: new Float32Array([0.14, 0.06, 0.06]),
       diffuse: new Float32Array([0.69510, 0.01153, 0.01153]),
       ambient: new Float32Array([0.1, 0.02, 0.02]),
@@ -195,9 +195,9 @@ export default function createScene() {
       mesh3.transform.position[1] = Math.abs(Math.sin(Date.now() / 150) * 2);
       mesh3.transform.position[2] = Math.sin(Date.now() / 500) * 5;
       mesh3.transform.invalidate();
-      pointLight.transform.position[0] = 1;
+      pointLight.transform.position[0] = Math.cos(Date.now() / 500) * 10;
       pointLight.transform.position[1] = 6;
-      pointLight.transform.position[2] = 10;
+      pointLight.transform.position[2] = Math.sin(Date.now() / 500) * 10;
       // Building transform matrix and quaternion from it doesn't seem to
       // work well, so I've decided to use euler rotation (pitch, yaw).
       let viewDir = vec3.create();

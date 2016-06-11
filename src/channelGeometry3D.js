@@ -110,8 +110,8 @@ export default class ChannelGeometry3D extends ChannelGeometry {
     if (posIndices == null) throw new Error('Position indices is null');
     let texIndices = this.texCoordIndices;
     if (texIndices == null) throw new Error('Texture indices is null');
-    // One vec3 per one face. so indices / 3 * 3.
-    let tangents = new Float32Array(posIndices.length);
+    // One vec4 per one face. so indices / 3 * 4.
+    let tangents = new Float32Array(posIndices.length / 3 * 4);
     let tangentIndices = createIndicesArray(posIndices.length / 3,
       posIndices.length);
     let tangentId = 0;
@@ -139,12 +139,29 @@ export default class ChannelGeometry3D extends ChannelGeometry {
         texId3 * 2 + 2), texOrigin);
       // Honestly I don't know what this does.
       let f = 1 / (texP1[0] * texP2[1] - texP2[0] * texP1[1]);
-      let tangent = vec3.create();
+      let tangent = new Float32Array(4);
       tangent[0] = f * (texP2[1] * p1[0] - texP1[1] * p2[0]);
       tangent[1] = f * (texP2[1] * p1[1] - texP1[1] * p2[1]);
       tangent[2] = f * (texP2[1] * p1[2] - texP1[1] * p2[2]);
+      // Calculate bi-tangent. To save vertex array, it can be calculated in
+      // vertex shader; however we have to specify the cross order to get right
+      // result. This can be done by using a modifier... I think.
+      // To calculate modifier, we have to calculate dot product with
+      // bi-tangent from vertex shader and bi-tangent we calculated.
+      let normal = vec3.create();
+      vec3.cross(normal, p1, p2);
+      vec3.normalize(normal, normal);
+      let leftBitangent = vec3.create();
+      vec3.cross(leftBitangent, tangent, normal);
+      // Then calculate bi-tangent with texture coords.
+      let bitangent = vec3.create();
+      bitangent[0] = f * (texP2[0] * p1[0] - texP1[0] * p2[0]);
+      bitangent[1] = f * (texP2[0] * p1[1] - texP1[0] * p2[1]);
+      bitangent[2] = f * (texP2[0] * p1[2] - texP1[0] * p2[2]);
+      let modifier = vec3.dot(bitangent, leftBitangent);
+      tangent[3] = modifier < 0 ? -1 : 1;
       // Done. Store them in tangents buffer, and set indices to it.
-      tangents.set(tangent, tangentId * 3);
+      tangents.set(tangent, tangentId * 4);
       tangentIndices[faceId] = tangentId;
       tangentIndices[faceId + 1] = tangentId;
       tangentIndices[faceId + 2] = tangentId;
@@ -168,7 +185,7 @@ export default class ChannelGeometry3D extends ChannelGeometry {
         data: this.texCoords
       },
       aTangent: {
-        axis: 3,
+        axis: 4,
         data: this.tangents
       }
     };

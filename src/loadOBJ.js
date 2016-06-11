@@ -41,7 +41,11 @@ export default function loadOBJ(data, separate = false) {
       }
     }
     // Calculate tangent vectors.
-    geometry.calculateTangents();
+    if (normalSmooth) {
+      geometry.calculateTangents();
+    } else {
+      geometry.calculateTangents();
+    }
     // Add geometry to output geometries list.
     geometries.push({
       geometry, name: objName, material: objMaterial

@@ -4,7 +4,7 @@
 
 attribute vec3 aPosition;
 attribute vec3 aNormal;
-attribute vec3 aTangent;
+attribute vec4 aTangent;
 attribute vec2 aTexCoord;
 
 uniform lowp vec3 uViewPos;
@@ -47,12 +47,12 @@ void main(void) {
   // OpenGL's Y axis is inverted... not sure why though.
   vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
   #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
-    // Tangent vector.
-    lowp vec3 T = normalize(vec3(uModelInvTransp * aTangent));
     // Normal vector.
     lowp vec3 N = normalize(uModelInvTransp * aNormal);
+    // Tangent vector.
+    lowp vec3 T = normalize(vec3(uModelInvTransp * aTangent.xyz));
     // Bi-tangent vector.
-    lowp vec3 B = cross(T, N);
+    lowp vec3 B = cross(T, N) * aTangent.w;
     // Transpose the matrix by hand
     lowp mat3 tangent = mat3(
       vec3(T.x, B.x, N.x),

@@ -408,9 +408,5 @@ void main(void) {
   #endif
 
   gl_FragColor = vec4(result, 1.0);
-  #ifdef USE_NORMAL_MAP
-    lowp vec3 dd = vec3(vTangent[0].x, vTangent[1].x, vTangent[2].x);
-    gl_FragColor = vec4(dd * 0.5 + 0.5, 1.0);
-  #endif
 
 }
