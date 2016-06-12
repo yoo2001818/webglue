@@ -8,4 +8,10 @@ export default class Shader {
     // ....
     this.numberId = ID ++;
   }
+  getVertexShader() {
+    return this.vertex;
+  }
+  getFragmentShader() {
+    return this.fragment;
+  }
 }

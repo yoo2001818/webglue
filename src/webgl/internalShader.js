@@ -10,8 +10,9 @@ export default class InternalShader {
     const gl = context.gl;
     this.name = shader.name;
     // Compile shaders
-    this.vertexShader = compileShader(gl, shader.vertex, gl.VERTEX_SHADER);
-    this.fragmentShader = compileShader(gl, shader.fragment,
+    this.vertexShader = compileShader(gl, shader.getVertexShader(),
+      gl.VERTEX_SHADER);
+    this.fragmentShader = compileShader(gl, shader.getFragmentShader(),
       gl.FRAGMENT_SHADER);
     // Link shaders
     let program = gl.createProgram();

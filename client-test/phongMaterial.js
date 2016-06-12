@@ -18,8 +18,6 @@ const SHADER_APPENDS = {
   heightMap: '#define USE_HEIGHT_MAP'
 };
 // Processed shader instances.
-// TODO Static memory (a.k.a. permgen) can be reduced by dynamically generating
-// the code at the shader upload time instead of saving it.
 const SHADER_INSTANCES = [];
 
 const VERT_SHADER = require('./shader/phong.vert');
@@ -47,9 +45,16 @@ function retrieveShader(options) {
   }
   // Appendage is placed on the top; this might be a problem. or not.
   let shader = new Shader(
-    attachAppendage(VERT_SHADER, appendage),
-    attachAppendage(FRAG_SHADER, appendage)
+    VERT_SHADER,
+    FRAG_SHADER
   );
+  shader.appendage = appendage;
+  shader.getVertexShader = function() {
+    return attachAppendage(this.vertex, this.appendage);
+  };
+  shader.getFragmentShader = function() {
+    return attachAppendage(this.fragment, this.appendage);
+  };
   SHADER_INSTANCES[bitMask] = shader;
   return shader;
 }
