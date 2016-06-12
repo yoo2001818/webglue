@@ -51,6 +51,7 @@ void main(void) {
     lowp vec3 N = normalize(uModelInvTransp * aNormal);
     // Tangent vector.
     lowp vec3 T = normalize(vec3(uModelInvTransp * aTangent.xyz));
+    T = normalize(T - dot(T, N) * N);
     // Bi-tangent vector.
     lowp vec3 B = cross(T, N) * aTangent.w;
     // Transpose the matrix by hand

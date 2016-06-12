@@ -3,7 +3,7 @@
 precision lowp float;
 
 #define AMBIENT_LIGHT_SIZE 0
-#define DIRECTIONAL_LIGHT_SIZE 0
+#define DIRECTIONAL_LIGHT_SIZE 1
 #define POINT_LIGHT_SIZE 1
 #define POINT_SHADOW_LIGHT_SIZE 1
 #define SPOT_LIGHT_SIZE 0

@@ -9,8 +9,8 @@ import Scene from 'webglue/scene';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
-import widgetScene from './scene/normalMap';
-import FPSCameraController from './fpsCameraController';
+import widgetScene from './scene/theater';
+import FPSCameraController from './blenderCameraController';
 
 import PointGeometry from './pointGeometry';
 import { TranslateWidget } from './widget';
@@ -56,7 +56,7 @@ container.appendChild(translateWidget);
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
 
-let controller = new FPSCameraController(context.canvas, window, camera);
+let controller = new FPSCameraController(window, camera);
 controller.registerEvents();
 
 // Build post-processing scene

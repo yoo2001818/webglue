@@ -4,7 +4,7 @@ import Texture from './texture';
 export default class Texture2D extends Texture {
   constructor(image, alpha = true, options = {
     mipmap: true,
-    minFilter: 'nearestMipmapLinear'
+    minFilter: 'linearMipmapLinear'
   }, name) {
     super(image, alpha ? 'rgba': 'rgb', 'uint8', options, name);
   }
