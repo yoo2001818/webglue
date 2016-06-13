@@ -19,7 +19,7 @@ import loadMTL from 'webglue/loader/loadMTL';
 
 import processMTL from '../processMTL';
 
-import { quat } from 'gl-matrix';
+import { mat4, mat3, vec3, quat } from 'gl-matrix';
 
 // A normal map testing scene.
 
@@ -96,6 +96,14 @@ export default function createScene() {
     mesh4.transform.invalidate();
   });
 
+  let chairMaterials = processMTL(
+    loadMTL(require('../geom/theater2.mtl'), {
+      'theaterlowpoly.png':
+        Texture2D.fromImage(require('../texture/theaterlowpoly.png'))
+    }));
+
+  let chairGeom = loadOBJ(require('../geom/theater2.obj'), true);
+
   /*let shader6 = new Shader(
     require('../shader/curve.vert'),
     require('../shader/curve.frag')
@@ -113,8 +121,76 @@ export default function createScene() {
   quat.rotateY(mesh6.transform.rotation, mesh6.transform.rotation, Math.PI);
   mesh6.transform.invalidate();*/
 
+  let chairMeshes = [];
+
+  window.addEventListener('keydown', e => {
+    if (e.keyCode === 82) {
+      chairMeshes.forEach(mesh => {
+        container.removeChild(mesh.mesh);
+      });
+      chairMeshes = [];
+    }
+  });
+
   return {
     container, camera, update: () => {
+      chairMeshes.forEach(options => {
+        // This looks horrible.
+        quat.multiply(options.mesh.transform.rotation,
+          options.parent.transform.rotation, options.originRot);
+        quat.rotateZ(options.mesh.transform.rotation,
+          options.mesh.transform.rotation,
+          Math.sin(Date.now() / 300) * Math.PI / 10);
+        vec3.transformMat4(options.mesh.transform.position, options.originPos,
+          options.parent.transform.matrix);
+        options.mesh.transform.invalidate();
+      });
+    },
+    onSelect: (pos, collisionMesh, collisionFace) => {
+      if (collisionMesh == null) return;
+      // Extract collision face's normal and tangent.
+      let indices = collisionMesh.geometry.getIndices();
+      // Calculate normal
+      let normalData = collisionMesh.geometry.getAttributes().aNormal.data;
+      let normal = vec3.create();
+      vec3.add(normal, normal, normalData.slice(
+        indices[collisionFace] * 3, indices[collisionFace] * 3 + 3));
+      vec3.add(normal, normal, normalData.slice(
+        indices[collisionFace + 1] * 3, indices[collisionFace + 1] * 3 + 3));
+      vec3.add(normal, normal, normalData.slice(
+        indices[collisionFace + 2] * 3, indices[collisionFace + 2] * 3 + 3));
+      vec3.normalize(normal, normal);
+      let normal2 = vec3.create();
+      vec3.transformMat3(normal2, normal, collisionMesh.normalMatrix);
+
+      // Convert the points to local point
+      let invMat = mat4.create();
+      mat4.invert(invMat, collisionMesh.transform.matrix);
+      let originPos = vec3.create();
+      vec3.transformMat4(originPos, pos, invMat);
+
+      let originRot = quat.create();
+      quat.rotationTo(originRot, [0, 1, 0], normal);
+      quat.rotateY(originRot, originRot, Math.PI);
+
+      // :P
+      let actualRot = quat.create();
+      quat.rotationTo(actualRot, [0, 1, 0], normal2);
+      quat.rotateY(actualRot, actualRot,
+        Math.PI);
+
+      chairGeom.forEach(geom => {
+        let mesh = new Mesh(geom.geometry,
+          chairMaterials[geom.material]);
+        container.appendChild(mesh);
+        mesh.transform.invalidate();
+        vec3.copy(mesh.transform.position, pos);
+        quat.copy(mesh.transform.rotation, actualRot);
+
+        chairMeshes.push({
+          mesh, originRot, originPos, parent: collisionMesh
+        });
+      });
     }
   };
 }

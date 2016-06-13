@@ -24,7 +24,8 @@ document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.overflow = 'hidden';
 
-const { container, camera, update: sceneUpdate } = widgetScene();
+const scene = widgetScene();
+const { container, camera, update: sceneUpdate } = scene;
 
 let grid = new Grid();
 container.appendChild(grid);
@@ -129,7 +130,7 @@ context.canvas.addEventListener('click', e => {
   vec3.normalize(diff, diff);
 
   let minMesh = null;
-  // let minFace = null;
+  let minFace = null;
   let minDist = Infinity;
 
   // Perform ray cast to all the meshes
@@ -141,7 +142,7 @@ context.canvas.addEventListener('click', e => {
     if (collision === null) return;
     if (minDist > collision.distance) {
       minMesh = child;
-      // minFace = collision.faceId;
+      minFace = collision.faceId;
       minDist = collision.distance;
     }
   });
@@ -164,6 +165,9 @@ context.canvas.addEventListener('click', e => {
 
   if (minMesh) {
     selectedMesh = minMesh;
+  }
+  if (scene.onSelect) {
+    scene.onSelect(anchor.transform.position, minMesh, minFace);
   }
 });
 
