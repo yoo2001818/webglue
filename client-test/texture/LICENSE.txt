@@ -18,6 +18,8 @@ http://visibleearth.nasa.gov/view.php?id=73580
 crate.jpg is obtained from here:
 http://opengameart.org/content/3-crate-textures-w-bump-normal
 
+theaterExit.png is copied from Wikipedia.
+
 theater*.png is created by myself. It's released under MIT license.
 
 anything else is obtained from here:

@@ -1,6 +1,8 @@
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
+import PointLight from 'webglue/light/point';
+import PointLightMesh from '../pointLightMesh';
 import DirectionalLight from 'webglue/light/directional';
 // import DirectionalLightMesh from '../directionalLightMesh';
 
@@ -12,7 +14,10 @@ import UniQuadGeometry from 'webglue/uniQuadGeometry';
 import QuadGeometry from 'webglue/quadGeometry';
 import Mesh from 'webglue/mesh';
 
-import loadOBJ from 'webglue/loadOBJ';
+import loadOBJ from 'webglue/loader/loadOBJ';
+import loadMTL from 'webglue/loader/loadMTL';
+
+import processMTL from '../processMTL';
 
 import { quat } from 'gl-matrix';
 
@@ -30,20 +35,22 @@ export default function createScene() {
     -Math.PI / 4);
   camera.transform.invalidate();
 
-  let light = new DirectionalLight({
+  let light = new PointLightMesh(new PointLight({
     color: new Float32Array([1, 1, 1]),
-    ambient: 1,
+    ambient: 0.5,
     diffuse: 1,
-    specular: 0.8
-  });
+    specular: 0.8,
+    attenuation: 0
+  }));
+  light.transform.position[1] = 14;
   quat.rotateX(light.transform.rotation, light.transform.rotation,
     -Math.PI / 4);
   quat.rotateY(light.transform.rotation, light.transform.rotation,
-    Math.PI / 4 * 3);
+    Math.PI / 2);
   light.transform.invalidate();
   container.appendChild(light);
 
-  let quadGeom = new QuadGeometry();
+  /* let quadGeom = new QuadGeometry();
 
   let material5 = new PhongMaterial({
     diffuseMap: Texture2D.fromImage(require('../texture/stone.jpg')),
@@ -58,31 +65,29 @@ export default function createScene() {
   container.appendChild(mesh5);
   mesh5.transform.scale[0] = 10;
   mesh5.transform.scale[2] = 10;
-  mesh5.transform.invalidate();
+  mesh5.transform.invalidate(); */
 
-  let theaterMaterials = {
-    BlackPlastic: new PhongMaterial({
-      specular: new Float32Array([0.21337, 0.21337, 0.21337]),
-      diffuse: new Float32Array([0.05136, 0.05295, 0.05630]),
-      ambient: new Float32Array([0.1, 0.1, 0.1]),
-      shininess: 96
-    }),
-    RedFabric: new PhongMaterial({
-      specular: new Float32Array([0.14, 0.06, 0.06]),
-      diffuse: new Float32Array([0.69510, 0.01153, 0.01153]),
-      ambient: new Float32Array([0.1, 0.02, 0.02]),
-      shininess: 7.843
-    }),
-    RedFabricNormalMap: new PhongMaterial({
-      diffuseMap: Texture2D.fromImage(require('../texture/theaterlowpoly.png')),
-      specular: new Float32Array([0.14, 0.06, 0.06]),
-      diffuse: new Float32Array([0.69510, 0.01153, 0.01153]),
-      ambient: new Float32Array([0.1, 0.02, 0.02]),
-      shininess: 7.843
-    })
-  };
+  // Welcome to ... LISP? (shrugs)
+  let theaterMaterials = processMTL(
+    loadMTL(require('../geom/theaterbuilding2.mtl'), {
+      'theaterWall.png':
+        Texture2D.fromImage(require('../texture/theaterWall.png')),
+      'theaterFloor.png':
+        Texture2D.fromImage(require('../texture/theaterFloor.png')),
+      'theaterFloorEmit.png':
+        Texture2D.fromImage(require('../texture/theaterFloorEmit.png')),
+      'theaterExit.png':
+        Texture2D.fromImage(require('../texture/theaterExit.png')),
+      'theaterScreen.png':
+        Texture2D.fromImage(require('../texture/theaterScreen.png'), {
+          mipmap: false,
+          minFilter: 'linear',
+          wrapS: 'clamp',
+          wrapT: 'clamp'
+        })
+    }));
 
-  let objGeom = loadOBJ(require('../geom/theater2.obj'), true);
+  let objGeom = loadOBJ(require('../geom/theaterbuilding2.obj'), true);
   objGeom.forEach(geom => {
     console.log(geom.material);
     let mesh4 = new Mesh(geom.geometry,
@@ -91,7 +96,7 @@ export default function createScene() {
     mesh4.transform.invalidate();
   });
 
-  let shader6 = new Shader(
+  /*let shader6 = new Shader(
     require('../shader/curve.vert'),
     require('../shader/curve.frag')
   );
@@ -106,7 +111,7 @@ export default function createScene() {
   mesh6.transform.position[1] = 4;
   mesh6.transform.position[2] = 4;
   quat.rotateY(mesh6.transform.rotation, mesh6.transform.rotation, Math.PI);
-  mesh6.transform.invalidate();
+  mesh6.transform.invalidate();*/
 
   return {
     container, camera, update: () => {
