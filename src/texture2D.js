@@ -8,10 +8,10 @@ export default class Texture2D extends Texture {
   }, name) {
     super(image, alpha ? 'rgba': 'rgb', 'uint8', options, name);
   }
-  static fromImage(url) {
+  static fromImage(url, options) {
     let image = new Image();
     image.src = url;
-    let texture = new Texture2D(image);
+    let texture = new Texture2D(image, true, options);
     return texture;
   }
 }

@@ -16,7 +16,7 @@ import BoxGeometry from '../channelBoxGeometry';
 import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';
-import loadOBJ from 'webglue/loadOBJ';
+import loadOBJ from 'webglue/loader/loadOBJ';
 
 import { quat, vec3 } from 'gl-matrix';
 
