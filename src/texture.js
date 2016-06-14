@@ -39,6 +39,10 @@ export default class Texture {
   isLoaded() {
     // If source is not available, just return true.
     if (this.source == null) return true;
+    // Check readystate...
+    if (this.source.readyState != null && this.source.readyState !== 4) {
+      return false;
+    }
     // If there is complete property and it is false, return false.
     if (this.source.complete === false) return false;
     // If this is an array, check complete property for every sub-source.

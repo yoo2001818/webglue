@@ -86,6 +86,7 @@ export default class RenderContext {
     const gl = this.gl;
     // Ignore if context is lost.
     if (gl.isContextLost()) return;
+    this.globalTickId ++;
     this.handleLoadingTextures();
     this.metrics.reset();
     // Read each render task, and perform rendering
@@ -184,6 +185,7 @@ export default class RenderContext {
     this.currentFramebuffer = null;
     // This defaults to back
     this.currentCullFace = gl.BACK;
+    this.globalTickId = 0;
     this.renderTickId = 0;
     this.textureBindId = 0;
     this.lightChanged = 0;
@@ -518,7 +520,9 @@ export default class RenderContext {
     internalTexture.unitId = leastId;
     internalTexture.use(this, texture, leastId);
     if (reupload) internalTexture.reupload(this, texture, leastId);
-    if (!internalTexture.loaded) this.loadingTextures.push(texture);
+    if (!internalTexture.loaded || internalTexture.update) {
+      this.loadingTextures.push(texture);
+    }
     this.metrics.textureCalls ++;
     return leastId;
   }
@@ -530,7 +534,7 @@ export default class RenderContext {
       // If the texture is unloaded from the GPU, it'll be re-added when
       // it's loaded again - so we can remove it.
       // If texture is already loaded - trivially we can remove it.
-      if (internalTexture.loaded || index === -1) {
+      if ((!internalTexture.update && internalTexture.loaded) || index === -1) {
         this.loadingTextures.splice(i, 1);
         i --;
         continue;

@@ -210,7 +210,7 @@ lowp float linstep(lowp float low, lowp float high, lowp float v) {
 
 lowp float lerpShadow(lowp float depth, lowp float moment, lowp float compare) {
   if (compare <= depth) return 1.0;
-  float p = smoothstep(compare - 0.0008, compare, depth);
+  float p = smoothstep(compare - 0.0015, compare, depth);
   float variance = max(moment - depth * depth, 0.0001);
   float d = compare - depth;
   float pMax = variance / (variance + d * d);
@@ -224,7 +224,8 @@ lowp float calcShadow(sampler2D shadowMap, lowp vec4 shadowCoord) {
   lowp float shadow;
 
   if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
-    lightPos.y < 0.0 || lightPos.y > 1.0
+    lightPos.y < 0.0 || lightPos.y > 1.0 ||
+    lightPos.z < 0.0 || lightPos.z > 1.0
   ) {
     shadow = 1.0;
   } else {

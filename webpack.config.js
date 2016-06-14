@@ -51,7 +51,7 @@ module.exports = {
         loader: 'url-loader?limit=10240'
       },
       {
-        test: /\.(png|jpe?g|gif|tiff)?$/,
+        test: /\.(png|jpe?g|gif|tiff|mp4|mkv|webm)?$/,
         loader: 'file-loader'
       }
     ]

@@ -10,7 +10,7 @@ lowp float decodeRGToFloat(lowp vec2 v) {
 
 void main() {
   lowp vec4 value = texture2D(uTexture, vTexCoord);
-  lowp float depth = decodeRGToFloat(value.rg);
+  lowp float depth = pow(decodeRGToFloat(value.rg), 10.0);
   lowp float moment = decodeRGToFloat(value.rg);
   gl_FragColor = vec4(depth, depth, moment, 1.0);
 }

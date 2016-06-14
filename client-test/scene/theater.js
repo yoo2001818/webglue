@@ -1,8 +1,8 @@
 import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
-import PointLight from 'webglue/light/point';
-import PointLightMesh from '../pointLightMesh';
+import PointShadowLight from 'webglue/light/pointShadow';
+import PointShadowLightMesh from '../pointShadowLightMesh';
 import DirectionalLight from 'webglue/light/directional';
 // import DirectionalLightMesh from '../directionalLightMesh';
 
@@ -19,7 +19,7 @@ import loadMTL from 'webglue/loader/loadMTL';
 
 import processMTL from '../processMTL';
 
-import { mat4, mat3, vec3, quat } from 'gl-matrix';
+import { mat4, vec3, quat } from 'gl-matrix';
 
 // A normal map testing scene.
 
@@ -35,14 +35,38 @@ export default function createScene() {
     -Math.PI / 4);
   camera.transform.invalidate();
 
-  let light = new PointLightMesh(new PointLight({
+  let shadowShader = new Shader(
+    require('../shader/shadow.vert'),
+    require('../shader/shadow.frag')
+  );
+
+  let shadowMat = new Material(shadowShader);
+  shadowMat.getShader = () => shadowShader;
+
+  let light = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),
     ambient: 0.5,
     diffuse: 1,
     specular: 0.8,
-    attenuation: 0
+    attenuation: 0,
+    camera: {
+      fov: Math.PI / 180 * 70,
+      near: 4,
+      far: 38
+    },
+    framebuffer: {
+      width: 512,
+      height: 512,
+      mode: 'depth',
+      defaultMaterial: shadowMat
+    },
+    task: {
+      frontFace: 'ccw',
+      clearColor: [1, 1, 1, 1]
+    }
   }));
   light.transform.position[1] = 14;
+  light.transform.position[2] = 7;
   quat.rotateX(light.transform.rotation, light.transform.rotation,
     -Math.PI / 4);
   quat.rotateY(light.transform.rotation, light.transform.rotation,
@@ -67,6 +91,21 @@ export default function createScene() {
   mesh5.transform.scale[2] = 10;
   mesh5.transform.invalidate(); */
 
+  var video = document.createElement('video');
+
+  video.src = require('../texture/videoTex.webm');
+  video.autoPlay = true;
+  video.play();
+  console.log(video);
+
+  let videoTex = new Texture2D(video, false,{
+    mipmap: false,
+    minFilter: 'linear',
+    wrapS: 'clamp',
+    wrapT: 'clamp'
+  });
+  videoTex.update = 3;
+
   // Welcome to ... LISP? (shrugs)
   let theaterMaterials = processMTL(
     loadMTL(require('../geom/theaterbuilding2.mtl'), {
@@ -78,13 +117,7 @@ export default function createScene() {
         Texture2D.fromImage(require('../texture/theaterFloorEmit.png')),
       'theaterExit.png':
         Texture2D.fromImage(require('../texture/theaterExit.png')),
-      'theaterScreen.png':
-        Texture2D.fromImage(require('../texture/theaterScreen.png'), {
-          mipmap: false,
-          minFilter: 'linear',
-          wrapS: 'clamp',
-          wrapT: 'clamp'
-        })
+      'theaterScreen.png': videoTex
     }));
 
   let objGeom = loadOBJ(require('../geom/theaterbuilding2.obj'), true);
@@ -104,22 +137,27 @@ export default function createScene() {
 
   let chairGeom = loadOBJ(require('../geom/theater2.obj'), true);
 
-  /*let shader6 = new Shader(
-    require('../shader/curve.vert'),
-    require('../shader/curve.frag')
+  let shader6 = new Shader(
+    require('../shader/screen.vert'),
+    require('../shader/screen.frag')
   );
 
   let material6 = new Material(shader6);
+  material6.use = () => ({
+    uTexture: light.light.colorTexture,
+    uScreenSize: (context) => new Float32Array([
+      context.width, context.height
+    ]),
+    uTextureSize: () => new Float32Array([
+      light.light.colorTexture.width / 2,
+      light.light.colorTexture.height / 2
+    ])
+  });
+  material6.update = true;
 
   let uniQuadGeom = new UniQuadGeometry();
   let mesh6 = new Mesh(uniQuadGeom, material6);
   container.appendChild(mesh6);
-  mesh6.transform.scale[0] = 8;
-  mesh6.transform.scale[1] = 4;
-  mesh6.transform.position[1] = 4;
-  mesh6.transform.position[2] = 4;
-  quat.rotateY(mesh6.transform.rotation, mesh6.transform.rotation, Math.PI);
-  mesh6.transform.invalidate();*/
 
   let chairMeshes = [];
 

@@ -65,7 +65,9 @@ export default class InternalTexture {
     this.loaded = false;
     this.lastUsed = 0;
     // Decides whether if it should update every frame or not.
-    this.update = texture.width == null || texture.height == null;
+    this.update = (texture.source == null &&
+      (texture.width == null || texture.height == null) ? 1 : 0)
+      || texture.update;
 
     // Width and height information for framebuffers.
     this.width = null;
@@ -118,6 +120,12 @@ export default class InternalTexture {
   }
   upload(context, texture, unit) {
     const gl = context.gl;
+    if (this.loaded && this.update &&
+      (context.globalTickId % this.update === 0)
+    ) {
+      this.reupload(context, texture, unit);
+      return;
+    }
     if (!this.loaded && texture.isLoaded()) {
       this.reupload(context, texture, unit);
       // Now set the textue properties..
