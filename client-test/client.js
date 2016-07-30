@@ -9,7 +9,7 @@ import Scene from 'webglue/scene';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from './canvasRenderContext';
 import Grid from './grid';
-import widgetScene from './scene/theater';
+import widgetScene from './scene/sandbox';
 import FPSCameraController from './blenderCameraController';
 
 import PointGeometry from './pointGeometry';

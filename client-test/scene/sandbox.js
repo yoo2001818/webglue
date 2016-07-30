@@ -8,7 +8,10 @@ import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 // import AmbientLight from 'webglue/light/ambient';
 // import DirectionalLightMesh from './directionalLightMesh';
-import PointLightMesh from '../pointLightMesh';
+import Shader from 'webglue/shader';
+import Material from 'webglue/material';
+import PointShadowLight from 'webglue/light/pointShadow';
+import PointShadowLightMesh from '../pointShadowLightMesh';
 
 import { quat } from 'gl-matrix';
 
@@ -16,7 +19,7 @@ function createMaterial(image) {
   let texture = Texture2D.fromImage(image);
   let material = new PhongMaterial({
     diffuseMap: texture,
-    specular: new Float32Array([0.4, 0.4, 0.4]),
+    specular: new Float32Array([0.1, 0.1, 0.1]),
     diffuse: new Float32Array([1, 1, 1]),
     ambient: new Float32Array([0.2, 0.2, 0.2]),
     shininess: 10.0
@@ -77,13 +80,36 @@ export default function createScene() {
   mesh4.transform.scale[2] = 5;
   mesh4.transform.invalidate();
 
-  let directionalLight = new PointLightMesh({
+  let shadowShader = new Shader(
+    require('../shader/shadow.vert'),
+    require('../shader/shadow.frag')
+  );
+
+  let shadowMat = new Material(shadowShader);
+  shadowMat.getShader = () => shadowShader;
+
+  let directionalLight = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),
     ambient: 1,
     diffuse: 1,
     specular: 0.8,
-    attenuation: 0.0008
-  });
+    attenuation: 0.0008,
+    camera: {
+      fov: Math.PI / 180 * 70,
+      near: 2,
+      far: 26
+    },
+    framebuffer: {
+      width: 512,
+      height: 512,
+      mode: 'depth',
+      defaultMaterial: shadowMat
+    },
+    task: {
+      frontFace: 'ccw',
+      clearColor: [1, 1, 1, 1]
+    }
+  }));
   container.appendChild(directionalLight);
 
   directionalLight.transform.position[1] = 10;

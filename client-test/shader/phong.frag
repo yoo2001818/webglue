@@ -210,8 +210,8 @@ lowp float linstep(lowp float low, lowp float high, lowp float v) {
 
 lowp float lerpShadow(lowp float depth, lowp float moment, lowp float compare) {
   if (compare <= depth) return 1.0;
-  float p = smoothstep(compare - 0.0015, compare, depth);
-  float variance = max(moment - depth * depth, 0.0001);
+  float p = smoothstep(compare - 0.0004, compare, depth);
+  float variance = max(moment - depth * depth, 0.000004);
   float d = compare - depth;
   float pMax = variance / (variance + d * d);
   return max(p, pMax);
