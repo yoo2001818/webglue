@@ -1,14 +1,14 @@
-import Shader from 'webglue/shader';
-import Material from 'webglue/material';
+import Shader from '../../shader';
+import Material from '../../material';
 
-import Mesh from 'webglue/mesh';
-import Container from 'webglue/container';
+import Mesh from '../../mesh';
+import Container from '../../container';
 
-import LineGeometry from './lineGeometry';
-import CircleGeometry from './circleGeometry';
-import ConeGeometry from 'webglue/coneGeometry';
-import BoxGeometry from 'webglue/boxGeometry';
-import CombinedGeometry from 'webglue/combinedGeometry';
+import LineGeometry from '../geom/line';
+import CircleGeometry from '../geom/circle';
+import ConeGeometry from '../../geom/coneGeometry';
+import BoxGeometry from '../../geom/boxGeometry';
+import CombinedGeometry from '../../geom/combinedGeometry';
 
 export default function buildWidget(geom) {
   return new CombinedGeometry([
@@ -89,19 +89,19 @@ const ROTATION_AXIS_GEOM = new CombinedGeometry([
 const ROTATION_GEOM = buildWidget(ROTATION_AXIS_GEOM);
 
 const SHADER = new Shader(
-  require('./shader/widget.vert'), require('./shader/widget.frag')
+  require('../shader/widget.vert'), require('../shader/widget.frag')
 );
 const MATERIAL = new Material(SHADER);
 
 let ROTATION_SHADER = new Shader(
-  require('./shader/widgetRotation.vert'),
-  require('./shader/widgetRotation.frag')
+  require('../shader/widgetRotation.vert'),
+  require('../shader/widgetRotation.frag')
 );
 let ROTATION_MATERIAL = new Material(ROTATION_SHADER);
 
 let BILLBOARD_SHADER = new Shader(
-  require('./shader/widgetBillboard.vert'),
-  require('./shader/widget.frag')
+  require('../shader/widgetBillboard.vert'),
+  require('../shader/widget.frag')
 );
 let BILLBOARD_MATERIAL = new Material(BILLBOARD_SHADER);
 BILLBOARD_MATERIAL.use = () => ({

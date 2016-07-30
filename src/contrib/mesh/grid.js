@@ -1,11 +1,11 @@
-import Mesh from '../src/mesh';
-import Geometry2D from '../src/geometry2D';
-import Material from '../src/material';
-import Shader from '../src/shader';
+import Mesh from '../../mesh';
+import Geometry2D from '../../geom/geometry2D';
+import Material from '../../material';
+import Shader from '../../shader';
 
 const shader = new Shader(
-  require('./shader/grid.vert'),
-  require('./shader/grid.frag')
+  require('../shader/grid.vert'),
+  require('../shader/grid.frag')
 );
 
 export default class Grid extends Mesh {

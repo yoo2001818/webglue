@@ -1,5 +1,5 @@
 import Geometry from './geometry';
-import createIndicesArray from './util/createIndicesArray';
+import createIndicesArray from '../util/createIndicesArray';
 
 import { vec2, vec3, vec4 } from 'gl-matrix';
 

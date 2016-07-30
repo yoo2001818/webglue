@@ -1,5 +1,5 @@
 import Geometry from './geometry';
-import createIndicesArray from './util/createIndicesArray';
+import createIndicesArray from '../util/createIndicesArray';
 
 export default class WireframeGeometry extends Geometry {
   constructor(geometry, name) {

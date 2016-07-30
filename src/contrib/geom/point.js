@@ -1,4 +1,4 @@
-import Geometry2D from '../src/geometry2D';
+import Geometry2D from '../../geom/geometry2D';
 
 const POINT_GEOM = Symbol('geometry_point');
 

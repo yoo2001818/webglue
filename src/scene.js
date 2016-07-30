@@ -29,6 +29,9 @@ export default class Scene {
     // Called by RenderContext to sort the meshes, etc.
     if (this.finalized) return;
     this.meshes.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
       let aShader = a.material.shader.numberId;
       let bShader = b.material.shader.numberId;
       if (aShader != bShader) {

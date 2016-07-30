@@ -1,8 +1,9 @@
 import { quat, vec3 } from 'gl-matrix';
 
 export default class BlenderCameraController {
-  constructor(node, camera) {
+  constructor(node, keyNode, camera) {
     this.node = node;
+    this.keyNode = keyNode;
     this.camera = camera;
     this.center = vec3.create();
     this.radius = 6;
@@ -75,7 +76,7 @@ export default class BlenderCameraController {
       this.mouseHeld = false;
       e.preventDefault();
     });
-    this.node.addEventListener('keydown', e => {
+    this.keyNode.addEventListener('keydown', e => {
       if (e.shiftKey) return;
       const { camera } = this;
       if (e.keyCode === 32) {

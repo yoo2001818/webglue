@@ -2,22 +2,21 @@ import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
 import PointShadowLight from 'webglue/light/pointShadow';
-import PointShadowLightMesh from '../pointShadowLightMesh';
-import DirectionalLight from 'webglue/light/directional';
+import PointShadowLightMesh from 'webglue/contrib/mesh/light/pointShadow';
+// import DirectionalLight from 'webglue/light/directional';
 // import DirectionalLightMesh from '../directionalLightMesh';
 
 import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
-import PhongMaterial from '../phongMaterial';
-import UniQuadGeometry from 'webglue/uniQuadGeometry';
-import QuadGeometry from 'webglue/quadGeometry';
+// import PhongMaterial from '../phongMaterial';
+// import QuadGeometry from 'webglue/quadGeometry';
 import Mesh from 'webglue/mesh';
 
 import loadOBJ from 'webglue/loader/loadOBJ';
 import loadMTL from 'webglue/loader/loadMTL';
 
-import processMTL from '../processMTL';
+import processMTL from 'webglue/contrib/util/processMTL';
 
 import { mat4, vec3, quat } from 'gl-matrix';
 
@@ -136,28 +135,6 @@ export default function createScene() {
     }));
 
   let chairGeom = loadOBJ(require('../geom/theater2.obj'), true);
-
-  let shader6 = new Shader(
-    require('../shader/screen.vert'),
-    require('../shader/screen.frag')
-  );
-
-  let material6 = new Material(shader6);
-  material6.use = () => ({
-    uTexture: light.light.colorTexture,
-    uScreenSize: (context) => new Float32Array([
-      context.width, context.height
-    ]),
-    uTextureSize: () => new Float32Array([
-      light.light.colorTexture.width / 2,
-      light.light.colorTexture.height / 2
-    ])
-  });
-  material6.update = true;
-
-  let uniQuadGeom = new UniQuadGeometry();
-  let mesh6 = new Mesh(uniQuadGeom, material6);
-  container.appendChild(mesh6);
 
   let chairMeshes = [];
 

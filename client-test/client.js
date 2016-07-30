@@ -1,19 +1,15 @@
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
-import WireframeGeometry from 'webglue/wireframeGeometry';
-
-import UniQuadGeometry from 'webglue/uniQuadGeometry';
-import Texture from 'webglue/texture';
-import Scene from 'webglue/scene';
+import WireframeGeometry from 'webglue/geom/wireframeGeometry';
 
 import Mesh from 'webglue/mesh';
-import CanvasRenderContext from './canvasRenderContext';
-import Grid from './grid';
+import CanvasRenderContext from 'webglue/contrib/canvasRenderContext';
+import Grid from 'webglue/contrib/mesh/grid';
 import widgetScene from './scene/sandbox';
-import FPSCameraController from './blenderCameraController';
+import FPSCameraController from 'webglue/contrib/controller/blender';
 
-import PointGeometry from './pointGeometry';
-import { TranslateWidget } from './widget';
+import PointGeometry from 'webglue/contrib/geom/point';
+import { TranslateWidget } from 'webglue/contrib/mesh/widget';
 
 import { quat, vec3, mat4 } from 'gl-matrix';
 import geometryRayIntersection from './util/geometryRayIntersection';
@@ -35,7 +31,8 @@ grid.transform.invalidate();
 
 let pointGeom = new PointGeometry();
 let anchorShader = new Shader(
-  require('./shader/anchorPoint.vert'), require('./shader/anchorPoint.frag')
+  require('webglue/contrib/shader/anchorPoint.vert'),
+  require('webglue/contrib/shader/anchorPoint.frag')
 );
 let anchorMat = new Material(anchorShader);
 anchorMat.use = () => ({
@@ -57,43 +54,8 @@ container.appendChild(translateWidget);
 let context = new CanvasRenderContext();
 context.mainScene.camera = camera;
 
-let controller = new FPSCameraController(window, camera);
+let controller = new FPSCameraController(context.canvas, window, camera);
 controller.registerEvents();
-
-// Build post-processing scene
-let outTexture = new Texture(null, 'rgb', 'uint8', {
-  minFilter: 'nearest',
-  magFilter: 'nearest',
-  wrapS: 'clamp',
-  wrapT: 'clamp',
-  mipmap: false
-});
-
-let postProcess = new Scene();
-let uniQuad = new UniQuadGeometry();
-
-let postShader = new Shader(
-  require('./shader/invert.vert'), require('./shader/border.frag')
-);
-let postMat = new Material(postShader);
-postMat.getShader = () => postMat.shader;
-postMat.use = () => ({
-  uTexture: outTexture,
-  uTextureOffset: () => new Float32Array(
-    [1 / context.width, 1 / context.height])
-});
-
-// TODO Implement availability to set null instead
-postProcess.camera = camera;
-
-let postMesh = new Mesh(uniQuad, postMat);
-postMesh.update(postProcess);
-
-let normalShader = new Shader(
-  require('./shader/normal.vert'), require('./shader/normal.frag')
-);
-let normalMat = new Material(normalShader);
-normalMat.getShader = () => normalMat.shader;
 
 context.tasks = [
   new RenderTask(context.mainScene, 'default')
@@ -219,7 +181,8 @@ function animate(currentTime) {
 window.requestAnimationFrame(animate);
 
 let wireShader = new Shader(
-  require('./shader/wireframe.vert'), require('./shader/wireframe.frag')
+  require('webglue/contrib/shader/wireframe.vert'),
+  require('webglue/contrib/shader/wireframe.frag')
 );
 
 let wireMaterial = new Material(wireShader);

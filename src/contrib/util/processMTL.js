@@ -1,7 +1,7 @@
 // Converts intermediate MTL tree to actual Material data.
 
-import PhongMaterial from './phongMaterial';
-import ConstantMaterial from './constantMaterial';
+import PhongMaterial from '../material/phong';
+import ConstantMaterial from '../material/constant';
 
 function calcAmbient(ambient, diffuse) {
   let output = new Float32Array(3);

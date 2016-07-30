@@ -1,4 +1,4 @@
-import Geometry from '../src/geometry';
+import Geometry from '../../geom/geometry';
 
 // A geometry object representing a circle.
 export default class CircleGeometry extends Geometry {

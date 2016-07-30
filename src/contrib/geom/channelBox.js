@@ -1,4 +1,4 @@
-import ChannelGeometry3D from 'webglue/channelGeometry3D';
+import ChannelGeometry3D from '../../geom/channelGeometry3D';
 
 // A box geometry used to test ChannelGeometry.
 export default class ChannelBoxGeometry extends ChannelGeometry3D {

@@ -1,38 +1,31 @@
-import PointGeometry from './pointGeometry';
-import LineGeometry from './lineGeometry';
-import Shader from 'webglue/shader';
-import Material from 'webglue/material';
-import Mesh from 'webglue/mesh';
-import DirectionalLight from 'webglue/light/directional';
-import Container from 'webglue/container';
+import PointGeometry from '../../geom/point';
+import LineGeometry from '../../geom/line';
+import Shader from '../../../shader';
+import Material from '../../../material';
+import Mesh from '../../../mesh';
+import Container from '../../../container';
 
 import { vec3, vec4, quat, mat4 } from 'gl-matrix';
 
 const pointGeom = new PointGeometry();
 const pointShader = new Shader(
-  require('./shader/pointLight.vert'), require('./shader/directionalLight.frag')
+  require('../../shader/pointLight.vert'),
+  require('../../shader/directionalLight.frag')
 );
 const pointMaterial = new Material(pointShader);
 pointMaterial.use = () => ({
   uColor: new Float32Array([0, 0, 0]),
-  uWidth: 1/40,
-  uFill: 6/40,
-  uLine: 18/40,
-  uCrossStart: 22/40,
-  uRadius: 40
+  uWidth: 1/25,
+  uFill: 6/25,
+  uLine1: 18/25,
+  uLine2: 25/25,
+  uRadius: 25
 });
 
 const lineGeom = new LineGeometry();
-const guideLineShader = new Shader(
-  require('./shader/line.vert'), require('./shader/line.frag')
-);
-const guideLineMaterial = new Material(guideLineShader);
-guideLineMaterial.use = () => ({
-  uColor: new Float32Array([0.15, 0.15, 0.15])
-});
-
 const lineShader = new Shader(
-  require('./shader/dottedLine.vert'), require('./shader/dottedLine.frag')
+  require('../../shader/dottedLine.vert'),
+  require('../../shader/dottedLine.frag')
 );
 const lineMaterial = new Material(lineShader);
 lineMaterial.use = () => ({
@@ -40,17 +33,15 @@ lineMaterial.use = () => ({
   uDotted: 0.2
 });
 
-export default class DirectionalLightMesh extends Container {
-  constructor(options) {
+
+export default class PointLightMesh extends Container {
+  constructor(light) {
     super();
-    this.appendChild(new DirectionalLight(options));
+    this.light = light;
+    this.appendChild(light);
     this.appendChild(new Mesh(pointGeom, pointMaterial));
-    this.guideLine = new Mesh(lineGeom, guideLineMaterial);
+    this.guideLine = new Mesh(lineGeom, lineMaterial);
     this.appendChild(this.guideLine);
-    this.line = new Mesh(lineGeom, lineMaterial);
-    this.line.transform.scale[0] = 20;
-    this.line.transform.invalidate();
-    this.appendChild(this.line);
   }
   update(context, parent) {
     super.update(context, parent);

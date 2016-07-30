@@ -1,5 +1,5 @@
 import ChannelGeometry from './channelGeometry';
-import createIndicesArray from './util/createIndicesArray';
+import createIndicesArray from '../util/createIndicesArray';
 
 import { vec2, vec3 } from 'gl-matrix';
 

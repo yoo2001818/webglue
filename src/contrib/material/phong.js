@@ -1,5 +1,5 @@
-import Material from '../src/material';
-import Shader from '../src/shader';
+import Material from '../../material';
+import Shader from '../../shader';
 
 // Bit mask of shader features.
 const SHADER_FEATURES = {
@@ -20,8 +20,8 @@ const SHADER_APPENDS = {
 // Processed shader instances.
 const SHADER_INSTANCES = [];
 
-const VERT_SHADER = require('./shader/phong.vert');
-const FRAG_SHADER = require('./shader/phong.frag');
+const VERT_SHADER = require('../shader/phong.vert');
+const FRAG_SHADER = require('../shader/phong.frag');
 
 function attachAppendage(code, appendage) {
   // Find #version and skip it.

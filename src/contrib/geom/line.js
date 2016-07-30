@@ -1,4 +1,4 @@
-import Geometry from '../src/geometry';
+import Geometry from '../../geom/geometry';
 
 const LINE_GEOM = Symbol('geometry_line');
 

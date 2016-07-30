@@ -1,7 +1,7 @@
-import Geometry3D from 'webglue/geometry3D';
-import Shader from 'webglue/shader';
-import Material from 'webglue/material';
-import Mesh from 'webglue/mesh';
+import Geometry3D from '../../geom/geometry3D';
+import Shader from '../../shader';
+import Material from '../../material';
+import Mesh from '../../mesh';
 
 import { vec3 } from 'gl-matrix';
 
@@ -24,7 +24,7 @@ coneGeom.indices = new Uint8Array([
 coneGeom.type = 'lines';
 
 const lineShader = new Shader(
-  require('./shader/line.vert'), require('./shader/line.frag')
+  require('../shader/line.vert'), require('../shader/line.frag')
 );
 const lineMaterial = new Material(lineShader);
 lineMaterial.use = () => ({

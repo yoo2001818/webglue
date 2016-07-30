@@ -1,15 +1,15 @@
-import Shader from 'webglue/shader';
-import Material from 'webglue/material';
+import Shader from '../../shader';
+import Material from '../../material';
 
-import Mesh from 'webglue/mesh';
+import Mesh from '../../mesh';
 
-import BoxGeometry from 'webglue/boxGeometry';
+import BoxGeometry from '../../geom/boxGeometry';
 
 const SKYBOX_GEOM = new BoxGeometry();
 SKYBOX_GEOM.cullFace = 'front';
 
 const SHADER = new Shader(
-  require('./shader/skybox.vert'), require('./shader/skybox.frag')
+  require('../shader/skybox.vert'), require('../shader/skybox.frag')
 );
 
 export default class SkyBox extends Mesh {

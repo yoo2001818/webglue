@@ -2,17 +2,17 @@ import Camera from 'webglue/camera';
 import Container from 'webglue/container';
 
 import PointShadowLight from 'webglue/light/point';
-import PointShadowLightMesh from '../pointShadowLightMesh';
-import SkyBox from '../skyBox';
+import PointShadowLightMesh from 'webglue/contrib/mesh/light/pointShadow';
+import SkyBox from 'webglue/contrib/mesh/light/skyBox';
 
 import TextureCube from 'webglue/textureCube';
 import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
-import PhongMaterial from '../phongMaterial';
+import PhongMaterial from 'webglue/contrib/material/phong';
 // import UniQuadGeometry from 'webglue/uniQuadGeometry';
 import QuadGeometry from 'webglue/quadGeometry';
-import BoxGeometry from '../channelBoxGeometry';
+import BoxGeometry from 'webglue/boxGeometry';
 import Mesh from 'webglue/mesh';
 
 import UVSphereGeometry from 'webglue/uvSphereGeometry';

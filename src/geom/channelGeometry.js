@@ -1,5 +1,5 @@
 import Geometry from './geometry';
-import createIndicesArray from './util/createIndicesArray';
+import createIndicesArray from '../util/createIndicesArray';
 
 // ChannelGeometry allows to specify each attribute index separately in a
 // vertex. (Indices must specify the vertex index per attribute.)

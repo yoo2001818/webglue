@@ -2,7 +2,7 @@
   "name": "webglue",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/",
   "scripts": {
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,7 +20,9 @@
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-eslint": "^2.0.0",
+    "gulp-revert-path": "^1.2.1",
     "gulp-util": "^3.0.7",
+    "gulp-wrap": "^0.13.0",
     "html-loader": "^0.4.3",
     "html-webpack-plugin": "^2.14.0",
     "import-glob-loader": "^1.1.0",
@@ -32,7 +34,6 @@
     "webpack-node-externals": "^1.2.0"
   },
   "dependencies": {
-    "gl-matrix": "^2.3.2",
-    "heap": "^0.2.6"
+    "gl-matrix": "^2.3.2"
   }
 }

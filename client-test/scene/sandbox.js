@@ -1,7 +1,7 @@
-import PhongMaterial from '../phongMaterial';
+import PhongMaterial from 'webglue/contrib/material/phong';
 import Texture2D from 'webglue/texture2D';
-import BoxGeometry from 'webglue/boxGeometry';
-import QuadGeometry from 'webglue/quadGeometry';
+import BoxGeometry from 'webglue/geom/boxGeometry';
+import QuadGeometry from 'webglue/geom/quadGeometry';
 // import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import Mesh from 'webglue/mesh';
 import Camera from 'webglue/camera';
@@ -11,7 +11,7 @@ import Container from 'webglue/container';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
 import PointShadowLight from 'webglue/light/pointShadow';
-import PointShadowLightMesh from '../pointShadowLightMesh';
+import PointShadowLightMesh from 'webglue/contrib/mesh/light/pointShadow';
 
 import { quat } from 'gl-matrix';
 
@@ -81,8 +81,8 @@ export default function createScene() {
   mesh4.transform.invalidate();
 
   let shadowShader = new Shader(
-    require('../shader/shadow.vert'),
-    require('../shader/shadow.frag')
+    require('webglue/contrib/shader/shadow.vert'),
+    require('webglue/contrib/shader/shadow.frag')
   );
 
   let shadowMat = new Material(shadowShader);

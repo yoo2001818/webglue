@@ -1,11 +1,12 @@
 let ID = 0;
 
 export default class Material {
-  constructor(shader, name) {
+  constructor(shader, name, priority = 100) {
     this.shader = shader;
     this.name = name || Symbol('material_' + (Math.random() * 1000 | 0));
     // ....
     this.numberId = ID ++;
+    this.priority = priority;
     // If it dynamically changes (i.e. contains function value), this should
     // be true.
     this.update = false;

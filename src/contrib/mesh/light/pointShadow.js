@@ -1,5 +1,5 @@
-import PointLightMesh from './pointLightMesh';
-import CameraMesh from './cameraMesh';
+import PointLightMesh from './point';
+import CameraMesh from '../camera';
 
 export default class PointShadowLightMesh extends PointLightMesh {
   constructor(light) {

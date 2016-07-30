@@ -3,7 +3,7 @@ import Container from 'webglue/container';
 
 import {
   TranslateWidget, ScaleWidget, RotationWidget
-} from '../widget';
+} from 'webglue/contrib/mesh/widget';
 
 import { quat } from 'gl-matrix';
 

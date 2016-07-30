@@ -1,4 +1,4 @@
-import RenderContext from 'webglue/webgl/renderContext';
+import RenderContext from '../webgl/renderContext';
 
 function getDocumentSize() {
   const { clientWidth: width, clientHeight: height } = document.documentElement;

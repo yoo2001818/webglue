@@ -1,5 +1,5 @@
-import Material from '../src/material';
-import Shader from '../src/shader';
+import Material from '../../material';
+import Shader from '../../shader';
 
 // This is copied from PhongMaterial. TODO Export these function to reuse it
 const SHADER_FEATURES = {
@@ -12,8 +12,8 @@ const SHADER_APPENDS = {
 // Processed shader instances.
 const SHADER_INSTANCES = [];
 
-const VERT_SHADER = require('./shader/constant.vert');
-const FRAG_SHADER = require('./shader/constant.frag');
+const VERT_SHADER = require('../shader/constant.vert');
+const FRAG_SHADER = require('../shader/constant.frag');
 
 function attachAppendage(code, appendage) {
   // Find #version and skip it.

@@ -1,5 +1,7 @@
 var gulp = require('gulp');
 var babel = require('gulp-babel');
+var wrap = require('gulp-wrap');
+var revertPath = require('gulp-revert-path');
 var eslint = require('gulp-eslint');
 
 // TODO: Add code coverage tool
@@ -19,4 +21,12 @@ gulp.task('babel', function() {
     .pipe(gulp.dest('lib'));
 });
 
-gulp.task('default', ['babel']);
+gulp.task('wrap', function() {
+  return gulp.src(['src/**/*.vert', 'src/**/*.frag'])
+    .pipe(wrap('module.exports = `<%= contents %>`;', {}, { parse: false }))
+    .pipe(babel())
+    .pipe(revertPath())
+    .pipe(gulp.dest('lib'));
+});
+
+gulp.task('default', ['babel', 'wrap']);

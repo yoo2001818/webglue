@@ -1,8 +1,8 @@
-import Material from '../src/material';
-import Shader from '../src/shader';
+import Material from '../../material';
+import Shader from '../../shader';
 
 const SOLID_SHADER = new Shader(
-  require('./shader/solid.vert'), require('./shader/solid.frag')
+  require('../shader/solid.vert'), require('../shader/solid.frag')
 );
 
 export default class SolidMaterial extends Material {
