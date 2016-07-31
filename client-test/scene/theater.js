@@ -9,6 +9,7 @@ import PointShadowLightMesh from 'webglue/contrib/mesh/light/pointShadow';
 import Texture2D from 'webglue/texture2D';
 import Shader from 'webglue/shader';
 import Material from 'webglue/material';
+import ShadowMaterial from 'webglue/contrib/material/shadow';
 // import PhongMaterial from '../phongMaterial';
 // import QuadGeometry from 'webglue/quadGeometry';
 import Mesh from 'webglue/mesh';
@@ -34,13 +35,7 @@ export default function createScene() {
     -Math.PI / 4);
   camera.transform.invalidate();
 
-  let shadowShader = new Shader(
-    require('../shader/shadow.vert'),
-    require('../shader/shadow.frag')
-  );
-
-  let shadowMat = new Material(shadowShader);
-  shadowMat.getShader = () => shadowShader;
+  let shadowMat = new ShadowMaterial();
 
   let light = new PointShadowLightMesh(new PointShadowLight({
     color: new Float32Array([1, 1, 1]),

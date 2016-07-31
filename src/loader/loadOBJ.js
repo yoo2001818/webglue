@@ -1,4 +1,4 @@
-import ChannelGeometry3D from '../channelGeometry3D';
+import ChannelGeometry3D from '../geom/channelGeometry3D';
 
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
