@@ -1,3 +1,5 @@
+import attachAppendage from './util/attachAppendage';
+
 let ID = 0;
 
 export default class Shader {
@@ -8,10 +10,10 @@ export default class Shader {
     // ....
     this.numberId = ID ++;
   }
-  getVertexShader() {
-    return this.vertex;
+  getVertexShader(lights) { // eslint-disable-line
+    return attachAppendage(this.vertex, lights);
   }
-  getFragmentShader() {
-    return this.fragment;
+  getFragmentShader(lights) { // eslint-disable-line
+    return attachAppendage(this.fragment, lights);
   }
 }

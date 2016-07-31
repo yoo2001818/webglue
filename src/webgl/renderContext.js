@@ -48,6 +48,14 @@ export default class RenderContext {
       spot: 'uSpotLight',
       pointShadow: 'uPointShadowLight'
     };
+    // Light type define names.
+    this.lightDefines = {
+      ambient: 'AMBIENT_LIGHT_SIZE',
+      directional: 'DIRECTIONAL_LIGHT_SIZE',
+      point: 'POINT_LIGHT_SIZE',
+      spot: 'SPOT_LIGHT_SIZE',
+      pointShadow: 'POINT_SHADOW_LIGHT_SIZE'
+    };
     // Light size uniform offsets.
     // Currently this uses ivec4 array, however it can be changed later.
     this.lightSizeUniform = 'uLightSize';
@@ -134,6 +142,7 @@ export default class RenderContext {
     this.mode = task.mode;
     this.defaultMaterial = task.defaultMaterial;
     // Construct light buffer data using scene lights
+    this.lightDefineData = null;
     this.updateLights(scene.lights);
     // Set current OpenGL state if scene's options exist.
     this.setOptions(task.options || this.defaultOptions);
@@ -170,6 +179,8 @@ export default class RenderContext {
     this.renderbuffers = {};
 
     // User should not set this value - this will be overrided anyway.
+    this.lightDefineData = null;
+    this.lightUniformData = {};
     this.lights = {};
     this.camera = null;
     this.mode = 'default';
@@ -315,7 +326,20 @@ export default class RenderContext {
       this.metrics.lights += lightsArray.length;
     }
     lightsBuf[this.lightSizeUniform] = lightSizeVec;
-    this.lights = lightsBuf;
+    this.lights = lights;
+    this.lightUniformData = lightsBuf;
+  }
+  getLightDefines() {
+    if (this.lightDefineData !== null) return this.lightDefineData;
+    let lightDefineData = '';
+    Object.keys(this.lightDefines).forEach(type => {
+      let lightsArray = this.lights[type];
+      let size = lightsArray == null ? 0 : lightsArray.length;
+      lightDefineData += '#define ' + this.lightDefines[type] + ' ' +
+        size + '\n';
+    });
+    this.lightDefineData = lightDefineData;
+    return this.lightDefineData;
   }
   useLights() {
     let shader = this.currentShader;
@@ -323,7 +347,8 @@ export default class RenderContext {
     if (lightUpdateTick != null && lightUpdateTick >= this.renderTickId) {
       return;
     }
-    this.bindUniforms(this.lights, shader.uniforms, shader.uniformTypes);
+    this.bindUniforms(this.lightUniformData, shader.uniforms,
+      shader.uniformTypes);
     this.currentLight[shader.name] = this.renderTickId;
   }
   useShader(shader) {
