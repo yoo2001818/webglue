@@ -15,7 +15,7 @@ export default class Geometry3D extends Geometry {
     return this.vertices.length / 3 | 0;
   }
   // Recalculate normals. Indices array must be present to use this.
-  calculateNormals() {
+  calculateNormals(smooth = false) {
     if (this.vertices === null) throw new Error('Vertices array is null');
     // If normal vector array is not present, create one.
     if (this.normals === null) {
@@ -37,9 +37,25 @@ export default class Geometry3D extends Geometry {
       vec3.cross(uv, p1, p2);
       vec3.normalize(uv, uv);
       // Done! Paste them to those three vertices.
-      this.normals.set(uv, vertexId1 * 3);
-      this.normals.set(uv, vertexId2 * 3);
-      this.normals.set(uv, vertexId3 * 3);
+      this.normals[vertexId1 * 3] += uv[0];
+      this.normals[vertexId1 * 3 + 1] += uv[1];
+      this.normals[vertexId1 * 3 + 2] += uv[2];
+      this.normals[vertexId2 * 3] += uv[0];
+      this.normals[vertexId2 * 3 + 1] += uv[1];
+      this.normals[vertexId2 * 3 + 2] += uv[2];
+      this.normals[vertexId3 * 3] += uv[0];
+      this.normals[vertexId3 * 3 + 1] += uv[1];
+      this.normals[vertexId3 * 3 + 2] += uv[2];
+    }
+    if (!smooth) return;
+    for (let vertexId = 0; vertexId < this.normals.length; vertexId += 3) {
+      let len = Math.sqrt(
+        this.normals[vertexId] * this.normals[vertexId] +
+        this.normals[vertexId + 1] * this.normals[vertexId + 1] +
+        this.normals[vertexId + 2] * this.normals[vertexId + 2]);
+      this.normals[vertexId] /= len;
+      this.normals[vertexId + 1] /= len;
+      this.normals[vertexId + 2] /= len;
     }
   }
   // Recalculate tangents. This shouldn't be required if normal map or

@@ -1,10 +1,11 @@
-import Geometry2D from './geometry2D';
+import Geometry3D from './geometry3D';
 
 // Uni-directional quad geometry used by post-processing scene.
-export default class UniQuadGeometry extends Geometry2D {
+export default class UniQuadGeometry extends Geometry3D {
   constructor(hSlice = 1, vSlice = 1) {
     super();
-    this.vertices = new Float32Array((hSlice + 1) * (vSlice + 1) * 2);
+    this.vertices = new Float32Array((hSlice + 1) * (vSlice + 1) * 3);
+    this.texCoords = new Float32Array((hSlice + 1) * (vSlice + 1) * 2);
     if ((hSlice + 1) * (vSlice + 1) > 65535) {
       this.indices = new Uint32Array(hSlice * vSlice * 6);
     } else {
@@ -15,9 +16,12 @@ export default class UniQuadGeometry extends Geometry2D {
       let yPos = y / vSlice * 2 - 1;
       for (let x = 0; x <= hSlice; ++x) {
         let xPos = x / hSlice * 2 - 1;
-        let pos = (y * (hSlice + 1) + x) * 2;
-        this.vertices[pos] = xPos;
-        this.vertices[pos + 1] = yPos;
+        let pos = y * (hSlice + 1) + x;
+        this.vertices[pos* 3] = xPos;
+        this.vertices[pos * 3 + 1] = yPos;
+        this.vertices[pos * 3 + 2] = 0;
+        this.texCoords[pos * 2] = xPos;
+        this.texCoords[pos * 2+ 1] = yPos;
       }
     }
     // Mark indices
@@ -38,5 +42,6 @@ export default class UniQuadGeometry extends Geometry2D {
         this.indices[pos + 5] = tl;
       }
     }
+    this.calculateNormals();
   }
 }

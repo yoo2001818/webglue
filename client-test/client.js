@@ -5,7 +5,7 @@ import WireframeGeometry from 'webglue/geom/wireframeGeometry';
 import Mesh from 'webglue/mesh';
 import CanvasRenderContext from 'webglue/contrib/canvasRenderContext';
 import Grid from 'webglue/contrib/mesh/grid';
-import widgetScene from './scene/sandbox';
+import widgetScene from './scene/uniQuad';
 import FPSCameraController from 'webglue/contrib/controller/blender';
 
 import PointGeometry from 'webglue/contrib/geom/point';
