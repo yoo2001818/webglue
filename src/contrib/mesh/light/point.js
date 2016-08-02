@@ -10,7 +10,7 @@ import { vec3, vec4, quat, mat4 } from 'gl-matrix';
 const pointGeom = new PointGeometry();
 const pointShader = new Shader(
   require('../../shader/pointLight.vert'),
-  require('../../shader/directionalLight.frag')
+  require('../../shader/pointLight.frag')
 );
 const pointMaterial = new Material(pointShader);
 pointMaterial.use = () => ({

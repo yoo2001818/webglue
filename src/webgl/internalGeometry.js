@@ -18,6 +18,12 @@ const CULL_FACE = {
   both: 0x0408
 };
 
+const USAGE = {
+  static: 0x88e4,
+  stream: 0x88e0,
+  dynamic: 0x88e8
+};
+
 export default class InternalGeometry {
   constructor() {
     this.vbo = null;
@@ -45,7 +51,7 @@ export default class InternalGeometry {
       this.typeArray = false;
     }
     this.name = geometry.name;
-    this.vbo = gl.createBuffer();
+    if (this.vbo == null) this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Convert the provided geometry to internal format
     this.attributes = [];
@@ -103,7 +109,7 @@ export default class InternalGeometry {
     }
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, pos, USAGE[geometry.usage] || USAGE.static);
     // Upload each attribute, one at a time
     for (let i = 0; i < this.attributes.length; ++i) {
       let attribute = this.attributes[i];
@@ -130,9 +136,10 @@ export default class InternalGeometry {
       } else {
         throw new Error('Unsupported indices array type');
       }
-      this.ebo = gl.createBuffer();
+      if (this.ebo == null) this.ebo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geomIndices, gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geomIndices,
+        USAGE[geometry.usage] || USAGE.static);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
       this.eboLength = geomIndices.length;
     }

@@ -1,6 +1,6 @@
 import PhongMaterial from 'webglue/contrib/material/phong';
 import Texture2D from 'webglue/texture2D';
-import BoxGeometry from 'webglue/geom/boxGeometry';
+import BoxGeometry from 'webglue/contrib/geom/channelBox';
 import QuadGeometry from 'webglue/geom/quadGeometry';
 // import UVSphereGeometry from 'webglue/uvSphereGeometry';
 import Mesh from 'webglue/mesh';
@@ -15,9 +15,10 @@ import PointShadowLightMesh from 'webglue/contrib/mesh/light/pointShadow';
 
 import { quat } from 'gl-matrix';
 
-function createMaterial(image) {
+function createMaterial(image, normalImage) {
   let texture = Texture2D.fromImage(image);
   let material = new PhongMaterial({
+    normalMap: normalImage && Texture2D.fromImage(normalImage),
     diffuseMap: texture,
     specular: new Float32Array([0.1, 0.1, 0.1]),
     diffuse: new Float32Array([1, 1, 1]),
@@ -35,6 +36,8 @@ export default function createScene() {
 
   let camera = new Camera();
   container.appendChild(camera);
+
+  geometry.usage = 'stream';
 
   quat.rotateY(camera.transform.rotation, camera.transform.rotation,
     Math.PI / 4);
@@ -121,11 +124,17 @@ export default function createScene() {
     directionalLight.transform.rotation, -Math.PI / 3);
   directionalLight.transform.invalidate();
 
+  let counter = 0;
   return {
     container, camera, update: (delta) => {
-      quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
+      counter += delta;
+      geometry.vertices[0] = -1 + Math.sin(counter * 3);
+      geometry.vertices[1] = -1 + Math.cos(counter * 3);
+      geometry.vertices[2] = 1 + Math.cos(counter * 2);
+      geometry.valid = false;
+      /* quat.rotateY(mesh.transform.rotation, mesh.transform.rotation,
           Math.PI / 180 * 120 * delta);
-      mesh.transform.invalidate();
+      mesh.transform.invalidate(); */
     }
   };
 }

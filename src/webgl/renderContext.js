@@ -476,8 +476,10 @@ export default class RenderContext {
     }
   }
   useGeometry(geometry, previousShader) {
-    // We can do a ignore-check if geometry is same.
-    if (this.currentGeometry && geometry.name === this.currentGeometry.name) {
+    // We can do a ignore-check if geometry is same and valid.
+    if (geometry.valid && this.currentGeometry &&
+      geometry.name === this.currentGeometry.name
+    ) {
       // If previous shader and current shader is same, just ignore it.
       if (this.currentShader === previousShader) return;
       // Or if both shader follows the shared attributes, we can ignore it.
@@ -488,6 +490,10 @@ export default class RenderContext {
     // Otherwise, we need to apply the geometry.
     let internalGeometry = this.geometries[geometry.name];
     if (internalGeometry) {
+      if (!geometry.valid) {
+        internalGeometry.upload(this, geometry);
+        geometry.valid = true;
+      }
       // If geometry object exists, just call it.
       internalGeometry.use(this, geometry);
       this.currentGeometry = internalGeometry;
@@ -495,6 +501,7 @@ export default class RenderContext {
       // If it doesn't, create new one.
       internalGeometry = new InternalGeometry();
       internalGeometry.upload(this, geometry);
+      geometry.valid = true;
       this.geometries[geometry.name] = internalGeometry;
       internalGeometry.use(this, geometry);
       this.currentGeometry = internalGeometry;
