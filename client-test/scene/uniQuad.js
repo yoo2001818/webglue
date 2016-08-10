@@ -1,4 +1,4 @@
-// import PhongMaterial from 'webglue/contrib/material/phong';
+import PhongMaterial from 'webglue/contrib/material/phong';
 // import Texture2D from 'webglue/texture2D';
 import UniQuadGeometry from 'webglue/geom/uniQuad3DGeometry';
 import Mesh from 'webglue/mesh';
@@ -7,22 +7,13 @@ import Container from 'webglue/container';
 import PointLight from 'webglue/light/point';
 import PointLightMesh from 'webglue/contrib/mesh/light/point';
 
-import Shader from 'webglue/shader';
-import Material from 'webglue/material';
-
 import { quat } from 'gl-matrix';
 
 export default function createScene() {
   let container = new Container();
 
-  let w = 60;
-  let h = 60;
-
-  let shader = new Shader(
-    require('webglue/contrib/shader/normal.vert'),
-    require('webglue/contrib/shader/normal.frag')
-  );
-  let material = new Material(shader);
+  let w = 100;
+  let h = 100;
 
   let geometry = new UniQuadGeometry(w - 1, h - 1);
 
@@ -37,13 +28,12 @@ export default function createScene() {
     -Math.PI / 3);
   camera.transform.invalidate();
 
-  let mesh = new Mesh(geometry, material);
-  /*new PhongMaterial({
+  let mesh = new Mesh(geometry, new PhongMaterial({
     specular: new Float32Array([0.8, 0.8, 0.8]),
     diffuse: new Float32Array([73 / 255, 25 / 255, 0]),
     ambient: new Float32Array([18 / 255, 6 / 255, 0]),
     shininess: 50.0
-  }));*/
+  }));
   container.appendChild(mesh);
 
   let directionalLight = new PointLightMesh(new PointLight({
