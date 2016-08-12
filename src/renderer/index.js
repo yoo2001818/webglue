@@ -1,5 +1,6 @@
 import ShaderManager from './shaderManager';
 import GeometryManager from './geometryManager';
+import StateManager from './stateManager';
 
 export default class Renderer {
   constructor(gl) {
@@ -7,5 +8,6 @@ export default class Renderer {
 
     this.shaders = new ShaderManager(this);
     this.geometries = new GeometryManager(this);
+    this.state = new StateManager(this);
   }
 }
