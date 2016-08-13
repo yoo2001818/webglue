@@ -112,7 +112,10 @@ export default class StateManager {
     this.setEnabled(gl.BLEND, BIT_POS.blend, options);
     if (!options) return;
     // Will it be safe?
-    if (options.color) gl.blendColor.apply(gl, options.color);
+    if (options.color) {
+      let arr = options.color;
+      gl.blendColor(arr[0], arr[1], arr[2], arr[3]);
+    }
     if (options.equation != null) {
       if (typeof options.equation === 'number') {
         gl.blendEquation(options.equation);

@@ -23,7 +23,7 @@ let geometry = renderer.geometries.create({
   indices: new Uint16Array([
     0, 1, 2, 2, 3, 0
   ]),
-  mode: 'triangles'
+  mode: gl.TRIANGLES
 });
 
 // And provide sample data
@@ -32,7 +32,7 @@ renderer.render([{
     clearColor: '#000000',
     clearDepth: 1,
     // clearStencil: 0,
-    cullFace: 'front'
+    cull: gl.BACK
   },
   passes: [{
     shader: shader,
