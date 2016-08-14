@@ -4,6 +4,7 @@ export default class GeometryManager {
     this.geometries = [];
   }
   create(options) {
-
+    // attributes, indices, mode (or passes)
+    
   }
 }

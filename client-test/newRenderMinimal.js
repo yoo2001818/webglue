@@ -16,9 +16,12 @@ let shader = renderer.shaders.create(
 );
 let geometry = renderer.geometries.create({
   attributes: {
-    aTexCoord: new Float32Array([
-      0, 0, 0, 1, 1, 1, 1, 0
-    ])
+    aTexCoord: {
+      axis: 2,
+      data: new Float32Array([
+        0, 0, 0, 1, 1, 1, 1, 0
+      ])
+    }
   },
   indices: new Uint16Array([
     0, 1, 2, 2, 3, 0

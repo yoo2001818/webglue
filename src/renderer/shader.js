@@ -136,6 +136,7 @@ export default class Shader {
     // Nothing to do yet
     const gl = this.renderer.gl;
     gl.deleteProgram(this.program);
+    this.program = null;
   }
 }
 
