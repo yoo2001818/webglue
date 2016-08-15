@@ -132,6 +132,82 @@ export default class Shader {
     if (this.program === null) this.upload();
     gl.useProgram(this.program);
   }
+  setUniforms(originalValues,
+    uniforms = this.uniforms,
+    uniformTypes = this.uniformTypes
+  ) {
+    let values = originalValues;
+    if (typeof originalValues === 'function') {
+      values = originalValues(this, this.renderer);
+    }
+    if (typeof uniformTypes === 'number') {
+      return this.setUniform(values, uniforms, uniformTypes);
+    }
+    if (Array.isArray(values)) {
+      for (let i = 0; i < values; ++i) {
+        if (uniforms[i] == null) continue;
+        this.setUniforms(values[i], uniforms, uniformTypes);
+      }
+    } else {
+      for (let i in values) {
+        if (uniforms[i] == null) continue;
+        this.setUniforms(values[i], uniforms, uniformTypes);
+      }
+    }
+  }
+  setUniform(value, key, type) {
+    const gl = this.renderer.gl;
+    if (key == null) return;
+    switch (type) {
+    case gl.FLOAT_VEC2:
+      gl.uniform2fv(key, value);
+      break;
+    case gl.FLOAT_VEC3:
+      gl.uniform3fv(key, value);
+      break;
+    case gl.FLOAT_VEC4:
+      gl.uniform4fv(key, value);
+      break;
+    case gl.INT_VEC2:
+    case gl.BOOL_VEC2:
+      gl.uniform2iv(key, value);
+      break;
+    case gl.INT_VEC3:
+    case gl.BOOL_VEC3:
+      gl.uniform3iv(key, value);
+      break;
+    case gl.INT_VEC4:
+    case gl.BOOL_VEC4:
+      gl.uniform4iv(key, value);
+      break;
+    case gl.BOOL:
+    case gl.BYTE:
+    case gl.UNSIGNED_BYTE:
+    case gl.SHORT:
+    case gl.UNSIGNED_SHORT:
+    case gl.INT:
+    case gl.UNSIGNED_INT:
+      gl.uniform1i(key, value);
+      break;
+    case gl.FLOAT:
+      gl.uniform1f(key, value);
+      break;
+    case gl.FLOAT_MAT2:
+      gl.uniformMatrix2fv(key, false, value);
+      break;
+    case gl.FLOAT_MAT3:
+      gl.uniformMatrix3fv(key, false, value);
+      break;
+    case gl.FLOAT_MAT4:
+      gl.uniformMatrix4fv(key, false, value);
+      break;
+    case gl.SAMPLER_2D:
+    case gl.SAMPLER_CUBE:
+      // TODO Apply texture...
+      // gl.uniform1i(key, this.useTexture(value));
+      break;
+    }
+  }
   dispose() {
     // Nothing to do yet
     const gl = this.renderer.gl;

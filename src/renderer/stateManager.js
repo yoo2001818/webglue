@@ -11,6 +11,7 @@ const BIT_POS = {
 
 export default class StateManager {
   constructor(renderer) {
+    this.reset = false;
     this.renderer = renderer;
     this.state = 0;
     /*this.state = {
@@ -82,21 +83,13 @@ export default class StateManager {
   }
   reset(options) {
     // Resets the state (Basically, disables everything unless specified.)
-    this.set(Object.assign({
-      blend: false,
-      cull: false,
-      depth: false,
-      dither: false,
-      polygonOffset: false,
-      scissor: false,
-      stencil: false
-    }, options));
+    this.set(options, true);
   }
   setEnabled(key, pos, value) {
     const gl = this.renderer.gl;
-    if (value == null) return;
+    if (value == null && !this.reset) return;
     // If value is not 'false', it's enabled.
-    let enabled = value !== false;
+    let enabled = !value;
     if ((this.state & pos !== 0) === enabled) return;
     // Set the bit according to the bit set.
     if (enabled) {
@@ -134,13 +127,13 @@ export default class StateManager {
   }
   setColorMask(options) {
     const gl = this.renderer.gl;
-    if (options == null) return;
-    if (options === false) {
+    if (options == null && !this.reset) return;
+    if (!options) {
       if ((this.state & BIT_POS.colorMask) !== 0) {
         gl.colorMask(true, true, true, true);
         this.state &= ~BIT_POS.colorMask;
       }
-    } else if (options) {
+    } else {
       gl.colorMask(options[0], options[1], options[2], options[3]);
       this.state |= BIT_POS.colorMask;
     }
@@ -185,7 +178,8 @@ export default class StateManager {
     }
     if (flag !== 0) gl.clear(flag);
   }
-  set(options) {
+  set(options, reset = false) {
+    this.doReset = reset;
     const gl = this.renderer.gl;
     this.setBlend(options.blend);
     this.setColorMask(options.colorMask);

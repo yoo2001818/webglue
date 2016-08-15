@@ -4,12 +4,13 @@ export default class Geometry {
     // Raw options given by the user
     this.attributes = options.attributes;
     this.indices = options.indices;
-    this.type = options.type;
+    this.mode = options.mode;
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
     this.eboType = null;
     this.attributePos = null;
+    this.vertexCount = 0;
   }
   upload() {
     if (this.vbo !== null) return;
@@ -73,6 +74,7 @@ export default class Geometry {
       });
       pos += vertexCount * size * entry.axis;
     }
+    this.vertexCount = vertexCount;
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
     gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
@@ -124,6 +126,14 @@ export default class Geometry {
       gl.enableVertexAttribArray(attribPos);
       gl.vertexAttribPointer(attribPos, attribute.axis, attribute.type,
         false, attribute.size, attribute.pos);
+    }
+  }
+  render() {
+    const gl = this.renderer.gl;
+    if (this.ebo !== null) {
+      gl.drawElements(this.mode, this.eboLength, this.eboType, 0);
+    } else {
+      gl.drawArrays(this.mode, 0, this.vertexCount);
     }
   }
   // TODO render

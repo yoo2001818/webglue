@@ -40,9 +40,11 @@ renderer.render([{
   passes: [{
     shader: shader,
     uniforms: {},
-    geometries: [{
+    passes: [{
       geometry: geometry,
-      passes: [{}]
+      draw: [{
+        // No extra data is provided... really.
+      }]
     }]
   }],
   // null means main framebuffer
