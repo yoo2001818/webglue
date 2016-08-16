@@ -28,11 +28,13 @@ export default class Shader {
         gl.getProgramInfoLog(program));
     }
 
+    /*
     // Clean up the shaders
     gl.detachShader(program, this.shader.vert);
     gl.detachShader(program, this.shader.frag);
     gl.deleteShader(this.shader.vert);
     gl.deleteShader(this.shader.frag);
+    */
 
     this.program = program;
     this.attributes = {};

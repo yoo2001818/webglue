@@ -4,7 +4,7 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   context: __dirname,
-  entry: 'client',
+  entry: 'newRenderMinimal',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',

@@ -27,7 +27,16 @@ export default class Renderer {
     if (pass.uniforms) {
       this.shaders.setUniforms(pass.uniforms);
     }
-
+    if (pass.geometry) {
+      this.geometries.use(pass.geometry);
+    }
+    if (pass.draw) {
+      this.geometries.draw();
+    }
+    // Children
+    if (pass.passes) {
+      pass.passes.forEach(data => this.renderPass(data, pass));
+    }
     // Pop (Exit)
     if (parent != null) {
       // if (pass.options) this.state.set(parent.options)

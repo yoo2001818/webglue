@@ -1,7 +1,9 @@
-import Renderer from 'webglue/webgl/renderer';
+import Renderer from 'webglue/renderer';
 
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
+canvas.width = 800;
+canvas.height = 600;
 let gl = canvas.getContext('webgl', { antialias: false }) ||
   canvas.getContext('experimental-webgl');
 
@@ -29,24 +31,28 @@ let geometry = renderer.geometries.create({
   mode: gl.TRIANGLES
 });
 
-// And provide sample data
-renderer.render([{
-  options: {
-    clearColor: '#000000',
-    clearDepth: 1,
-    // clearStencil: 0,
-    cull: gl.BACK
-  },
-  passes: [{
-    shader: shader,
-    uniforms: {},
+function animate() {
+  // And provide sample data
+  renderer.render([{
+    options: {
+      clearColor: new Float32Array([0, 0, 0, 1]),
+      clearDepth: 1,
+      // clearStencil: 0,
+      cull: gl.FRONT,
+      depth: gl.LEQUAL
+    },
     passes: [{
-      geometry: geometry,
-      draw: [{
-        // No extra data is provided... really.
+      shader: shader,
+      uniforms: {},
+      passes: [{
+        geometry: geometry,
+        draw: true
       }]
-    }]
-  }],
-  // null means main framebuffer
-  output: null
-}]);
+    }],
+    // null means main framebuffer
+    output: null
+  }]);
+  window.requestAnimationFrame(animate);
+}
+
+window.requestAnimationFrame(animate);

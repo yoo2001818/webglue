@@ -8,7 +8,7 @@ export default class GeometryManager {
   }
   create(options) {
     // attributes, indices, mode (or passes)
-    let geometry = new Geometry(options);
+    let geometry = new Geometry(this.renderer, options);
     this.geometries.push(geometry);
     return geometry;
   }
@@ -16,7 +16,7 @@ export default class GeometryManager {
     this.current = geometry;
     geometry.use();
   }
-  render() {
-    this.current.render();
+  draw() {
+    this.current.draw();
   }
 }

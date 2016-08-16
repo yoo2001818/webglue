@@ -128,10 +128,10 @@ export default class Geometry {
         false, attribute.size, attribute.pos);
     }
   }
-  render() {
+  draw() {
     const gl = this.renderer.gl;
     if (this.ebo !== null) {
-      gl.drawElements(this.mode, this.eboLength, this.eboType, 0);
+      gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
     } else {
       gl.drawArrays(this.mode, 0, this.vertexCount);
     }

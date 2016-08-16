@@ -7,7 +7,7 @@ export default class ShaderManager {
   }
   create(vert, frag) {
     // TODO It should support 'define', but not for now.
-    let shader = new Shader(this, vert, frag);
+    let shader = new Shader(this.renderer, vert, frag);
     this.shaders.push(shader);
     return shader;
   }

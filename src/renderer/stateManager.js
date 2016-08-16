@@ -89,8 +89,8 @@ export default class StateManager {
     const gl = this.renderer.gl;
     if (value == null && !this.reset) return;
     // If value is not 'false', it's enabled.
-    let enabled = !value;
-    if ((this.state & pos !== 0) === enabled) return;
+    let enabled = value !== false && value != null;
+    if (((this.state & pos) !== 0) === enabled) return;
     // Set the bit according to the bit set.
     if (enabled) {
       this.state |= pos;
@@ -155,6 +155,7 @@ export default class StateManager {
     const gl = this.renderer.gl;
     this.setEnabled(gl.DEPTH_TEST, BIT_POS.depth, options);
     if (!options) return;
+    if (typeof options === 'number') return gl.depthFunc(options);
     if (options.func != null) gl.depthFunc(options.func);
     if (options.mask != null) gl.depthMask(options.mask);
     if (options.range) gl.depthRange(options.range[0], options.range[1]);
