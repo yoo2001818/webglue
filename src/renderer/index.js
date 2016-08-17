@@ -14,8 +14,14 @@ export default class Renderer {
     // Render each pass
     data.forEach(pass => this.renderPass(pass));
   }
-  renderPass(pass, parent = null) {
-    // Push (Enter)
+  renderPass(pass, parent) {
+    let currentLevel = {
+      uniforms: Object.assign({}, parent && parent.uniforms, pass.uniforms),
+      options: Object.assign({}, parent && parent.options, pass.options),
+      shader: pass.shader || (parent && parent.shader),
+      geometry: pass.geometry || (parent && parent.geometry)
+    };
+    // -- Push (Enter)
     // Set state
     if (pass.options) {
       this.state.set(pass.options, parent == null);
@@ -23,23 +29,51 @@ export default class Renderer {
     // TODO Set output
     if (pass.shader) {
       this.shaders.use(pass.shader);
-    }
-    if (pass.uniforms) {
+      // Reset all uniforms, including parent uniforms
+      this.shaders.setUniforms(currentLevel.uniforms);
+    } else if (pass.uniforms) {
+      // Set uniforms normally
       this.shaders.setUniforms(pass.uniforms);
     }
     if (pass.geometry) {
       this.geometries.use(pass.geometry);
     }
+    // -- Draw call... quite simple.
     if (pass.draw) {
       this.geometries.draw();
     }
-    // Children
+    // -- Children
     if (pass.passes) {
-      pass.passes.forEach(data => this.renderPass(data, pass));
+      pass.passes.forEach(data => this.renderPass(data, currentLevel));
     }
-    // Pop (Exit)
-    if (parent != null) {
-      // if (pass.options) this.state.set(parent.options)
+    // -- Pop (Exit)
+    if (parent == null) return;
+    // Restore uniforms and shader
+    if (parent.shader && pass.shader) {
+      this.shaders.use(parent.shader);
+      // Reset all uniforms, including parent uniforms
+      this.shaders.setUniforms(parent.uniforms);
+    } else if (parent.uniforms && pass.uniforms) {
+      // Restore uniforms...
+      for (let key in pass.uniforms) {
+        // We can't reset if parent hasn't set the uniform
+        // (Unless we set it to 0)
+        if (parent.uniforms[key] == null) continue;
+        this.shaders.setUniforms({[key]: parent.uniforms[key]});
+      }
+    }
+    // Restore geometry
+    if (parent.geometry && pass.geometry) {
+      this.geometries.use(parent.geometry);
+    }
+    // Restore options
+    if (parent.options && pass.options) {
+      let recoverOpts = {};
+      for (let key in pass.options) {
+        // Disable if not found
+        recoverOpts[key] = parent.options[key] || false;
+      }
+      this.state.set(recoverOpts);
     }
   }
 }

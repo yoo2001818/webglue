@@ -148,12 +148,12 @@ export default class Shader {
     if (Array.isArray(values)) {
       for (let i = 0; i < values; ++i) {
         if (uniforms[i] == null) continue;
-        this.setUniforms(values[i], uniforms, uniformTypes);
+        this.setUniforms(values[i], uniforms[i], uniformTypes[i]);
       }
     } else {
       for (let i in values) {
         if (uniforms[i] == null) continue;
-        this.setUniforms(values[i], uniforms, uniformTypes);
+        this.setUniforms(values[i], uniforms[i], uniformTypes[i]);
       }
     }
   }

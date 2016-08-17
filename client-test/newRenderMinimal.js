@@ -43,11 +43,18 @@ function animate() {
     },
     passes: [{
       shader: shader,
-      uniforms: {},
+      uniforms: {
+        uScale: 0.5,
+        uTint: new Float32Array([0, 0, 0, 0])
+      },
+      geometry: geometry,
       passes: [{
-        geometry: geometry,
+        uniforms: {
+          uScale: 1,
+          uTint: new Float32Array([0, 0, 1, 1])
+        },
         draw: true
-      }]
+      }, { draw: true }]
     }],
     // null means main framebuffer
     output: null
