@@ -55,12 +55,11 @@ export default class Renderer {
       this.shaders.setUniforms(parent.uniforms);
     } else if (parent.uniforms && pass.uniforms) {
       // Restore uniforms...
+      let recoverOpts = {};
       for (let key in pass.uniforms) {
-        // We can't reset if parent hasn't set the uniform
-        // (Unless we set it to 0)
-        if (parent.uniforms[key] == null) continue;
-        this.shaders.setUniforms({[key]: parent.uniforms[key]});
+        recoverOpts[key] = parent.uniforms[key] || false;
       }
+      this.shaders.setUniforms(recoverOpts);
     }
     // Restore geometry
     if (parent.geometry && pass.geometry) {

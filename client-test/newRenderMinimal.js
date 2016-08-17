@@ -44,8 +44,7 @@ function animate() {
     passes: [{
       shader: shader,
       uniforms: {
-        uScale: 0.5,
-        uTint: new Float32Array([0, 0, 0, 0])
+        uScale: 0.5
       },
       geometry: geometry,
       passes: [{
