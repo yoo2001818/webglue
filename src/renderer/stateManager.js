@@ -6,7 +6,8 @@ const BIT_POS = {
   polygonOffset: 16,
   scissor: 32,
   stencil: 64,
-  colorMask: 128
+  colorMask: 128,
+  depthMask: 256
 };
 
 export default class StateManager {
@@ -134,8 +135,23 @@ export default class StateManager {
         this.state &= ~BIT_POS.colorMask;
       }
     } else {
-      gl.colorMask(options[0], options[1], options[2], options[3]);
+      gl.colorMask(!options[0], !options[1], !options[2], !options[3]);
       this.state |= BIT_POS.colorMask;
+    }
+  }
+  setDepthMask(value) {
+    const gl = this.renderer.gl;
+    if (value == null && !this.reset) return;
+    // If value is not 'false', it's enabled.
+    let enabled = value !== false && value != null;
+    if (((this.state & BIT_POS.depthMask) !== 0) === enabled) return;
+    // Set the bit according to the bit set.
+    if (enabled) {
+      this.state |= BIT_POS.depthMask;
+      gl.depthMask(false);
+    } else {
+      this.state &= ~BIT_POS.depthMask;
+      gl.depthMask(true);
     }
   }
   setCull(options) {
@@ -159,6 +175,39 @@ export default class StateManager {
     if (options.func != null) gl.depthFunc(options.func);
     if (options.mask != null) gl.depthMask(options.mask);
     if (options.range) gl.depthRange(options.range[0], options.range[1]);
+  }
+  setStencil(options) {
+    const gl = this.renderer.gl;
+    this.setEnabled(gl.STENCIL_TEST, BIT_POS.stencil, options);
+    if (!options) return;
+    if (options.mask != null) {
+      if (typeof options.mask === 'number') {
+        gl.stencilMask(options.mask);
+      } else {
+        gl.stencilMaskSeparate(gl.FRONT, options.mask[0]);
+        gl.stencilMaskSeparate(gl.BACK, options.mask[1]);
+      }
+    }
+    if (options.func != null) {
+      if (!Array.isArray(options.func[0])) {
+        gl.stencilFunc(options.func[0], options.func[1], options.func[2]);
+      } else {
+        gl.stencilFuncSeparate(gl.FRONT, options.func[0][0],
+          options.func[0][1], options.func[0][2]);
+        gl.stencilFuncSeparate(gl.BACK, options.func[1][0],
+          options.func[1][1], options.func[1][2]);
+      }
+    }
+    if (options.op != null) {
+      if (!Array.isArray(options.op[0])) {
+        gl.stencilOp(options.op[0], options.op[1], options.op[2]);
+      } else {
+        gl.stencilOpSeparate(gl.FRONT, options.op[0][0],
+          options.op[0][1], options.op[0][2]);
+        gl.stencilOpSeparate(gl.BACK, options.op[1][0],
+          options.op[1][1], options.op[1][2]);
+      }
+    }
   }
   clear(options) {
     const gl = this.renderer.gl;
@@ -184,12 +233,13 @@ export default class StateManager {
     const gl = this.renderer.gl;
     this.setBlend(options.blend);
     this.setColorMask(options.colorMask);
+    this.setDepthMask(options.depthMask);
     this.clear(options);
     this.setCull(options.cull);
     this.setDepth(options.depth);
     this.setEnabled(gl.DITHER, BIT_POS.dither, options.dither);
+    this.setStencil(options.stencil);
     // TODO Polygon offset fill
     // TODO Scissor test
-    // TODO Stencil test
   }
 }

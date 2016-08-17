@@ -69,6 +69,9 @@ export default class Renderer {
     if (parent.options && pass.options) {
       let recoverOpts = {};
       for (let key in pass.options) {
+        if (key === 'clearStencil') continue;
+        if (key === 'clearDepth') continue;
+        if (key === 'clearColor') continue;
         // Disable if not found
         recoverOpts[key] = parent.options[key] || false;
       }

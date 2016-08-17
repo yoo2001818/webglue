@@ -1,12 +1,13 @@
 import Renderer from 'webglue/renderer';
 import BoxGeometry from 'webglue/geom/boxGeometry';
+import UVSphereGeometry from 'webglue/geom/uvSphereGeometry';
 import { mat4 } from 'gl-matrix';
 
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
 canvas.width = 800;
 canvas.height = 600;
-let gl = canvas.getContext('webgl', { antialias: false }) ||
+let gl = canvas.getContext('webgl', { antialias: false, stencil: true }) ||
   canvas.getContext('experimental-webgl');
 
 let renderer = new Renderer(gl);
@@ -19,6 +20,7 @@ let shader = renderer.shaders.create(
   require('./shader/texCoordTest.frag')
 );
 let geometry = renderer.geometries.create(new BoxGeometry());
+let uvGeometry = renderer.geometries.create(new UVSphereGeometry(16, 10));
 /*let geometry = renderer.geometries.create({
   attributes: {
     aTexCoord: {
@@ -37,21 +39,35 @@ let geometry = renderer.geometries.create(new BoxGeometry());
 let projMat = mat4.create();
 mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 20);
 let viewMat = mat4.create();
-mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -10]));
+mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -5]));
 
 let model1Mat = mat4.create();
 let model2Mat = mat4.create();
+let uvMat = mat4.create();
 
 mat4.translate(model2Mat, model2Mat, new Float32Array([0, 2, 2]));
 
-function animate() {
+mat4.translate(uvMat, uvMat, new Float32Array([0, 0, 2]));
+
+let prevTime = -1;
+let timer = 0;
+
+function animate(time) {
+  if (prevTime === -1) prevTime = time;
+  let delta = time - prevTime;
+  prevTime = time;
+  timer += delta / 1000;
   mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
+  mat4.identity(uvMat);
+  mat4.translate(uvMat, uvMat, new Float32Array([
+    Math.cos(timer * 5), Math.sin(timer * 5),
+    Math.cos(timer) * 2 + 1]));
   // And provide sample data
   renderer.render([{
     options: {
       clearColor: new Float32Array([0, 0, 0, 1]),
       clearDepth: 1,
-      // clearStencil: 0,
+      clearStencil: 0,
       cull: gl.BACK,
       depth: gl.LEQUAL
     },
@@ -64,18 +80,41 @@ function animate() {
       uniforms: {
         uScale: 0.5
       },
-      geometry: geometry,
       passes: [{
+        geometry: uvGeometry,
         uniforms: {
-          uTint: new Float32Array([0, 0, 1, 1]),
-          uModel: model1Mat
+          uModel: uvMat
+        },
+        options: {
+          stencil: {
+            func: [gl.ALWAYS, 1, 0xFF],
+            op: [gl.KEEP, gl.KEEP, gl.REPLACE],
+            mask: 0xFF
+          },
+          colorMask: [true, true, true, true],
+          depthMask: true
         },
         draw: true
       }, {
-        uniforms: {
-          uModel: model2Mat
+        options: {
+          stencil: {
+            func: [gl.EQUAL, 1, 0xFF],
+            mask: 0
+          }
         },
-        draw: true
+        geometry: geometry,
+        passes: [{
+          uniforms: {
+            uTint: new Float32Array([0, 0, 1, 1]),
+            uModel: model1Mat
+          },
+          draw: true
+        }, {
+          uniforms: {
+            uModel: model2Mat
+          },
+          draw: true
+        }]
       }]
     }],
     // null means main framebuffer
