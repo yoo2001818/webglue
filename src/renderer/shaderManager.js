@@ -16,6 +16,7 @@ export default class ShaderManager {
     shader.use();
   }
   setUniforms(values) {
+    if (this.current == null) return;
     this.current.setUniforms(values);
   }
 }

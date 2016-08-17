@@ -7,6 +7,24 @@ export default class GeometryManager {
     this.current = null;
   }
   create(options) {
+    let finalOpts = options;
+    // Old geometry compatibility code
+    if (options.getAttributes) {
+      finalOpts.attributes = options.getAttributes();
+      finalOpts.indices = options.getIndices();
+      switch (options.type) {
+      case 'points':
+        finalOpts.mode = this.renderer.gl.POINTS;
+        break;
+      case 'lines':
+        finalOpts.mode = this.renderer.gl.LINES;
+        break;
+      case 'triangles':
+      default:
+        finalOpts.mode = this.renderer.gl.TRIANGLES;
+        break;
+      }
+    }
     // attributes, indices, mode (or passes)
     let geometry = new Geometry(this.renderer, options);
     this.geometries.push(geometry);
