@@ -1,4 +1,5 @@
 import Renderer from 'webglue/renderer';
+import UniQuadGeometry from 'webglue/geom/uniQuadGeometry';
 import BoxGeometry from 'webglue/geom/boxGeometry';
 import UVSphereGeometry from 'webglue/geom/uvSphereGeometry';
 import { mat4 } from 'gl-matrix';
@@ -19,8 +20,14 @@ let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),
   require('./shader/texCoordTest.frag')
 );
+let screenShader = renderer.shaders.create(
+  require('./shader/screen.vert'),
+  require('./shader/monoColor.frag')
+);
+
 let geometry = renderer.geometries.create(new BoxGeometry());
-let uvGeometry = renderer.geometries.create(new UVSphereGeometry(16, 10));
+let uvGeometry = renderer.geometries.create(new UVSphereGeometry(16, 20));
+let quadGeometry = renderer.geometries.create(new UniQuadGeometry());
 /*let geometry = renderer.geometries.create({
   attributes: {
     aTexCoord: {
@@ -116,6 +123,19 @@ function animate(time) {
           draw: true
         }]
       }]
+    }, {
+      options: {
+        stencil: {
+          func: [gl.NOTEQUAL, 1, 0xFF],
+          mask: 0
+        }
+      },
+      shader: screenShader,
+      uniforms: {
+        uColor: new Float32Array([1, 1, 1])
+      },
+      geometry: quadGeometry,
+      draw: true
     }],
     // null means main framebuffer
     output: null
