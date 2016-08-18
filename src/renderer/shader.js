@@ -1,3 +1,5 @@
+import parseUniform from '../util/parseUniform';
+
 export default class Shader {
   constructor(renderer, vert, frag) {
     this.renderer = renderer;
@@ -169,66 +171,10 @@ export default class Shader {
       }
     }
   }
-  setUniform(value, key, type) {
+  setUniform(val, key, type) {
     const gl = this.renderer.gl;
     if (key == null) return;
-    if (value === false) {
-      switch (type) {
-      case gl.FLOAT_VEC2:
-        gl.uniform2f(key, 0, 0);
-        break;
-      case gl.FLOAT_VEC3:
-        gl.uniform3f(key, 0, 0, 0);
-        break;
-      case gl.FLOAT_VEC4:
-        gl.uniform4f(key, 0, 0, 0, 0);
-        break;
-      case gl.INT_VEC2:
-      case gl.BOOL_VEC2:
-        gl.uniform2i(key, 0, 0);
-        break;
-      case gl.INT_VEC3:
-      case gl.BOOL_VEC3:
-        gl.uniform3i(key, 0, 0, 0);
-        break;
-      case gl.INT_VEC4:
-      case gl.BOOL_VEC4:
-        gl.uniform4i(key, 0, 0, 0, 0);
-        break;
-      case gl.BOOL:
-      case gl.BYTE:
-      case gl.UNSIGNED_BYTE:
-      case gl.SHORT:
-      case gl.UNSIGNED_SHORT:
-      case gl.INT:
-      case gl.UNSIGNED_INT:
-        gl.uniform1i(key, 0);
-        break;
-      case gl.FLOAT:
-        gl.uniform1f(key, 0);
-        break;
-      case gl.FLOAT_MAT2:
-        gl.uniformMatrix2fv(key, false, new Float32Array([
-          1, 0, 0, 1
-        ]));
-        break;
-      case gl.FLOAT_MAT3:
-        gl.uniformMatrix3fv(key, false, new Float32Array([
-          1, 0, 0, 0, 1, 0, 0, 0, 1
-        ]));
-        break;
-      case gl.FLOAT_MAT4:
-        gl.uniformMatrix4fv(key, false, new Float32Array([
-          1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1
-        ]));
-        break;
-      case gl.SAMPLER_2D:
-      case gl.SAMPLER_CUBE:
-        gl.uniform1i(key, 0);
-        break;
-      }
-      return;
-    }
+    let value = parseUniform(gl, val, type);
     switch (type) {
     case gl.FLOAT_VEC2:
       gl.uniform2fv(key, value);

@@ -105,14 +105,14 @@ function animate(time) {
       }, {
         options: {
           stencil: {
-            func: [gl.EQUAL, 1, 0xFF],
+            func: [gl.ALWAYS, 1, 0xFF],
             mask: 0
           }
         },
         geometry: geometry,
         passes: [{
           uniforms: {
-            uTint: new Float32Array([0, 0, 1, 1]),
+            uTint: '#0000ff',
             uModel: model1Mat
           },
           draw: true
@@ -128,11 +128,14 @@ function animate(time) {
         stencil: {
           func: [gl.NOTEQUAL, 1, 0xFF],
           mask: 0
+        },
+        blend: {
+          func: [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA]
         }
       },
       shader: screenShader,
       uniforms: {
-        uColor: new Float32Array([1, 1, 1])
+        uColor: '#50ffffff'
       },
       geometry: quadGeometry,
       draw: true
