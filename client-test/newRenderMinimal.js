@@ -14,7 +14,9 @@ let gl = canvas.getContext('webgl', { antialias: false, stencil: true }) ||
 let renderer = new Renderer(gl);
 
 // Init basic textures and geometries
-// let texture = renderer.textures.fromImage(require('./texture/1.jpg'));
+/* let texture = renderer.textures.create({
+  source: new Image(require('./texture/1.jpg'))
+}); */
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),

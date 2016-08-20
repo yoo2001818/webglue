@@ -41,7 +41,6 @@ export default class Shader {
     this.program = program;
     this.attributes = {};
     this.uniforms = {};
-    this.uniformTypes = {};
 
     // Load program information
     let attributeSize = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
@@ -64,20 +63,26 @@ export default class Shader {
           // Something doesn't feel right about this. It works but it's weird.
           let newName = name.replace('[0]', '[' + i + ']');
           let location = gl.getUniformLocation(program, newName);
-          this._addUniform(newName, typeId, location);
+          this._addUniform(newName, {
+            name: newName,
+            type: typeId,
+            location: location
+          });
         }
       } else {
         let location = gl.getUniformLocation(program, name);
-        this._addUniform(name, typeId, location);
+        this._addUniform(name, {
+          name: name,
+          type: typeId,
+          location: location
+        });
       }
     }
   }
-  _addUniform(name, typeId, location) {
+  _addUniform(name, metadata) {
     // Support raw string (.[] is reserved anyway)
-    this.uniforms[name] = location;
-    this.uniformTypes[name] = typeId;
+    this.uniforms[name] = metadata;
     let parent = this.uniforms;
-    let parentTypes = this.uniformTypes;
     let parentArray = false;
     let parentIndex = null;
     let truncName = name;
@@ -94,10 +99,8 @@ export default class Shader {
         let parentField = parentArray ? parentIndex : fieldName;
         if (parent[parentField] == null) {
           parent[parentField] = [];
-          parentTypes[parentField] = [];
         }
         parent = parent[parentField];
-        parentTypes = parentTypes[parentField];
 
         parentArray = true;
         parentIndex = index;
@@ -110,10 +113,8 @@ export default class Shader {
         let parentField = parentArray ? parentIndex : fieldName;
         if (parent[parentField] == null) {
           parent[parentField] = {};
-          parentTypes[parentField] = {};
         }
         parent = parent[parentField];
-        parentTypes = parentTypes[parentField];
 
         parentArray = false;
       } else {
@@ -122,10 +123,8 @@ export default class Shader {
         let parentField = parentArray ? parentIndex : fieldName;
         if (parent[parentField] == null) {
           parent[parentField] = {};
-          parentTypes[parentField] = {};
         }
-        parent[parentField] = location;
-        parentTypes[parentField] = typeId;
+        parent[parentField] = metadata;
 
         hasFinished = true;
       }
@@ -136,46 +135,44 @@ export default class Shader {
     if (this.program === null) this.upload();
     gl.useProgram(this.program);
   }
-  setUniforms(originalValues,
-    uniforms = this.uniforms,
-    uniformTypes = this.uniformTypes
-  ) {
+  setUniforms(originalValues, uniforms = this.uniforms) {
     let values = originalValues;
     if (typeof originalValues === 'function') {
       values = originalValues(this, this.renderer);
     }
-    if (typeof uniformTypes === 'number') {
-      return this.setUniform(values, uniforms, uniformTypes);
+    if (typeof uniforms.type === 'number') {
+      return this.setUniform(values, uniforms);
     }
     // Set all children to 0...
     if (values === false) {
       if (Array.isArray(uniforms)) {
         for (let i = 0; i < uniforms; ++i) {
-          this.setUniforms(false, uniforms[i], uniformTypes[i]);
+          this.setUniforms(false, uniforms[i]);
         }
       } else {
         for (let i in uniforms) {
-          this.setUniforms(values[i], uniforms[i], uniformTypes[i]);
+          this.setUniforms(values[i], uniforms[i]);
         }
       }
     }
     if (Array.isArray(values)) {
       for (let i = 0; i < values; ++i) {
         if (uniforms[i] == null) continue;
-        this.setUniforms(values[i], uniforms[i], uniformTypes[i]);
+        this.setUniforms(values[i], uniforms[i]);
       }
     } else {
       for (let i in values) {
         if (uniforms[i] == null) continue;
-        this.setUniforms(values[i], uniforms[i], uniformTypes[i]);
+        this.setUniforms(values[i], uniforms[i]);
       }
     }
   }
-  setUniform(val, key, type) {
+  setUniform(val, metadata) {
     const gl = this.renderer.gl;
+    let key = metadata.location;
     if (key == null) return;
-    let value = parseUniform(gl, val, type);
-    switch (type) {
+    let value = parseUniform(gl, val, metadata.type);
+    switch (metadata.type) {
     case gl.FLOAT_VEC2:
       gl.uniform2fv(key, value);
       break;
