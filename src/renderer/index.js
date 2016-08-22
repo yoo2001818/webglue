@@ -1,5 +1,6 @@
 import ShaderManager from './shaderManager';
 import GeometryManager from './geometryManager';
+import TextureManager from './textureManager';
 import StateManager from './stateManager';
 
 export default class Renderer {
@@ -8,6 +9,7 @@ export default class Renderer {
 
     this.shaders = new ShaderManager(this);
     this.geometries = new GeometryManager(this);
+    this.textures = new TextureManager(this);
     this.state = new StateManager(this);
   }
   render(data) {

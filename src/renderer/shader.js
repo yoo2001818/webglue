@@ -50,6 +50,8 @@ export default class Shader {
       this.attributes[name] = gl.getAttribLocation(program, name);
     }
 
+    let textureId = 0;
+
     // Since uniform supports struct and array, this gets pretty tricky..
     let uniformSize = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
     for (let i = 0; i < uniformSize; ++i) {
@@ -66,7 +68,8 @@ export default class Shader {
           this._addUniform(newName, {
             name: newName,
             type: typeId,
-            location: location
+            location: location,
+            texture: textureId ++
           });
         }
       } else {
@@ -74,7 +77,8 @@ export default class Shader {
         this._addUniform(name, {
           name: name,
           type: typeId,
-          location: location
+          location: location,
+          texture: textureId ++
         });
       }
     }
@@ -218,7 +222,7 @@ export default class Shader {
     case gl.SAMPLER_2D:
     case gl.SAMPLER_CUBE:
       // TODO Apply texture...
-      // gl.uniform1i(key, this.useTexture(value));
+      gl.uniform1i(key, this.renderer.textures.use(metadata.texture, value));
       break;
     }
   }

@@ -14,9 +14,9 @@ let gl = canvas.getContext('webgl', { antialias: false, stencil: true }) ||
 let renderer = new Renderer(gl);
 
 // Init basic textures and geometries
-/* let texture = renderer.textures.create({
-  source: new Image(require('./texture/1.jpg'))
-}); */
+let texture = renderer.textures.create({
+  source: require('./texture/1.jpg')
+});
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),
@@ -87,7 +87,8 @@ function animate(time) {
     passes: [{
       shader: shader,
       uniforms: {
-        uScale: 0.5
+        uScale: 0.5,
+        uTexture: texture
       },
       passes: [{
         geometry: uvGeometry,
@@ -128,7 +129,7 @@ function animate(time) {
     }, {
       options: {
         stencil: {
-          func: [gl.NOTEQUAL, 1, 0xFF],
+          func: [gl.NEVER, 1, 0xFF],
           mask: 0
         },
         blend: {

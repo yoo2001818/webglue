@@ -86,6 +86,6 @@ export function getDefault(gl, type) {
     ]);
   case gl.SAMPLER_2D:
   case gl.SAMPLER_CUBE:
-    return 0;
+    return false;
   }
 }
