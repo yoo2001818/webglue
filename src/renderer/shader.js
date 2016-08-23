@@ -65,20 +65,28 @@ export default class Shader {
           // Something doesn't feel right about this. It works but it's weird.
           let newName = name.replace('[0]', '[' + i + ']');
           let location = gl.getUniformLocation(program, newName);
+          let texturePos = null;
+          if (typeId === gl.SAMPLER_2D || typeId === gl.SAMPLER_CUBE) {
+            texturePos = textureId ++;
+          }
           this._addUniform(newName, {
             name: newName,
             type: typeId,
             location: location,
-            texture: textureId ++
+            texture: texturePos
           });
         }
       } else {
         let location = gl.getUniformLocation(program, name);
+        let texturePos = null;
+        if (typeId === gl.SAMPLER_2D || typeId === gl.SAMPLER_CUBE) {
+          texturePos = textureId ++;
+        }
         this._addUniform(name, {
           name: name,
           type: typeId,
           location: location,
-          texture: textureId ++
+          texture: texturePos
         });
       }
     }
@@ -144,23 +152,25 @@ export default class Shader {
     if (typeof originalValues === 'function') {
       values = originalValues(this, this.renderer);
     }
+    // TODO We need to make sure that this is indeed a 'leaf' node,
+    // otherwise we won't be able to use 'type' as a variable name
     if (typeof uniforms.type === 'number') {
       return this.setUniform(values, uniforms);
     }
     // Set all children to 0...
     if (values === false) {
       if (Array.isArray(uniforms)) {
-        for (let i = 0; i < uniforms; ++i) {
+        for (let i = 0; i < uniforms.length; ++i) {
           this.setUniforms(false, uniforms[i]);
         }
       } else {
         for (let i in uniforms) {
-          this.setUniforms(values[i], uniforms[i]);
+          this.setUniforms(false, uniforms[i]);
         }
       }
     }
     if (Array.isArray(values)) {
-      for (let i = 0; i < values; ++i) {
+      for (let i = 0; i < values.length; ++i) {
         if (uniforms[i] == null) continue;
         this.setUniforms(values[i], uniforms[i]);
       }

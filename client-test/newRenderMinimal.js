@@ -2,7 +2,7 @@ import Renderer from 'webglue/renderer';
 import UniQuadGeometry from 'webglue/geom/uniQuadGeometry';
 import BoxGeometry from 'webglue/geom/boxGeometry';
 import UVSphereGeometry from 'webglue/geom/uvSphereGeometry';
-import { mat4 } from 'gl-matrix';
+import { mat3, mat4 } from 'gl-matrix';
 
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
@@ -56,6 +56,10 @@ let uvMat = mat4.create();
 
 mat4.translate(model2Mat, model2Mat, new Float32Array([0, 2, 2]));
 
+let model1Normal = mat3.create();
+let model2Normal = mat3.create();
+mat3.normalFromMat4(model2Normal, model2Mat);
+
 mat4.translate(uvMat, uvMat, new Float32Array([0, 0, 2]));
 
 let prevTime = -1;
@@ -67,6 +71,7 @@ function animate(time) {
   prevTime = time;
   timer += delta / 1000;
   mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
+  mat3.normalFromMat4(model1Normal, model1Mat);
   mat4.identity(uvMat);
   mat4.translate(uvMat, uvMat, new Float32Array([
     Math.cos(timer * 5), Math.sin(timer * 5),
@@ -86,45 +91,56 @@ function animate(time) {
     },
     passes: [{
       shader: shader,
+      geometry: uvGeometry,
       uniforms: {
-        uScale: 0.5,
-        uTexture: texture
+        uModel: uvMat
       },
-      passes: [{
-        geometry: uvGeometry,
-        uniforms: {
-          uModel: uvMat
+      options: {
+        stencil: {
+          func: [gl.ALWAYS, 1, 0xFF],
+          op: [gl.KEEP, gl.KEEP, gl.REPLACE],
+          mask: 0xFF
         },
-        options: {
-          stencil: {
-            func: [gl.ALWAYS, 1, 0xFF],
-            op: [gl.KEEP, gl.KEEP, gl.REPLACE],
-            mask: 0xFF
-          },
-          colorMask: [true, true, true, true],
-          depthMask: true
+        colorMask: [true, true, true, true],
+        depthMask: true
+      },
+      draw: true
+    }, {
+      options: {
+        stencil: {
+          func: [gl.ALWAYS, 1, 0xFF],
+          mask: 0
+        }
+      },
+      shader: shader,
+      uniforms: {
+        uTexture: texture,
+        uMaterial: {
+          ambient: '#ffffff',
+          diffuse: '#ffffff',
+          specular: '#ffffff',
+          shininess: 30
+        },
+        uPointLight: [{
+          position: [0, 0, 5],
+          color: '#ffffff',
+          intensity: [0.3, 0.7, 0.5, 0.00015]
+        }]
+      },
+      geometry: geometry,
+      passes: [{
+        uniforms: {
+          uTint: '#0000ff',
+          uModel: model1Mat,
+          uNormal: model1Normal
         },
         draw: true
       }, {
-        options: {
-          stencil: {
-            func: [gl.ALWAYS, 1, 0xFF],
-            mask: 0
-          }
+        uniforms: {
+          uModel: model2Mat,
+          uNormal: model2Normal
         },
-        geometry: geometry,
-        passes: [{
-          uniforms: {
-            uTint: '#0000ff',
-            uModel: model1Mat
-          },
-          draw: true
-        }, {
-          uniforms: {
-            uModel: model2Mat
-          },
-          draw: true
-        }]
+        draw: true
       }]
     }, {
       options: {
