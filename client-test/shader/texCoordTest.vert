@@ -19,7 +19,7 @@ void main() {
   gl_Position = uProjection * uView * fragPos;
   vPosition = fragPos.xyz;
 
-  vTexCoord = aTexCoord;
+  vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
   vNormal = uNormal * aNormal;
   // vColor = vec4(vec3(aTexCoord, 0.0) + uTint.xyz * uTint.w, 1.0);
 }

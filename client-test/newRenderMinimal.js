@@ -17,6 +17,10 @@ let renderer = new Renderer(gl);
 let texture = renderer.textures.create({
   source: require('./texture/1.jpg')
 });
+
+let texture2 = renderer.textures.create({
+  source: require('./texture/texture2.png')
+});
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),
@@ -114,7 +118,6 @@ function animate(time) {
       },
       shader: shader,
       uniforms: {
-        uTexture: texture,
         uMaterial: {
           ambient: '#ffffff',
           diffuse: '#ffffff',
@@ -130,13 +133,14 @@ function animate(time) {
       geometry: geometry,
       passes: [{
         uniforms: {
-          uTint: '#0000ff',
+          uTexture: texture,
           uModel: model1Mat,
           uNormal: model1Normal
         },
         draw: true
       }, {
         uniforms: {
+          uTexture: texture2,
           uModel: model2Mat,
           uNormal: model2Normal
         },

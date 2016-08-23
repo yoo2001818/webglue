@@ -16,8 +16,8 @@ export default class TextureManager {
       params: {
         magFilter: gl.LINEAR,
         minFilter: gl.LINEAR_MIPMAP_LINEAR,
-        wrapS: gl.REPEAT,
-        wrapT: gl.REPEAT,
+        wrapS: gl.CLAMP_TO_EDGE,
+        wrapT: gl.CLAMP_TO_EDGE,
         mipmap: true
       }
     };
@@ -38,9 +38,10 @@ export default class TextureManager {
     // TODO This swaps texture unit even if that's unnecessary - However
     // anything but draw calls aren't expensive. So we'd just stick with it?
     // If the texture is already bound at right unit, don't do anything
-    if (texture.unit === unit && texture.loaded) return texture.unit;
+    if (this.activeTextures[unit] === texture && texture.loaded) return;
     // Otherwise, bind the texture at specified unit.
     texture.use(unit);
+    this.activeTextures[unit] = texture;
     return texture.unit;
   }
   // This must be called when the shader is swapped.
