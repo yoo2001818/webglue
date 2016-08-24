@@ -1,14 +1,12 @@
 import Renderer from 'webglue/renderer';
-import UniQuadGeometry from 'webglue/geom/uniQuadGeometry';
 import BoxGeometry from 'webglue/geom/boxGeometry';
-import UVSphereGeometry from 'webglue/geom/uvSphereGeometry';
 import { mat3, mat4 } from 'gl-matrix';
 
 let canvas = document.createElement('canvas');
 document.body.appendChild(canvas);
 canvas.width = 800;
 canvas.height = 600;
-let gl = canvas.getContext('webgl', { antialias: false, stencil: true }) ||
+let gl = canvas.getContext('webgl', { antialias: false }) ||
   canvas.getContext('experimental-webgl');
 
 let renderer = new Renderer(gl);
@@ -26,14 +24,8 @@ let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),
   require('./shader/texCoordTest.frag')
 );
-let screenShader = renderer.shaders.create(
-  require('./shader/screen.vert'),
-  require('./shader/monoColor.frag')
-);
 
 let geometry = renderer.geometries.create(new BoxGeometry());
-let uvGeometry = renderer.geometries.create(new UVSphereGeometry(16, 20));
-let quadGeometry = renderer.geometries.create(new UniQuadGeometry());
 /*let geometry = renderer.geometries.create({
   attributes: {
     aTexCoord: {
@@ -81,11 +73,21 @@ function animate(time) {
     Math.cos(timer * 5), Math.sin(timer * 5),
     Math.cos(timer) * 2 + 1]));
   // And provide sample data
+  /*
+    The following code will happen if we support JSX.
+
+    renderer.render(<Pass uniforms={camera.getUniforms()}>
+      <Options clearColor='#f000' clearDepth={1} cull='back' depth='lequal' />
+      <Pass shader={shader} uniforms={material} geometry={geometry}>
+        <Pass uniforms={model1} draw />
+        <Pass uniforms={model2} draw />
+      </Pass>
+    </Pass>)
+  */
   renderer.render([{
     options: {
       clearColor: new Float32Array([0, 0, 0, 1]),
       clearDepth: 1,
-      clearStencil: 0,
       cull: gl.BACK,
       depth: gl.LEQUAL
     },
@@ -94,28 +96,6 @@ function animate(time) {
       uView: viewMat
     },
     passes: [{
-      shader: shader,
-      geometry: uvGeometry,
-      uniforms: {
-        uModel: uvMat
-      },
-      options: {
-        stencil: {
-          func: [gl.ALWAYS, 1, 0xFF],
-          op: [gl.KEEP, gl.KEEP, gl.REPLACE],
-          mask: 0xFF
-        },
-        colorMask: [true, true, true, true],
-        depthMask: true
-      },
-      draw: true
-    }, {
-      options: {
-        stencil: {
-          func: [gl.ALWAYS, 1, 0xFF],
-          mask: 0
-        }
-      },
       shader: shader,
       uniforms: {
         uMaterial: {
@@ -136,35 +116,15 @@ function animate(time) {
           uTexture: texture,
           uModel: model1Mat,
           uNormal: model1Normal
-        },
-        draw: true
+        }
       }, {
         uniforms: {
           uTexture: texture2,
           uModel: model2Mat,
           uNormal: model2Normal
-        },
-        draw: true
-      }]
-    }, {
-      options: {
-        stencil: {
-          func: [gl.NEVER, 1, 0xFF],
-          mask: 0
-        },
-        blend: {
-          func: [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA]
         }
-      },
-      shader: screenShader,
-      uniforms: {
-        uColor: '#50ffffff'
-      },
-      geometry: quadGeometry,
-      draw: true
-    }],
-    // null means main framebuffer
-    output: null
+      }]
+    }]
   }]);
   window.requestAnimationFrame(animate);
 }

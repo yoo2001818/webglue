@@ -21,6 +21,7 @@ export default class Renderer {
     this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
   }
   render(data) {
+    if (!Array.isArray(data)) return this.renderPass(data);
     // Render each pass
     data.forEach(pass => this.renderPass(pass));
   }
@@ -49,7 +50,7 @@ export default class Renderer {
       this.geometries.use(pass.geometry);
     }
     // -- Draw call... quite simple.
-    if (pass.draw) {
+    if (pass.passes == null) {
       this.geometries.draw();
     }
     // -- Children
