@@ -31,8 +31,8 @@ export default class GeometryManager {
     return geometry;
   }
   use(geometry) {
-    this.current = geometry;
     geometry.use();
+    this.current = geometry;
   }
   draw() {
     this.current.draw();

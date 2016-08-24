@@ -11,6 +11,14 @@ export default class Renderer {
     this.geometries = new GeometryManager(this);
     this.textures = new TextureManager(this);
     this.state = new StateManager(this);
+    // This should be preconfigured in order to set 'standard' attribute
+    // indices.
+    // Geometries using non-standard attributes cannot be properly cached
+    // using VAO.
+    // WebGLue geometries use this attributes, however, users can change this
+    // to other one.
+    // TODO Bind multiple attributes to single index??
+    this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
   }
   render(data) {
     // Render each pass
@@ -57,11 +65,13 @@ export default class Renderer {
       this.shaders.setUniforms(parent.uniforms);
     } else if (parent.uniforms && pass.uniforms) {
       // Restore uniforms...
+      /*
       let recoverOpts = {};
       for (let key in pass.uniforms) {
         recoverOpts[key] = parent.uniforms[key] || false;
       }
       this.shaders.setUniforms(recoverOpts);
+      */
     }
     // Restore geometry
     if (parent.geometry && pass.geometry) {

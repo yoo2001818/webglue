@@ -11,6 +11,8 @@ export default class Geometry {
     this.eboType = null;
     this.attributePos = null;
     this.vertexCount = 0;
+
+    this.standard = false;
   }
   upload() {
     if (this.vbo !== null) return;
@@ -20,6 +22,9 @@ export default class Geometry {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Then bind the data to VBO.
     this.attributePos = [];
+    this.standard = true;
+    // TODO Some use separate VBO per each attribute. if that's better,
+    // we should use it.
     let vertexCount = -1;
     let pos = 0;
     for (let key in this.attributes) {
@@ -72,6 +77,9 @@ export default class Geometry {
         pos: pos,
         data: entry.data
       });
+      if (this.renderer.attributes.indexOf(key) === -1) {
+        this.standard = false;
+      }
       pos += vertexCount * size * entry.axis;
     }
     this.vertexCount = vertexCount;
@@ -114,6 +122,10 @@ export default class Geometry {
   use() {
     const gl = this.renderer.gl;
     if (this.vbo === null) this.upload();
+    if (this.standard && this.renderer.geometries.current === this) {
+      // This doesn't have to be 'used' again in this case
+      return;
+    }
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);

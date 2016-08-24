@@ -19,7 +19,7 @@ let texture = renderer.textures.create({
 });
 
 let texture2 = renderer.textures.create({
-  source: require('./texture/texture2.png')
+  source: require('./texture/2.png')
 });
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(

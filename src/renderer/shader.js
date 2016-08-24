@@ -19,6 +19,10 @@ export default class Shader {
     };
     // Link shaders
     let program = gl.createProgram();
+    // Use standard geometries if possible
+    this.renderer.attributes.forEach((name, index) => {
+      gl.bindAttribLocation(program, index, name);
+    });
     gl.attachShader(program, this.shader.vert);
     gl.attachShader(program, this.shader.frag);
     gl.linkProgram(program);
