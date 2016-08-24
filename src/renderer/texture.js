@@ -79,5 +79,7 @@ export default class Texture {
   dispose() {
     const gl = this.renderer.gl;
     gl.deleteTexture(this.texture);
+    this.texture = null;
+    this.loaded = false;
   }
 }

@@ -44,8 +44,9 @@ export default class TextureManager {
     this.activeTextures[unit] = texture;
     return texture.unit;
   }
-  // This must be called when the shader is swapped.
   reset() {
-
+    // Unload all pre-loaded textures
+    this.activeTextures = [];
+    this.textures.forEach(texture => texture.dispose());
   }
 }

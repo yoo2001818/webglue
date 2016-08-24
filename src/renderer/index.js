@@ -20,7 +20,15 @@ export default class Renderer {
     // TODO Bind multiple attributes to single index??
     this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
   }
+  reset() {
+    // Should be called after WebGL context reset.
+    this.shaders.reset();
+    this.geometries.reset();
+    this.textures.reset();
+    this.state.reset();
+  }
   render(data) {
+    if (this.gl.isContextLost()) return false;
     if (!Array.isArray(data)) return this.renderPass(data);
     // Render each pass
     data.forEach(pass => this.renderPass(pass));

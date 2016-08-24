@@ -84,7 +84,7 @@ export default class StateManager {
   }
   reset(options) {
     // Resets the state (Basically, disables everything unless specified.)
-    this.set(options, true);
+    this.set(options || {}, true);
   }
   setEnabled(key, pos, value) {
     const gl = this.renderer.gl;

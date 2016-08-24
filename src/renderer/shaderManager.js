@@ -19,4 +19,8 @@ export default class ShaderManager {
     if (this.current == null) return;
     this.current.setUniforms(values);
   }
+  reset() {
+    this.current = null;
+    this.shaders.forEach(shader => shader.dispose());
+  }
 }

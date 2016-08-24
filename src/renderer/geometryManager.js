@@ -37,4 +37,8 @@ export default class GeometryManager {
   draw() {
     this.current.draw();
   }
+  reset() {
+    this.current = null;
+    this.geometries.forEach(geometry => geometry.dispose());
+  }
 }
