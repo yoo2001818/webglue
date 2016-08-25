@@ -11,6 +11,7 @@ export default class Geometry {
     this.eboType = null;
     this.attributePos = null;
     this.vertexCount = 0;
+    this.vao = null;
 
     this.standard = false;
   }
@@ -83,6 +84,13 @@ export default class Geometry {
       pos += vertexCount * size * entry.axis;
     }
     this.vertexCount = vertexCount;
+    // Populate VAO variable (initialization will be done at use time though)
+    if (this.standard) {
+      this.vao = null;
+    } else {
+      // TODO ES5 compatibility
+      this.vao = new WeakMap();
+    }
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
     gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
@@ -126,6 +134,24 @@ export default class Geometry {
       // This doesn't have to be 'used' again in this case
       return;
     }
+    // TODO VAO logic must be changed if we're going to use instancing.
+    // Use VAO if supported by the device.
+    if (this.renderer.vao) {
+      if (this.standard) {
+        if (this.vao == null) {
+          this.vao = this.renderer.vao.createVertexArrayOES();
+          this.renderer.vao.bindVertexArrayOES(this.vao);
+          // Continue.....
+        } else {
+          this.renderer.vao.bindVertexArrayOES(this.vao);
+          // Use EBO
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+          return;
+        }
+      } else {
+        // TODO Non-standard geometry
+      }
+    }
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
@@ -148,14 +174,16 @@ export default class Geometry {
       gl.drawArrays(this.mode, 0, this.vertexCount);
     }
   }
-  // TODO render
   dispose() {
     const gl = this.renderer.gl;
     if (this.vbo === null) return;
     // Throw away vbo, ebo, vao
     gl.deleteBuffer(this.vbo);
     gl.deleteBuffer(this.ebo);
-
+    if (this.vao && this.standard) {
+      this.renderer.vao.deleteVertexArrayOES(this.vao);
+      this.vao = null;
+    }
     this.vbo = null;
     this.ebo = null;
   }

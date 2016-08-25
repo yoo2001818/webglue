@@ -31,6 +31,7 @@ export default class GeometryManager {
     return geometry;
   }
   use(geometry) {
+    if (geometry == null) return;
     geometry.use();
     this.current = geometry;
   }

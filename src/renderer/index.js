@@ -26,6 +26,11 @@ export default class Renderer {
     this.geometries.reset();
     this.textures.reset();
     this.state.reset();
+    // Use WebGL extension, if possible.
+    this.vao = this.gl.getExtension('OES_vertex_array_object');
+    this.uint = this.gl.getExtension('OES_element_index_uint');
+    this.instanced = this.gl.getExtension('ANGLE_instanced_arrays');
+    this.derivatives = this.gl.getExtension('OES_standard_derivatives');
   }
   render(data) {
     if (this.gl.isContextLost()) return false;
@@ -50,6 +55,8 @@ export default class Renderer {
       this.shaders.use(pass.shader);
       // Reset all uniforms, including parent uniforms
       this.shaders.setUniforms(currentLevel.uniforms);
+      // Reuse geometry
+      this.geometries.use(this.geometries.current);
     } else if (pass.uniforms) {
       // Set uniforms normally
       this.shaders.setUniforms(pass.uniforms);
