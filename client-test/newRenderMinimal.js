@@ -1,5 +1,6 @@
 import Renderer from 'webglue/renderer';
 import BoxGeometry from 'webglue/geom/boxGeometry';
+import UniQuadGeometry from 'webglue/geom/uniQuadGeometry';
 import { mat3, mat4 } from 'gl-matrix';
 
 let canvas = document.createElement('canvas');
@@ -15,17 +16,37 @@ let renderer = new Renderer(gl);
 let texture = renderer.textures.create({
   source: require('./texture/1.jpg')
 });
-
 let texture2 = renderer.textures.create({
   source: require('./texture/2.png')
 });
+// Framebuffer test
+let outputTex = renderer.textures.create({
+  width: 256,
+  height: 256
+});
+/* let framebuffer = render.framebuffers.create({
+  color: outputTex, // TODO How do we specify the target of cubemap?
+  depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
+}); */
+
+// Or
+/* let framebuffer = render.framebuffers.create({
+  width: 256,
+  height: 256
+}); */
+
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(
   require('./shader/texCoordTest.vert'),
   require('./shader/texCoordTest.frag')
 );
+let screenShader = renderer.shaders.create(
+  require('./shader/screen.vert'),
+  require('./shader/noise.frag')
+);
 
-let geometry = renderer.geometries.create(new BoxGeometry());
+let box = renderer.geometries.create(new BoxGeometry());
+let quad = renderer.geometries.create(new UniQuadGeometry());
 /*let geometry = renderer.geometries.create({
   attributes: {
     aTexCoord: {
@@ -60,12 +81,14 @@ mat4.translate(uvMat, uvMat, new Float32Array([0, 0, 2]));
 
 let prevTime = -1;
 let timer = 0;
+let step = 0;
 
 function animate(time) {
   if (prevTime === -1) prevTime = time;
   let delta = time - prevTime;
   prevTime = time;
   timer += delta / 1000;
+  step ++;
   mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
   mat3.normalFromMat4(model1Normal, model1Mat);
   mat4.identity(uvMat);
@@ -85,8 +108,14 @@ function animate(time) {
     </Pass>)
   */
   renderer.render([{
+    shader: screenShader,
+    geometry: quad,
+    uniforms: {
+      uStep: step
+    }
+  }, {
     options: {
-      clearColor: new Float32Array([0, 0, 0, 1]),
+      // clearColor: new Float32Array([0, 0, 0, 1]),
       clearDepth: 1,
       cull: gl.BACK,
       depth: gl.LEQUAL
@@ -110,10 +139,10 @@ function animate(time) {
           intensity: [0.3, 0.7, 0.5, 0.00015]
         }]
       },
-      geometry: geometry,
+      geometry: box,
       passes: [{
         uniforms: {
-          uTexture: texture,
+          uTexture: outputTex,
           uModel: model1Mat,
           uNormal: model1Normal
         }

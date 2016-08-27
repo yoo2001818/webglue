@@ -6,6 +6,12 @@ const OPTIONS_KEY = {
   maxAnisotropy: 0x84FE
 };
 
+function isSource(source) {
+  if (source instanceof HTMLElement) return true;
+  if (source instanceof ImageData) return true;
+  return false;
+}
+
 export default class Texture {
   constructor(renderer, options) {
     this.renderer = renderer;
@@ -36,21 +42,27 @@ export default class Texture {
     // let width = this.options.width || this.options.source.width;
     // let height = this.options.height || this.options.source.height;
     gl.bindTexture(target, this.texture);
-    if (this.options.source instanceof Image) {
-      let source = this.options.source;
+    // TODO Cube texture
+    let source = this.options.source;
+    if (isSource(source)) {
       // Check readystate...
       if (source.readyState != null && source.readyState !== 4) {
         return false;
       }
       // If there is complete property and it is false, return false.
       if (source.complete === false) return false;
+      gl.texImage2D(target, 0, format, format, type, source);
+    } else {
+      // width and height shouldn't be 0, right?
+      let width = this.options.width || gl.drawingBufferWidth;
+      let height = this.options.height || gl.drawingBufferHeight;
+      gl.texImage2D(target, 0, format, width, height, 0, format, type, source);
     }
-    // TODO Cube texture
-    gl.texImage2D(target, 0, format, format, type, this.options.source);
 
     // Set texture parameters
     for (let key in this.options.params) {
       if (key === 'mipmap') {
+        if (source == null) continue;
         if (this.options.params[key]) gl.generateMipmap(target);
         continue;
       }
