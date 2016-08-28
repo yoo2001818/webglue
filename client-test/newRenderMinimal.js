@@ -21,11 +21,11 @@ let texture2 = renderer.textures.create({
 });
 // Framebuffer test
 let outputTex = renderer.textures.create({
-  width: 256,
-  height: 256,
+  width: 64,
+  height: 64,
   params: {
-    magFilter: gl.LINEAR,
-    minFilter: gl.LINEAR,
+    magFilter: gl.NEAREST,
+    minFilter: gl.NEAREST,
     mipmap: false
   }
 });
