@@ -22,12 +22,17 @@ let texture2 = renderer.textures.create({
 // Framebuffer test
 let outputTex = renderer.textures.create({
   width: 256,
-  height: 256
+  height: 256,
+  params: {
+    magFilter: gl.LINEAR,
+    minFilter: gl.LINEAR,
+    mipmap: false
+  }
 });
-/* let framebuffer = render.framebuffers.create({
+let framebuffer = renderer.framebuffers.create({
   color: outputTex, // TODO How do we specify the target of cubemap?
   depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
-}); */
+});
 
 // Or
 /* let framebuffer = render.framebuffers.create({
@@ -108,6 +113,7 @@ function animate(time) {
     </Pass>)
   */
   renderer.render([{
+    framebuffer: framebuffer,
     shader: screenShader,
     geometry: quad,
     uniforms: {
@@ -115,7 +121,7 @@ function animate(time) {
     }
   }, {
     options: {
-      // clearColor: new Float32Array([0, 0, 0, 1]),
+      clearColor: new Float32Array([0, 0, 0, 1]),
       clearDepth: 1,
       cull: gl.BACK,
       depth: gl.LEQUAL

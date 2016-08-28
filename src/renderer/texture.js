@@ -27,6 +27,9 @@ export default class Texture {
     this.unit = -1;
     this.texture = null;
     this.loaded = false;
+
+    this.width = null;
+    this.height = null;
   }
   init() {
     const gl = this.renderer.gl;
@@ -52,11 +55,17 @@ export default class Texture {
       // If there is complete property and it is false, return false.
       if (source.complete === false) return false;
       gl.texImage2D(target, 0, format, format, type, source);
+
+      this.width = source.width;
+      this.height = source.height;
     } else {
       // width and height shouldn't be 0, right?
       let width = this.options.width || gl.drawingBufferWidth;
       let height = this.options.height || gl.drawingBufferHeight;
       gl.texImage2D(target, 0, format, width, height, 0, format, type, source);
+
+      this.width = width;
+      this.height = height;
     }
 
     // Set texture parameters

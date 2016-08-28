@@ -1,6 +1,7 @@
 import ShaderManager from './shaderManager';
 import GeometryManager from './geometryManager';
 import TextureManager from './textureManager';
+import FramebufferManager from './framebufferManager';
 import StateManager from './stateManager';
 
 export default class Renderer {
@@ -10,6 +11,7 @@ export default class Renderer {
     this.shaders = new ShaderManager(this);
     this.geometries = new GeometryManager(this);
     this.textures = new TextureManager(this);
+    this.framebuffers = new FramebufferManager(this);
     this.state = new StateManager(this);
     // This should be preconfigured in order to set 'standard' attribute
     // indices.
@@ -25,6 +27,7 @@ export default class Renderer {
     this.shaders.reset();
     this.geometries.reset();
     this.textures.reset();
+    this.framebuffers.reset();
     this.state.reset();
     // Use WebGL extension, if possible.
     this.vao = this.gl.getExtension('OES_vertex_array_object');
@@ -47,10 +50,15 @@ export default class Renderer {
     };
     // -- Push (Enter)
     // Set state
+    if (pass.framebuffer) {
+      this.framebuffers.use(pass.framebuffer);
+    }
+    if (parent == null && pass.framebuffer == null) {
+      this.framebuffers.use(null);
+    }
     if (pass.options) {
       this.state.set(pass.options, parent == null);
     }
-    // TODO Set output
     if (pass.shader) {
       this.shaders.use(pass.shader);
       // Reset all uniforms, including parent uniforms
@@ -92,6 +100,10 @@ export default class Renderer {
     // Restore geometry
     if (parent.geometry && pass.geometry) {
       this.geometries.use(parent.geometry);
+    }
+    // Restore framebuffer
+    if (pass.framebuffer) {
+      this.framebuffers.use(parent.framebuffer);
     }
     // Restore options
     if (parent.options && pass.options) {
