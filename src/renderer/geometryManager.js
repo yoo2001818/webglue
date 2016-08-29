@@ -10,6 +10,7 @@ export default class GeometryManager {
     let finalOpts = options;
     // Old geometry compatibility code
     if (options.getAttributes) {
+      finalOpts = {};
       finalOpts.attributes = options.getAttributes();
       finalOpts.indices = options.getIndices();
       switch (options.type) {
@@ -26,7 +27,7 @@ export default class GeometryManager {
       }
     }
     // attributes, indices, mode (or passes)
-    let geometry = new Geometry(this.renderer, options);
+    let geometry = new Geometry(this.renderer, finalOpts);
     this.geometries.push(geometry);
     return geometry;
   }

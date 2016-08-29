@@ -51,21 +51,16 @@ let screenShader = renderer.shaders.create(
 );
 
 let box = renderer.geometries.create(new BoxGeometry());
-let quad = renderer.geometries.create(new UniQuadGeometry());
-/*let geometry = renderer.geometries.create({
+// let quad = renderer.geometries.create(new UniQuadGeometry());
+let quad = renderer.geometries.create({
   attributes: {
-    aTexCoord: {
-      axis: 2,
-      data: new Float32Array([
-        0, 0, 0, 1, 1, 1, 1, 0
-      ])
-    }
+    aPosition: [
+      [-1, -1], [1, -1], [-1, 1], [1, 1]
+    ]
   },
-  indices: new Uint16Array([
-    0, 1, 2, 2, 3, 0
-  ]),
+  indices: [0, 1, 3, 3, 2, 0],
   mode: gl.TRIANGLES
-});*/
+});
 
 let projMat = mat4.create();
 mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 20);

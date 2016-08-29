@@ -1,10 +1,13 @@
+import parseAttributes from '../util/parseAttributes';
+import parseIndices from '../util/parseIndices';
+
 export default class Geometry {
   constructor(renderer, options) {
     this.renderer = renderer;
     // Raw options given by the user
-    this.attributes = options.attributes;
-    this.indices = options.indices;
-    this.mode = options.mode;
+    this.attributes = parseAttributes(options.attributes);
+    this.indices = parseIndices(options.indices);
+    this.mode = options.mode || renderer.gl.TRIANGLES;
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
