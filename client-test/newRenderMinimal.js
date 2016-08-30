@@ -1,6 +1,6 @@
 import Renderer from 'webglue/renderer';
-import BoxGeometry from 'webglue/geom/boxGeometry';
-import UniQuadGeometry from 'webglue/geom/uniQuadGeometry';
+import geomBox from 'webglue/geom/box';
+import geomQuad from 'webglue/geom/quad';
 import { mat3, mat4 } from 'gl-matrix';
 
 let canvas = document.createElement('canvas');
@@ -13,26 +13,26 @@ let gl = canvas.getContext('webgl', { antialias: false }) ||
 let renderer = new Renderer(gl);
 
 // Init basic textures and geometries
-/* let texture = renderer.textures.create({
+/*let texture = renderer.textures.create({
   source: require('./texture/1.jpg')
-}); */
+});*/
 let texture2 = renderer.textures.create({
   source: require('./texture/2.png')
 });
 // Framebuffer test
-let outputTexs = [0, 1].map(() => renderer.textures.create({
-  width: 256,
-  height: 256,
+let outputTex = renderer.textures.create({
+  width: 32,
+  height: 32,
   params: {
     magFilter: gl.NEAREST,
     minFilter: gl.NEAREST,
     mipmap: false
   }
-}));
-let framebuffers = [0, 1].map(v => renderer.framebuffers.create({
-  color: outputTexs[v], // TODO How do we specify the target of cubemap?
+});
+let framebuffer = renderer.framebuffers.create({
+  color: outputTex, // TODO How do we specify the target of cubemap?
   depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
-}));
+});
 
 // Or
 /* let framebuffer = render.framebuffers.create({
@@ -50,17 +50,8 @@ let screenShader = renderer.shaders.create(
   require('./shader/noise.frag')
 );
 
-let box = renderer.geometries.create(new BoxGeometry());
-// let quad = renderer.geometries.create(new UniQuadGeometry());
-let quad = renderer.geometries.create({
-  attributes: {
-    aPosition: [
-      [-1, -1], [1, -1], [-1, 1], [1, 1]
-    ]
-  },
-  indices: [0, 1, 3, 3, 2, 0],
-  mode: gl.TRIANGLES
-});
+let box = renderer.geometries.create(geomBox());
+let quad = renderer.geometries.create(geomQuad());
 
 let projMat = mat4.create();
 mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 20);
@@ -72,7 +63,7 @@ let model2Mat = mat4.create();
 let uvMat = mat4.create();
 
 mat4.translate(model2Mat, model2Mat, new Float32Array([0, 2, 2]));
-mat4.translate(model1Mat, model1Mat, new Float32Array([0, 0, 2]));
+mat4.translate(model1Mat, model1Mat, new Float32Array([0, 0, 1]));
 
 let model1Normal = mat3.create();
 let model2Normal = mat3.create();
@@ -137,7 +128,7 @@ function animate(time) {
       geometry: box,
       passes: [{
         uniforms: {
-          uTexture: outputTexs[(step + 1) % 2],
+          uTexture: outputTex,
           uModel: model1Mat,
           uNormal: model1Normal
         }
@@ -151,13 +142,12 @@ function animate(time) {
     }]
   };
   renderer.render([{
-    framebuffer: framebuffers[step % 2],
-    passes: [worldScene]
-    /* shader: screenShader,
+    framebuffer: framebuffer,
+    shader: screenShader,
     geometry: quad,
     uniforms: {
       uStep: step
-    } */
+    }
   }, {
     passes: [worldScene]
   }]);
