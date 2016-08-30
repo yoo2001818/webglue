@@ -1,4 +1,5 @@
 import Renderer from 'webglue/renderer';
+import calcNormals from 'webglue/geom/calcNormals';
 import geomBox from 'webglue/geom/box';
 import geomQuad from 'webglue/geom/quad';
 import { mat3, mat4 } from 'gl-matrix';
@@ -50,7 +51,7 @@ let screenShader = renderer.shaders.create(
   require('./shader/noise.frag')
 );
 
-let box = renderer.geometries.create(geomBox());
+let box = renderer.geometries.create(calcNormals(geomBox()));
 let quad = renderer.geometries.create(geomQuad());
 
 let projMat = mat4.create();
