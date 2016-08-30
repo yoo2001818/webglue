@@ -18,7 +18,8 @@ export default class TextureManager {
         minFilter: gl.LINEAR_MIPMAP_LINEAR,
         wrapS: gl.CLAMP_TO_EDGE,
         wrapT: gl.CLAMP_TO_EDGE,
-        mipmap: true
+        mipmap: true,
+        flipY: true
       }
     };
   }

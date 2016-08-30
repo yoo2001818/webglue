@@ -68,8 +68,10 @@ export default class Texture {
       this.height = height;
     }
 
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
     // Set texture parameters
     for (let key in this.options.params) {
+      if (key === 'flipY') continue;
       if (key === 'mipmap') {
         if (source == null) continue;
         if (this.options.params[key]) gl.generateMipmap(target);

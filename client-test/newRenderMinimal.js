@@ -13,26 +13,26 @@ let gl = canvas.getContext('webgl', { antialias: false }) ||
 let renderer = new Renderer(gl);
 
 // Init basic textures and geometries
-let texture = renderer.textures.create({
+/* let texture = renderer.textures.create({
   source: require('./texture/1.jpg')
-});
+}); */
 let texture2 = renderer.textures.create({
   source: require('./texture/2.png')
 });
 // Framebuffer test
-let outputTex = renderer.textures.create({
-  width: 64,
-  height: 64,
+let outputTexs = [0, 1].map(() => renderer.textures.create({
+  width: 256,
+  height: 256,
   params: {
     magFilter: gl.NEAREST,
     minFilter: gl.NEAREST,
     mipmap: false
   }
-});
-let framebuffer = renderer.framebuffers.create({
-  color: outputTex, // TODO How do we specify the target of cubemap?
+}));
+let framebuffers = [0, 1].map(v => renderer.framebuffers.create({
+  color: outputTexs[v], // TODO How do we specify the target of cubemap?
   depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
-});
+}));
 
 // Or
 /* let framebuffer = render.framebuffers.create({
@@ -72,6 +72,7 @@ let model2Mat = mat4.create();
 let uvMat = mat4.create();
 
 mat4.translate(model2Mat, model2Mat, new Float32Array([0, 2, 2]));
+mat4.translate(model1Mat, model1Mat, new Float32Array([0, 0, 2]));
 
 let model1Normal = mat3.create();
 let model2Normal = mat3.create();
@@ -89,7 +90,7 @@ function animate(time) {
   prevTime = time;
   timer += delta / 1000;
   step ++;
-  mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
+  mat4.rotateY(model1Mat, model1Mat, Math.PI / 120);
   mat3.normalFromMat4(model1Normal, model1Mat);
   mat4.identity(uvMat);
   mat4.translate(uvMat, uvMat, new Float32Array([
@@ -107,14 +108,7 @@ function animate(time) {
       </Pass>
     </Pass>)
   */
-  renderer.render([{
-    framebuffer: framebuffer,
-    shader: screenShader,
-    geometry: quad,
-    uniforms: {
-      uStep: step
-    }
-  }, {
+  let worldScene = {
     options: {
       clearColor: new Float32Array([0, 0, 0, 1]),
       clearDepth: 1,
@@ -143,7 +137,7 @@ function animate(time) {
       geometry: box,
       passes: [{
         uniforms: {
-          uTexture: outputTex,
+          uTexture: outputTexs[(step + 1) % 2],
           uModel: model1Mat,
           uNormal: model1Normal
         }
@@ -155,6 +149,17 @@ function animate(time) {
         }
       }]
     }]
+  };
+  renderer.render([{
+    framebuffer: framebuffers[step % 2],
+    passes: [worldScene]
+    /* shader: screenShader,
+    geometry: quad,
+    uniforms: {
+      uStep: step
+    } */
+  }, {
+    passes: [worldScene]
   }]);
   window.requestAnimationFrame(animate);
 }
