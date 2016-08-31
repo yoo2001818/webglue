@@ -12,7 +12,7 @@ const BIT_POS = {
 
 export default class StateManager {
   constructor(renderer) {
-    this.reset = false;
+    this.doReset = false;
     this.renderer = renderer;
     this.state = 0;
     /*this.state = {

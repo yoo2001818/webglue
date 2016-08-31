@@ -21,6 +21,7 @@ export default class Renderer {
     // to other one.
     // TODO Bind multiple attributes to single index??
     this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
+    this.reset();
   }
   reset() {
     // Should be called after WebGL context reset.

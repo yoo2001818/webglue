@@ -5,6 +5,8 @@ attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aPosition;
 
+attribute vec3 aInstPos;
+
 varying lowp vec3 vPosition;
 varying lowp vec3 vNormal;
 varying lowp vec2 vTexCoord;
@@ -15,7 +17,7 @@ uniform mat4 uModel;
 uniform mat3 uNormal;
 
 void main() {
-  vec4 fragPos = uModel * vec4(aPosition, 1.0);
+  vec4 fragPos = uModel * vec4(aPosition, 1.0) + vec4(aInstPos, 0.0);
   gl_Position = uProjection * uView * fragPos;
   vPosition = fragPos.xyz;
 

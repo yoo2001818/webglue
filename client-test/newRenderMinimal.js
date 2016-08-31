@@ -51,11 +51,38 @@ let screenShader = renderer.shaders.create(
   require('./shader/noise.frag')
 );
 
-let box = renderer.geometries.create(calcNormals(geomBox()));
+function range(v) {
+  let out = [];
+  for (let i = 0; i < v; ++i) out.push(i);
+  return out;
+}
+
+// Fallback before we fully implement merging geometries
+let boxData = calcNormals(geomBox());
+boxData.attributes.aInstPos = range(100).map(() => [
+  Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25
+]);
+boxData.instanced = {
+  aInstPos: 1
+};
+
+let box = renderer.geometries.create(boxData);
 let quad = renderer.geometries.create(geomQuad());
 
+// Test instancing data...
+/*
+let instancedData = renderer.geometries.create({
+  attributes: {
+    aInstPos:
+  },
+  instanced: {
+    aInstPos: 1
+  }
+});
+*/
+
 let projMat = mat4.create();
-mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 20);
+mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 60);
 let viewMat = mat4.create();
 mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -5]));
 
@@ -82,7 +109,7 @@ function animate(time) {
   prevTime = time;
   timer += delta / 1000;
   step ++;
-  mat4.rotateY(model1Mat, model1Mat, Math.PI / 120);
+  mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
   mat3.normalFromMat4(model1Normal, model1Mat);
   mat4.identity(uvMat);
   mat4.translate(uvMat, uvMat, new Float32Array([
@@ -143,6 +170,9 @@ function animate(time) {
     }]
   };
   renderer.render([{
+    options: {
+      clearColor: new Float32Array([0, 0, 0, 1])
+    },
     framebuffer: framebuffer,
     shader: screenShader,
     geometry: quad,

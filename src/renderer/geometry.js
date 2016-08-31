@@ -7,6 +7,7 @@ export default class Geometry {
     // Raw options given by the user
     this.attributes = parseAttributes(options.attributes);
     this.indices = parseIndices(options.indices);
+    this.instanced = options.instanced;
     this.mode = options.mode || renderer.gl.TRIANGLES;
     // Geometry buffer objects.
     this.vbo = null;
@@ -14,6 +15,7 @@ export default class Geometry {
     this.eboType = null;
     this.attributePos = null;
     this.vertexCount = 0;
+    this.primCount = 0;
     this.vao = null;
 
     this.standard = false;
@@ -30,19 +32,31 @@ export default class Geometry {
     // TODO Some use separate VBO per each attribute. if that's better,
     // we should use it.
     let vertexCount = -1;
+    let primCount = -1;
     let pos = 0;
     for (let key in this.attributes) {
       let entry = this.attributes[key];
       let typeId = 0;
       let size = 0;
+      let instDiv = 0;
+      if (this.instanced != null) instDiv = this.instanced[key] || 0;
       if (entry.data == null) {
         continue;
       }
-      if (vertexCount === -1) {
-        vertexCount = entry.data.length / entry.axis;
-      }
-      if (entry.data.length !== entry.axis * vertexCount) {
-        throw new Error('Vertex data size mismatch');
+      if (instDiv !== 0) {
+        if (primCount === -1) {
+          primCount = entry.data.length / entry.axis / instDiv;
+        } else if (entry.data.length !== primCount * entry.axis * instDiv) {
+          throw new Error('Instanced primitive data size mismatch');
+        }
+        // Do not upload it to the buffer if instancing is not supported
+        if (this.renderer.instanced == null) continue;
+      } else {
+        if (vertexCount === -1) {
+          vertexCount = entry.data.length / entry.axis;
+        } else if (entry.data.length !== entry.axis * vertexCount) {
+          throw new Error('Vertex data size mismatch');
+        }
       }
       // Obtain buffer size and type from data type
       if (entry.data instanceof Float32Array) {
@@ -79,13 +93,16 @@ export default class Geometry {
         type: typeId,
         size: size * entry.axis,
         pos: pos,
-        data: entry.data
+        data: entry.data,
+        instanced: instDiv || 0
       });
       if (this.renderer.attributes.indexOf(key) === -1) {
         this.standard = false;
       }
-      pos += vertexCount * size * entry.axis;
+      pos += entry.data.length * size;
     }
+    // Instancing is enabled if not -1
+    this.primCount = primCount;
     this.vertexCount = vertexCount;
     // Populate VAO variable (initialization will be done at use time though)
     if (this.standard) {
@@ -132,6 +149,7 @@ export default class Geometry {
   }
   use() {
     const gl = this.renderer.gl;
+    const instancedExt = this.renderer.instanced;
     if (this.vbo === null) this.upload();
     if (this.standard && this.renderer.geometries.current === this) {
       // This doesn't have to be 'used' again in this case
@@ -153,6 +171,7 @@ export default class Geometry {
         }
       } else {
         // TODO Non-standard geometry
+        this.renderer.vao.bindVertexArrayOES(null);
       }
     }
     let shader = this.renderer.shaders.current;
@@ -167,14 +186,34 @@ export default class Geometry {
       gl.enableVertexAttribArray(attribPos);
       gl.vertexAttribPointer(attribPos, attribute.axis, attribute.type,
         false, attribute.size, attribute.pos);
+      if (instancedExt) {
+        // It's not memorized on VAO?
+        instancedExt.vertexAttribDivisorANGLE(attribPos,
+          attribute.instanced || 0);
+      }
     }
   }
   draw() {
     const gl = this.renderer.gl;
-    if (this.ebo !== null) {
-      gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
+    if (this.primCount !== -1) {
+      const instancedExt = this.renderer.instanced;
+      if (instancedExt) {
+        if (this.ebo !== null) {
+          instancedExt.drawElementsInstancedANGLE(this.mode,
+            this.indices.length, this.eboType, 0, this.primCount);
+        } else {
+          instancedExt.drawArraysInstancedANGLE(this.mode, 0, this.vertexCount,
+            this.primCount);
+        }
+      } else {
+        // We'll have to do this the really hard way.....
+      }
     } else {
-      gl.drawArrays(this.mode, 0, this.vertexCount);
+      if (this.ebo !== null) {
+        gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
+      } else {
+        gl.drawArrays(this.mode, 0, this.vertexCount);
+      }
     }
   }
   dispose() {
