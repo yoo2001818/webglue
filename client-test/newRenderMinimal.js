@@ -109,6 +109,7 @@ function animate(time) {
   prevTime = time;
   timer += delta / 1000;
   step ++;
+  mat4.rotateY(viewMat, viewMat, Math.PI / 120);
   mat4.rotateY(model1Mat, model1Mat, Math.PI / 60);
   mat3.normalFromMat4(model1Normal, model1Mat);
   mat4.identity(uvMat);

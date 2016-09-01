@@ -14,6 +14,7 @@ export default class Geometry {
     this.ebo = null;
     this.eboType = null;
     this.attributePos = null;
+    this.instancedPos = [];
     this.vertexCount = 0;
     this.primCount = 0;
     this.vao = null;
@@ -28,6 +29,7 @@ export default class Geometry {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Then bind the data to VBO.
     this.attributePos = [];
+    this.instancedPos = [];
     this.standard = true;
     // TODO Some use separate VBO per each attribute. if that's better,
     // we should use it.
@@ -45,12 +47,20 @@ export default class Geometry {
       }
       if (instDiv !== 0) {
         if (primCount === -1) {
-          primCount = entry.data.length / entry.axis / instDiv;
-        } else if (entry.data.length !== primCount * entry.axis * instDiv) {
+          primCount = entry.data.length / entry.axis * instDiv;
+        } else if (entry.data.length !== primCount * entry.axis / instDiv) {
           throw new Error('Instanced primitive data size mismatch');
         }
         // Do not upload it to the buffer if instancing is not supported
-        if (this.renderer.instanced == null) continue;
+        if (this.renderer.instanced == null) {
+          this.instancedPos.push({
+            name: key,
+            axis: entry.axis,
+            data: entry.data,
+            instanced: instDiv
+          });
+          continue;
+        }
       } else {
         if (vertexCount === -1) {
           vertexCount = entry.data.length / entry.axis;
@@ -206,7 +216,39 @@ export default class Geometry {
             this.primCount);
         }
       } else {
+        // Instancing fallback.
         // We'll have to do this the really hard way.....
+        let shader = this.renderer.shaders.current;
+        let shaderAttribs = shader.attributes;
+        for (let i = 0; i < this.primCount; ++i) {
+          this.instancedPos.forEach(v => {
+            let attribPos = shaderAttribs[v.name];
+            if (attribPos == null) return;
+            gl.disableVertexAttribArray(attribPos);
+            let pos = (i / v.instanced | 0) * v.axis;
+            switch (v.axis) {
+            case 1:
+              gl.vertexAttrib1f(attribPos, v.data[pos]);
+              break;
+            case 2:
+              gl.vertexAttrib2f(attribPos, v.data[pos], v.data[pos + 1]);
+              break;
+            case 3:
+              gl.vertexAttrib3f(attribPos, v.data[pos], v.data[pos + 1],
+                v.data[pos + 2]);
+              break;
+            case 4:
+              gl.vertexAttrib4f(attribPos, v.data[pos], v.data[pos + 1],
+                v.data[pos + 2], v.data[pos + 3]);
+              break;
+            }
+          });
+          if (this.ebo !== null) {
+            gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
+          } else {
+            gl.drawArrays(this.mode, 0, this.vertexCount);
+          }
+        }
       }
     } else {
       if (this.ebo !== null) {
