@@ -76,7 +76,7 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
 }
 
 void main(void) {
-  lowp vec3 viewDir = normalize(uView[3].xyz - vPosition);
+  lowp vec3 viewDir = normalize(-mat3(uView) * uView[3].xyz - vPosition);
   lowp vec3 normal = normalize(vNormal);
   lowp vec2 texCoord = vTexCoord;
   MaterialColor matColor;

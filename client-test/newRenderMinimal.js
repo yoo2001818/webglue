@@ -57,29 +57,21 @@ function range(v) {
   return out;
 }
 
-// Fallback before we fully implement merging geometries
-let boxData = calcNormals(geomBox());
-boxData.attributes.aInstPos = range(100).map(() => [
-  Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25
-]);
-boxData.instanced = {
-  aInstPos: 1
-};
-
-let box = renderer.geometries.create(boxData);
+let box = renderer.geometries.create(calcNormals(geomBox()));
 let quad = renderer.geometries.create(geomQuad());
 
 // Test instancing data...
-/*
 let instancedData = renderer.geometries.create({
   attributes: {
-    aInstPos:
+    aInstPos: range(100).map(() => [
+      Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25
+    ])
   },
   instanced: {
     aInstPos: 1
   }
 });
-*/
+let boxes = renderer.geometries.create([box, instancedData]);
 
 let projMat = mat4.create();
 mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 60);
@@ -154,7 +146,7 @@ function animate(time) {
           intensity: [0.3, 0.7, 0.5, 0.00015]
         }]
       },
-      geometry: box,
+      geometry: boxes,
       passes: [{
         uniforms: {
           uTexture: outputTex,

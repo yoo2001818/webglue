@@ -65,6 +65,7 @@ export default class Framebuffer {
     // Good enough! we're done. Kind of.
     this.width = width;
     this.height = height;
+    gl.viewport(0, 0, this.width, this.height);
   }
   use() {
     if (this.framebuffer == null) return this.init();

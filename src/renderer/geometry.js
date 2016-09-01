@@ -14,7 +14,7 @@ export default class Geometry {
     this.ebo = null;
     this.eboType = null;
     this.attributePos = null;
-    this.instancedPos = [];
+    this.instancedPos = null;
     this.vertexCount = 0;
     this.primCount = 0;
     this.vao = null;
@@ -157,7 +157,7 @@ export default class Geometry {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
   }
-  use() {
+  use(useVAO = true) {
     const gl = this.renderer.gl;
     const instancedExt = this.renderer.instanced;
     if (this.vbo === null) this.upload();
@@ -167,7 +167,7 @@ export default class Geometry {
     }
     // TODO VAO logic must be changed if we're going to use instancing.
     // Use VAO if supported by the device.
-    if (this.renderer.vao) {
+    if (this.renderer.vao && useVAO) {
       if (this.standard) {
         if (this.vao == null) {
           this.vao = this.renderer.vao.createVertexArrayOES();
@@ -186,7 +186,7 @@ export default class Geometry {
     }
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    if (useVAO) gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Read each attribute, and set pointer to it
     for (let i = 0; i < this.attributePos.length; ++i) {
