@@ -47,34 +47,19 @@ export default class CombinedGeometry extends Geometry {
       p.concat(g.instancedPos), []);
     // Is this standard object?
     this.standard = this.geometries.every(geometry => geometry.standard);
+    if (this.standard) {
+      this.vao = null;
+    } else {
+      this.vao = new WeakMap();
+    }
   }
   use() {
-    const gl = this.renderer.gl;
     if (!this.uploaded) this.upload();
     if (this.standard && this.renderer.geometries.current === this) {
       // This doesn't have to be 'used' again in this case
       return;
     }
-    // Use VAO if supported by the device.
-    if (this.renderer.vao) {
-      if (this.standard) {
-        if (this.vao == null) {
-          this.vao = this.renderer.vao.createVertexArrayOES();
-          this.renderer.vao.bindVertexArrayOES(this.vao);
-          // Continue.....
-        } else {
-          this.renderer.vao.bindVertexArrayOES(this.vao);
-          // Use EBO
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-          // TODO We should detect geometry update.
-          return;
-        }
-      } else {
-        // TODO Non-standard geometry
-        this.renderer.vao.bindVertexArrayOES(null);
-      }
-    }
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    this.useVAO();
     // 'Use' each geometry objects
     this.geometries.forEach(v => v.use(false));
   }

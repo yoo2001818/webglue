@@ -157,17 +157,12 @@ export default class Geometry {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
   }
-  use(useVAO = true) {
+  useVAO() {
     const gl = this.renderer.gl;
-    const instancedExt = this.renderer.instanced;
-    if (this.vbo === null) this.upload();
-    if (this.standard && this.renderer.geometries.current === this) {
-      // This doesn't have to be 'used' again in this case
-      return;
-    }
+    let shader = this.renderer.shaders.current;
     // TODO VAO logic must be changed if we're going to use instancing.
     // Use VAO if supported by the device.
-    if (this.renderer.vao && useVAO) {
+    if (this.renderer.vao) {
       if (this.standard) {
         if (this.vao == null) {
           this.vao = this.renderer.vao.createVertexArrayOES();
@@ -177,16 +172,38 @@ export default class Geometry {
           this.renderer.vao.bindVertexArrayOES(this.vao);
           // Use EBO
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-          return;
+          return true;
         }
       } else {
-        // TODO Non-standard geometry
-        this.renderer.vao.bindVertexArrayOES(null);
+        // Non-standard geometry
+        if (!this.vao.has(shader)) {
+          let vao = this.renderer.vao.createVertexArrayOES();
+          this.renderer.vao.bindVertexArrayOES(vao);
+          this.vao.set(shader, vao);
+          // Continue.....
+        } else {
+          let vao = this.vao.get(shader);
+          this.renderer.vao.bindVertexArrayOES(vao);
+          // Use EBO
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+          return true;
+        }
       }
     }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    return false;
+  }
+  use(useVAO = true) {
+    const gl = this.renderer.gl;
+    const instancedExt = this.renderer.instanced;
+    if (this.vbo === null) this.upload();
+    if (this.standard && this.renderer.geometries.current === this) {
+      // This doesn't have to be 'used' again in this case
+      return;
+    }
+    if (useVAO && this.useVAO()) return;
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
-    if (useVAO) gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Read each attribute, and set pointer to it
     for (let i = 0; i < this.attributePos.length; ++i) {
