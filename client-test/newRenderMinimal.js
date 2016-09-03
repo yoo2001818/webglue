@@ -20,6 +20,16 @@ let renderer = new Renderer(gl);
 let texture2 = renderer.textures.create({
   source: require('./texture/2.png')
 });
+let skybox = renderer.textures.create({
+  source: [
+    require('./texture/stormyday/front.jpg'),
+    require('./texture/stormyday/back.jpg'),
+    require('./texture/stormyday/up.jpg'),
+    require('./texture/stormyday/down.jpg'),
+    require('./texture/stormyday/right.jpg'),
+    require('./texture/stormyday/left.jpg')
+  ]
+});
 // Framebuffer test
 let outputTex = renderer.textures.create({
   width: 32,
@@ -49,6 +59,10 @@ let shader = renderer.shaders.create(
 let screenShader = renderer.shaders.create(
   require('./shader/screen.vert'),
   require('./shader/noise.frag')
+);
+let skyboxShader = renderer.shaders.create(
+  require('./shader/skybox.vert'),
+  require('./shader/skybox.frag')
 );
 
 function range(v) {
@@ -160,6 +174,15 @@ function animate(time) {
           uNormal: model2Normal
         }
       }]
+    }, {
+      options: {
+        cull: gl.FRONT
+      },
+      shader: skyboxShader,
+      geometry: box,
+      uniforms: {
+        uSkybox: skybox
+      }
     }]
   };
   renderer.render([{

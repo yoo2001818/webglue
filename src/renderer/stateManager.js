@@ -88,7 +88,7 @@ export default class StateManager {
   }
   setEnabled(key, pos, value) {
     const gl = this.renderer.gl;
-    if (value == null && !this.reset) return;
+    if (value == null && !this.doReset) return;
     // If value is not 'false', it's enabled.
     let enabled = value !== false && value != null;
     if (((this.state & pos) !== 0) === enabled) return;
@@ -128,7 +128,7 @@ export default class StateManager {
   }
   setColorMask(options) {
     const gl = this.renderer.gl;
-    if (options == null && !this.reset) return;
+    if (options == null && !this.doReset) return;
     if (!options) {
       if ((this.state & BIT_POS.colorMask) !== 0) {
         gl.colorMask(true, true, true, true);
@@ -141,7 +141,7 @@ export default class StateManager {
   }
   setDepthMask(value) {
     const gl = this.renderer.gl;
-    if (value == null && !this.reset) return;
+    if (value == null && !this.doReset) return;
     // If value is not 'false', it's enabled.
     let enabled = value !== false && value != null;
     if (((this.state & BIT_POS.depthMask) !== 0) === enabled) return;

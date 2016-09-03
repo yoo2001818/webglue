@@ -12,16 +12,39 @@ function isSource(source) {
   return false;
 }
 
+function isLoaded(source) {
+  if (isSource(source)) {
+    // Check readystate...
+    if (source.readyState != null && source.readyState !== 4) {
+      return false;
+    }
+    // If there is complete property and it is false, return false.
+    if (source.complete === false) return false;
+  }
+  return true;
+}
+
 export default class Texture {
   constructor(renderer, options) {
     this.renderer = renderer;
     this.options = options;
 
     // TODO immutable
-    if (typeof this.options.source === 'string') {
-      let image = new Image();
-      image.src = this.options.source;
-      this.options.source = image;
+    if (Array.isArray(this.options.source)) {
+      this.options.source = this.options.source.map(source => {
+        if (typeof source === 'string') {
+          let image = new Image();
+          image.src = source;
+          return image;
+        }
+        return source;
+      });
+    } else {
+      if (typeof this.options.source === 'string') {
+        let image = new Image();
+        image.src = this.options.source;
+        this.options.source = image;
+      }
     }
 
     this.unit = -1;
@@ -35,27 +58,18 @@ export default class Texture {
     const gl = this.renderer.gl;
     this.texture = gl.createTexture();
   }
-  upload() {
+  uploadTexture(target, source) {
     const gl = this.renderer.gl;
-    if (this.texture == null) this.init();
-    let target = this.options.target;
     let format = this.options.format;
     let type = this.options.type;
-
-    // let width = this.options.width || this.options.source.width;
-    // let height = this.options.height || this.options.source.height;
-    gl.bindTexture(target, this.texture);
-    // TODO Cube texture
-    let source = this.options.source;
     if (isSource(source)) {
-      // Check readystate...
-      if (source.readyState != null && source.readyState !== 4) {
-        return false;
-      }
-      // If there is complete property and it is false, return false.
-      if (source.complete === false) return false;
       gl.texImage2D(target, 0, format, format, type, source);
 
+      if (this.width !== null && source.width !== this.width &&
+        this.height !== null && source.height !== this.height
+      ) {
+        throw new Error('Size mismatch');
+      }
       this.width = source.width;
       this.height = source.height;
     } else {
@@ -67,8 +81,35 @@ export default class Texture {
       this.width = width;
       this.height = height;
     }
+  }
+  upload() {
+    const gl = this.renderer.gl;
+    if (this.texture == null) this.init();
+    let target;
+    let source = this.options.source;
+    if (Array.isArray(source)) {
+      target = gl.TEXTURE_CUBE_MAP;
+    } else {
+      target = gl.TEXTURE_2D;
+    }
+    gl.bindTexture(target, this.texture);
 
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
+    this.width = null;
+    this.height = null;
+
+    // Make sure everything is loaded and load...
+    if (Array.isArray(source)) {
+      if (!source.every(isLoaded)) return false;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
+      for (let i = 0; i < 6; ++i) {
+        this.uploadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, source[i]);
+      }
+    } else {
+      if (!isLoaded(source)) return false;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
+      this.uploadTexture(gl.TEXTURE_2D, source);
+    }
+
     // Set texture parameters
     for (let key in this.options.params) {
       if (key === 'flipY') continue;
@@ -96,7 +137,13 @@ export default class Texture {
       this.upload();
     } else {
       // Just rebind it.
-      gl.bindTexture(this.options.target, this.texture);
+      let target;
+      if (Array.isArray(this.options.source)) {
+        target = gl.TEXTURE_CUBE_MAP;
+      } else {
+        target = gl.TEXTURE_2D;
+      }
+      gl.bindTexture(target, this.texture);
     }
   }
   dispose() {
