@@ -53,8 +53,8 @@ let framebuffer = renderer.framebuffers.create({
 
 // We'd need specifiying 'capability', but we'll do that later.
 let shader = renderer.shaders.create(
-  require('./shader/texCoordTest.vert'),
-  require('./shader/texCoordTest.frag')
+  require('./shader/phong.vert'),
+  require('./shader/phong.frag')
 );
 let screenShader = renderer.shaders.create(
   require('./shader/screen.vert'),
