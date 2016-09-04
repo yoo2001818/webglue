@@ -18,12 +18,14 @@ export default function hello(renderer) {
   let model1Normal = mat3.create();
 
   let projMat = mat4.create();
-  // TODO Aspect ratio
-  mat4.perspective(projMat, Math.PI / 180 * 70, 800/600, 0.1, 60);
   let viewMat = mat4.create();
   mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -4]));
 
   return (delta) => {
+    // TODO We have to receive aspect ratio from renderer, to make it work
+    // in a framebuffer
+    mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
+      gl.drawingBufferHeight, 0.1, 60);
     mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000);
     mat3.normalFromMat4(model1Normal, model1Mat);
 

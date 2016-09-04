@@ -65,15 +65,12 @@ export default class Framebuffer {
     // Good enough! we're done. Kind of.
     this.width = width;
     this.height = height;
-    gl.viewport(0, 0, this.width, this.height);
   }
   use() {
     if (this.framebuffer == null) return this.init();
     const gl = this.renderer.gl;
     // Too easy
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-    // Set the viewport size.
-    gl.viewport(0, 0, this.width, this.height);
   }
   dispose() {
     const gl = this.renderer.gl;

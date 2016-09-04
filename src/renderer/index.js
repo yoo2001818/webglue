@@ -38,11 +38,17 @@ export default class Renderer {
   }
   render(data) {
     if (this.gl.isContextLost()) return false;
+    if (this.framebuffers.current == null) {
+      const gl = this.gl;
+      // Set the viewport size
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
     if (!Array.isArray(data)) return this.renderPass(data);
     // Render each pass
     data.forEach(pass => this.renderPass(pass));
   }
   renderPass(pass, parent) {
+    const gl = this.gl;
     let currentLevel = {
       uniforms: Object.assign({}, parent && parent.uniforms, pass.uniforms),
       options: Object.assign({}, parent && parent.options, pass.options),
@@ -53,6 +59,13 @@ export default class Renderer {
     // Set state
     if (pass.framebuffer) {
       this.framebuffers.use(pass.framebuffer);
+      // TODO Check options and if viewport doesn't exists, continue to use
+      // framebuffer's size.
+      if (this.framebuffers.current == null) {
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      } else {
+        gl.viewport(0, 0, pass.framebuffer.width, pass.framebuffer.height);
+      }
     }
     if (parent == null && pass.framebuffer == null) {
       this.framebuffers.use(null);
