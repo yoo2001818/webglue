@@ -64,6 +64,10 @@ let skyboxShader = renderer.shaders.create(
   require('./shader/skybox.vert'),
   require('./shader/skybox.frag')
 );
+let staticColorShader = renderer.shaders.create(
+  require('./shader/staticColor.vert'),
+  require('./shader/staticColor.frag')
+);
 
 function range(v) {
   let out = [];
@@ -73,6 +77,17 @@ function range(v) {
 
 let box = renderer.geometries.create(calcNormals(geomBox()));
 let quad = renderer.geometries.create(geomQuad());
+let lineTest = renderer.geometries.create({
+  attributes: {
+    aPosition: [
+      [-1, -1, -1], [1, 1, 1]
+    ],
+    aColor: [
+      [1, 0, 0], [0, 0, 1]
+    ]
+  },
+  mode: gl.LINES
+});
 
 // Test instancing data...
 let instancedData = renderer.geometries.create({
@@ -146,6 +161,12 @@ function animate(time) {
       uView: viewMat
     },
     passes: [{
+      shader: staticColorShader,
+      geometry: lineTest,
+      uniforms: {
+        uModel: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+      }
+    }, {
       shader: shader,
       uniforms: {
         uMaterial: {
