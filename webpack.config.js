@@ -43,6 +43,10 @@ module.exports = {
         loader: 'html'
       },
       {
+        test: /\.css$/i,
+        loader: 'style!css'
+      },
+      {
         test: /(\.vert|\.frag|\.obj|\.mtl)$/i,
         loader: 'raw'
       },

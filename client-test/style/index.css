@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+}
+#webglue-ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 0.5em;
+  margin: 0.5em;
+  min-width: 13em;
+  border-radius: 3px;
+  border: 1px solid #999;
+  background: #fff;
+}
+#webglue-ui h1 {
+  color: #e45900;
+  font-size: 1.05em;
+  padding: 0 0.5em;
+  padding-bottom: 0.3em;
+  margin: 0;
+  margin-bottom: 0.3em;
+  border-bottom: 1px solid #e45900;
+}
+#scene-list {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  font-size: 0.9em;
+}
+#scene-list li {
+  margin: 0.15em 0;
+  padding: 0.3em 0.5em;
+  border-radius: 2px;
+  cursor: pointer;
+}
+#scene-list li:hover {
+  background-color: #ecf4ff;
+}
+#scene-list .selected, #scene-list .selected:hover {
+  background-color: #2b80ff;
+  color: #fff;
+}

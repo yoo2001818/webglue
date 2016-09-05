@@ -1,14 +1,21 @@
-import boxGeom from 'webglue/geom/box';
-import calcNormals from 'webglue/geom/calcNormals';
-
 import { mat3, mat4 } from 'gl-matrix';
 
-export default function hello(renderer) {
+export default function line(renderer) {
   const gl = renderer.gl;
-  let box = renderer.geometries.create(calcNormals(boxGeom()));
+  let box = renderer.geometries.create({
+    attributes: {
+      aPosition: [
+        [-1, -1, -1], [1, 1, 1]
+      ],
+      aColor: [
+        [1, 0, 0], [0, 0, 1]
+      ]
+    },
+    mode: gl.LINES
+  });
   let shader = renderer.shaders.create(
-    require('../shader/phong.vert'),
-    require('../shader/phong.frag')
+    require('../shader/staticColor.vert'),
+    require('../shader/staticColor.frag')
   );
   let texture = renderer.textures.create({
     source: require('../texture/2.png')
