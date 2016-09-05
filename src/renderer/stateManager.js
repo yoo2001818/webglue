@@ -1,3 +1,5 @@
+import parseUniform from '../util/parseUniform';
+
 const BIT_POS = {
   blend: 1,
   cull: 2,
@@ -213,7 +215,7 @@ export default class StateManager {
     const gl = this.renderer.gl;
     let flag = 0;
     if (options.clearColor) {
-      let arr = options.clearColor;
+      let arr = parseUniform(gl, options.clearColor, gl.FLOAT_VEC4);
       // Whyyyyyyy
       gl.clearColor(arr[0], arr[1], arr[2], arr[3]);
       flag |= gl.COLOR_BUFFER_BIT;
