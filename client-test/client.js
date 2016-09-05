@@ -1,10 +1,11 @@
 import Renderer from 'webglue/renderer';
 import './style/index.css';
 
-const SCENES = [
-  require('./scene/hello'),
-  require('./scene/line')
-];
+function requireAll(context) {
+  return context.keys().map(context);
+}
+
+const SCENES = requireAll(require.context('./scene/', true, /\.js$/));
 
 // Canvas init
 let canvas = document.createElement('canvas');

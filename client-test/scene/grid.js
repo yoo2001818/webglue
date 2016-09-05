@@ -1,6 +1,6 @@
 import { mat3, mat4 } from 'gl-matrix';
 
-export default function line(renderer) {
+export default function grid(renderer) {
   const gl = renderer.gl;
   let box = renderer.geometries.create({
     attributes: {
@@ -17,9 +17,6 @@ export default function line(renderer) {
     require('../shader/staticColor.vert'),
     require('../shader/staticColor.frag')
   );
-  let texture = renderer.textures.create({
-    source: require('../texture/2.png')
-  });
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
@@ -37,34 +34,15 @@ export default function line(renderer) {
     mat3.normalFromMat4(model1Normal, model1Mat);
 
     renderer.render({
-      options: {
-        clearColor: new Float32Array([0, 0, 0, 1]),
-        clearDepth: 1,
-        cull: gl.BACK,
-        depth: gl.LEQUAL
-      },
       uniforms: {
         uProjection: projMat,
-        uView: viewMat,
-        uPointLight: [{
-          position: [0, 0, 8],
-          color: '#ffffff',
-          intensity: [0.3, 0.7, 0.5, 0.00015]
-        }]
+        uView: viewMat
       },
       passes: [{
         shader: shader,
         geometry: box,
         uniforms: {
-          uModel: model1Mat,
-          uNormal: model1Normal,
-          uMaterial: {
-            ambient: '#ffffff',
-            diffuse: '#ffffff',
-            specular: '#555555',
-            shininess: 30
-          },
-          uTexture: texture
+          uModel: model1Mat
         }
       }]
     });
