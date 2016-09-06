@@ -1,10 +1,10 @@
-import parseAttributes from '../util/parseAttributes';
+import { parseAttribute } from '../util/parseAttributes';
 import parseIndices from '../util/parseIndices';
 
 import { vec3 } from 'gl-matrix';
 
 export default function calcNormals(geometry, smooth = false) {
-  let vertices = parseAttributes(geometry.attributes.aPosition);
+  let vertices = parseAttribute(geometry.attributes.aPosition);
   if (vertices == null) throw new Error('aPosition must be specified');
   let normals = new Float32Array(vertices.data.length);
   let indices = parseIndices(geometry.indices);

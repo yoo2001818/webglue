@@ -6,7 +6,7 @@ export default function parseAttributes(attributes) {
   return output;
 }
 
-function parseAttribute(attribute) {
+export function parseAttribute(attribute) {
   if (Array.isArray(attribute)) {
     // Get vector axis size and attribute size
     let axis = attribute[0].length;

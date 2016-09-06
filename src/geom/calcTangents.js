@@ -1,13 +1,13 @@
-import parseAttributes from '../util/parseAttributes';
+import { parseAttribute } from '../util/parseAttributes';
 import parseIndices from '../util/parseIndices';
 
 import { vec2, vec3 } from 'gl-matrix';
 
 export default function calcTangents(geometry) {
-  let vertices = parseAttributes(geometry.attributes.aPosition);
+  let vertices = parseAttribute(geometry.attributes.aPosition);
   if (vertices == null) throw new Error('aPosition must be specified');
   vertices = vertices.data;
-  let texCoords = parseAttributes(geometry.attributes.aTexCoord);
+  let texCoords = parseAttribute(geometry.attributes.aTexCoord);
   if (texCoords == null) throw new Error('aTexCoord must be specified');
   texCoords = texCoords.data;
   // Resize the array

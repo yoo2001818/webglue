@@ -30,10 +30,10 @@ function getTransformer(axis, transform) {
 
 export default function transform(input, transforms) {
   // Create exact copy of the input, with some data modified.
-  let attributes = Object.assign({}, input.attributes);
+  let attributes = parseAttributes(input.attributes);
   for (let key in transforms) {
     if (attributes[key] == null) continue;
-    let attribute = parseAttributes(attributes[key]);
+    let attribute = attributes[key];
     // Since geometry functions should be immutable, we must create a clone
     // to work with
     let data = attribute.data.slice();
