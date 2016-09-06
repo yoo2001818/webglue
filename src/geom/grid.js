@@ -1,3 +1,5 @@
+import { LINES } from '../renderer/geometry';
+
 // Generates 2D grid geometry
 export default function grid(width = 17, height = 17, gap = 1) {
   let vertices = new Float32Array(4 * (width + height));
@@ -24,6 +26,6 @@ export default function grid(width = 17, height = 17, gap = 1) {
     attributes: {
       aPosition: { axis: 2, data: vertices }
     },
-    mode: 1 // TODO
+    mode: LINES
   };
 }

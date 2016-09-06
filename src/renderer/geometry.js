@@ -1,6 +1,14 @@
 import parseAttributes from '../util/parseAttributes';
 import parseIndices from '../util/parseIndices';
 
+export const POINTS = 0;
+export const LINES = 1;
+export const LINE_LOOP = 2;
+export const LINE_STRIP = 3;
+export const TRIANGLES = 4;
+export const TRIANGLE_STRIP = 5;
+export const TRIANGLE_FAN = 6;
+
 export default class Geometry {
   constructor(renderer, options) {
     this.renderer = renderer;
@@ -8,7 +16,8 @@ export default class Geometry {
     this.attributes = parseAttributes(options.attributes);
     this.indices = parseIndices(options.indices);
     this.instanced = options.instanced;
-    this.mode = options.mode || renderer.gl.TRIANGLES;
+    // gl.POINTS is 0
+    this.mode = options.mode == null ? renderer.gl.TRIANGLES : options.mode;
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
