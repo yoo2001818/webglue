@@ -8,6 +8,7 @@ export default function unwrapInstanced(input) {
   let instanced = input.instanced;
   let attributes = parseAttributes(input.attributes);
   let indices = parseIndices(input.indices);
+  if (instanced == null) return input;
   let outAttributes = {};
   let outIndices = null;
   // TODO Check mode
@@ -16,8 +17,7 @@ export default function unwrapInstanced(input) {
   let primCount = -1;
   for (let key in attributes) {
     let attribute = attributes[key];
-    let instDiv = 0;
-    if (instanced != null) instDiv = instanced[key] || 0;
+    let instDiv = instanced[key] || 0;
     if (instDiv !== 0) {
       if (primCount === -1) {
         primCount = attribute.data.length / attribute.axis * instDiv;
@@ -73,13 +73,15 @@ export default function unwrapInstanced(input) {
     }
   }
   // Populate indices
-  outIndices = createIndicesArray(vertexCount * primCount,
-    indices.length * primCount);
-  for (let i = 0; i < primCount; ++i) {
-    let offset = i * indices.length;
-    // Since we have to increment value, we can't just copy it
-    for (let j = 0; j < indices.length; ++j) {
-      outIndices[offset + j] = indices[j] + vertexCount * i;
+  if (indices) {
+    outIndices = createIndicesArray(vertexCount * primCount,
+      indices.length * primCount);
+    for (let i = 0; i < primCount; ++i) {
+      let offset = i * indices.length;
+      // Since we have to increment value, we can't just copy it
+      for (let j = 0; j < indices.length; ++j) {
+        outIndices[offset + j] = indices[j] + vertexCount * i;
+      }
     }
   }
   // All done! export the value
