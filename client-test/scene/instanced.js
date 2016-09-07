@@ -36,17 +36,7 @@ export default function instanced(renderer) {
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
 
-  let projMat = mat4.create();
-  let viewMat = mat4.create();
-  mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -5]));
-
-  return (delta) => {
-    // TODO We have to receive aspect ratio from renderer, to make it work
-    // in a framebuffer
-    mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
-      gl.drawingBufferHeight, 0.1, 60);
-    mat4.rotateY(viewMat, viewMat, Math.PI * delta / 1000 / 4);
-
+  return (delta, context) => {
     renderer.render({
       options: {
         clearColor: new Float32Array([0, 0, 0, 1]),
@@ -54,15 +44,13 @@ export default function instanced(renderer) {
         cull: gl.BACK,
         depth: gl.LEQUAL
       },
-      uniforms: {
-        uProjection: projMat,
-        uView: viewMat,
+      uniforms: Object.assign({}, context.camera, {
         uPointLight: [{
           position: [0, -3, 0],
           color: '#ffffff',
           intensity: [0.3, 0.7, 0.5, 0.00015]
         }]
-      },
+      }),
       passes: [{
         shader: shader,
         geometry: boxes,

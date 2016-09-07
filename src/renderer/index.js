@@ -21,6 +21,8 @@ export default class Renderer {
     // to other one.
     // TODO Bind multiple attributes to single index??
     this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
+    this.width = null;
+    this.height = null;
     this.reset();
   }
   reset() {
@@ -35,12 +37,17 @@ export default class Renderer {
     this.uint = this.gl.getExtension('OES_element_index_uint');
     this.instanced = this.gl.getExtension('ANGLE_instanced_arrays');
     this.derivatives = this.gl.getExtension('OES_standard_derivatives');
+
+    this.width = this.gl.drawingBufferWidth;
+    this.height = this.gl.drawingBufferHeight;
   }
   render(data) {
     if (this.gl.isContextLost()) return false;
     if (this.framebuffers.current == null) {
       const gl = this.gl;
       // Set the viewport size
+      this.width = gl.drawingBufferWidth;
+      this.height = gl.drawingBufferHeight;
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
     if (!Array.isArray(data)) return this.renderPass(data);
@@ -62,8 +69,12 @@ export default class Renderer {
       // TODO Check options and if viewport doesn't exists, continue to use
       // framebuffer's size.
       if (this.framebuffers.current == null) {
+        this.width = gl.drawingBufferWidth;
+        this.height = gl.drawingBufferHeight;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
+        this.width = pass.framebuffer.width;
+        this.height = pass.framebuffer.height;
         gl.viewport(0, 0, pass.framebuffer.width, pass.framebuffer.height);
       }
     }

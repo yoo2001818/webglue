@@ -1,4 +1,5 @@
 import Renderer from 'webglue/renderer';
+import { mat4 } from 'gl-matrix';
 import './style/index.css';
 
 function requireAll(context) {
@@ -60,12 +61,30 @@ loadScene(window.localStorage.index || 0);
 let prevTime = -1;
 let timer = 0;
 
+let projMat = mat4.create();
+let viewMat = mat4.create();
+
+mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -4]));
+mat4.rotateX(viewMat, viewMat, Math.PI * 1 / 4);
+
 function animate(time) {
   if (prevTime === -1) prevTime = time;
   let delta = time - prevTime;
   prevTime = time;
   timer += delta / 1000;
-  if (update) update(delta);
+
+  mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
+    gl.drawingBufferHeight, 0.1, 60);
+  mat4.rotateY(viewMat, viewMat, Math.PI * delta / 1000 / 3);
+
+  if (update) {
+    update(delta, {
+      camera: {
+        uProjection: projMat,
+        uView: viewMat
+      }
+    });
+  }
   window.requestAnimationFrame(animate);
 }
 

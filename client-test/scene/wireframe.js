@@ -13,17 +13,7 @@ export default function wireframe(renderer) {
 
   let model1Mat = mat4.create();
 
-  let projMat = mat4.create();
-  let viewMat = mat4.create();
-  mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -4]));
-
-  return (delta) => {
-    // TODO We have to receive aspect ratio from renderer, to make it work
-    // in a framebuffer
-    mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
-      gl.drawingBufferHeight, 0.1, 60);
-    mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000 / 2);
-
+  return (delta, context) => {
     renderer.render({
       options: {
         clearColor: new Float32Array([0, 0, 0, 1]),
@@ -31,10 +21,7 @@ export default function wireframe(renderer) {
         cull: gl.BACK,
         depth: gl.LEQUAL
       },
-      uniforms: {
-        uProjection: projMat,
-        uView: viewMat
-      },
+      uniforms: context.camera,
       passes: [{
         shader: shader,
         geometry: geom,
