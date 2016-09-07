@@ -70,10 +70,7 @@ export default function cone(polygons) {
     attributes: {
       aPosition: {axis: 3, data: vertices},
       aTexCoord: {axis: 2, data: texCoords},
-      // Instead of calculating normals by calculating indices, we can
-      // just put vertices data to the normals to calculate smooth
-      // normals. (This only applies to sphere though)
-      aNormal: {axis: 3, data: vertices}
+      aNormal: {axis: 3, data: normals}
     },
     indices
   };
