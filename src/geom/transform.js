@@ -1,4 +1,5 @@
 import parseAttributes from '../util/parseAttributes';
+import getVerticesCount from '../util/getVerticesCount';
 import { vec2, vec3, vec4 } from 'gl-matrix';
 
 function getTransformer(axis, transform) {
@@ -31,9 +32,30 @@ function getTransformer(axis, transform) {
 export default function transform(input, transforms) {
   // Create exact copy of the input, with some data modified.
   let attributes = parseAttributes(input.attributes);
+  let verticesCount = -1;
   for (let key in transforms) {
-    if (attributes[key] == null) continue;
-    let attribute = attributes[key];
+    let attribute;
+    if (attributes[key] == null) {
+      if (verticesCount === -1) {
+        verticesCount = getVerticesCount(input.attributes);
+      }
+      // Special case - if attribute doesn't exists and transformer's size
+      // equals or is smaller than 4, create one.
+      // TODO This can cause a confliction with 2x2 transform matrix
+      if ((Array.isArray(transforms[key])
+        || transforms[key] instanceof Float32Array) &&
+        transforms[key].length <= 4
+      ) {
+        attribute = attributes[key] = {
+          axis: transforms[key].length,
+          data: new Float32Array(verticesCount * transforms[key].length)
+        };
+      } else {
+        continue;
+      }
+    } else {
+      attribute = attributes[key];
+    }
     // Since geometry functions should be immutable, we must create a clone
     // to work with
     let data = attribute.data.slice();

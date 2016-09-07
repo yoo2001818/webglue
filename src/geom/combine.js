@@ -1,4 +1,4 @@
-import parseAttributes, { parseAttribute } from '../util/parseAttributes';
+import parseAttributes from '../util/parseAttributes';
 import parseIndices from '../util/parseIndices';
 import createIndicesArray from '../util/createIndicesArray';
 import unwrapInstanced from './unwrapInstanced';

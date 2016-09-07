@@ -1,20 +1,12 @@
 import { TRIANGLES, LINES } from '../renderer/geometry';
-import { parseAttribute } from '../util/parseAttributes';
+import getVerticesCount from '../util/getVerticesCount';
 import createIndicesArray from '../util/createIndicesArray';
-
-function getVerticesCount(geometry) {
-  for (let key in geometry.attributes) {
-    let attribute = parseAttribute(geometry.attributes[key]);
-    return attribute.data.length / attribute.axis;
-  }
-  throw new Error('There must be at least one attribute');
-}
 
 export default function wireframe(input) {
   if (input.mode != null && input.mode != TRIANGLES) {
     throw new Error('Wireframe geometry only supports triangles');
   }
-  let verticesCount = getVerticesCount(input);
+  let verticesCount = getVerticesCount(input.attributes);
   if (input.indices) {
     let indices = createIndicesArray(verticesCount,
       input.indices.length * 2);

@@ -32,6 +32,7 @@ function loadScene(index) {
   sceneNodes[currentIndex].className = '';
   sceneNodes[index].className = 'selected';
   currentIndex = index;
+  window.localStorage.index = index;
 }
 
 // Create UI
@@ -54,7 +55,7 @@ function loadSceneList() {
   });
 }
 loadSceneList();
-loadScene(0);
+loadScene(window.localStorage.index || 0);
 
 let prevTime = -1;
 let timer = 0;

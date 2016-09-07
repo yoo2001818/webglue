@@ -86,7 +86,6 @@ export default function cylinder(polygons) {
     indices[((polygons - 2) * 2 + i * 2) * 3 + 4] = polygons * 5 + i;
     indices[((polygons - 2) * 2 + i * 2) * 3 + 5] = polygons * 4 + i;
   }
-  console.log(indices);
   return {
     attributes: {
       aPosition: {axis: 3, data: vertices},
