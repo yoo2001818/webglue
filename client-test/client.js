@@ -74,7 +74,7 @@ function animate(time) {
   timer += delta / 1000;
 
   mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
-    gl.drawingBufferHeight, 0.1, 60);
+    gl.drawingBufferHeight, 0.1, 200);
   controller.update(delta);
 
   if (update) {

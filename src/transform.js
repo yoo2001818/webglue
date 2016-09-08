@@ -9,6 +9,10 @@ export default class Transform {
     this.valid = false;
     this.validate();
   }
+  get() {
+    this.validate();
+    return this.matrix;
+  }
   validate() {
     if (this.valid) return false;
     // Recalculate transform matrix

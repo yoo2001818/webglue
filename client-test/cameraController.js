@@ -86,11 +86,25 @@ export default class CameraController {
       e.preventDefault();
     });
     this.node.addEventListener('wheel', e => {
-      if (e.deltaMode === 0) {
-        this.radius += this.radius * e.deltaY / 50 / 12;
-      } else {
-        this.radius += this.radius * e.deltaY / 50;
+      let diff = e.deltaY / 50;
+      if (e.deltaMode === 0) diff /= 12;
+      if (e.shiftKey) {
+        let vecY = vec3.create();
+        vec3.transformQuat(vecY, [0, -diff * this.radius, 0],
+          this.rotation);
+        vec3.add(this.center, this.center, vecY);
+        this.hasChanged = true;
+        return;
+      } else if (e.ctrlKey) {
+        let vecX = vec3.create();
+        vec3.transformQuat(vecX, [diff * this.radius, 0, 0],
+          this.rotation);
+        vec3.add(this.center, this.center, vecX);
+        this.hasChanged = true;
+        e.preventDefault();
+        return;
       }
+      this.radius += this.radius * diff;
       this.hasChanged = true;
       e.preventDefault();
     });

@@ -29,7 +29,7 @@ export default function cylinder(renderer) {
       },
       uniforms: Object.assign({}, context.camera, {
         uPointLight: [{
-          position: [0, 0, 8],
+          position: [0, 0, 10],
           color: '#ffffff',
           intensity: [0.3, 0.7, 0.5, 0.00015]
         }]
