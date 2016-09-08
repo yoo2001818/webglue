@@ -1,4 +1,5 @@
 import Renderer from 'webglue/renderer';
+import CameraController from './cameraController';
 import { mat4 } from 'gl-matrix';
 import './style/index.css';
 
@@ -61,11 +62,10 @@ loadScene(window.localStorage.index || 0);
 let prevTime = -1;
 let timer = 0;
 
-let projMat = mat4.create();
-let viewMat = mat4.create();
+// Create controller
+let controller = new CameraController(canvas, document);
 
-mat4.translate(viewMat, viewMat, new Float32Array([0, 0, -4]));
-mat4.rotateX(viewMat, viewMat, Math.PI * 1 / 4);
+let projMat = mat4.create();
 
 function animate(time) {
   if (prevTime === -1) prevTime = time;
@@ -75,13 +75,13 @@ function animate(time) {
 
   mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
     gl.drawingBufferHeight, 0.1, 60);
-  mat4.rotateY(viewMat, viewMat, Math.PI * delta / 1000 / 3);
+  controller.update(delta);
 
   if (update) {
     update(delta, {
       camera: {
         uProjection: projMat,
-        uView: viewMat
+        uView: controller.viewMat
       }
     });
   }
