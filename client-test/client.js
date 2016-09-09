@@ -1,4 +1,5 @@
 import Renderer from 'webglue/renderer';
+import Camera from 'webglue/camera';
 import CameraController from './cameraController';
 import { mat4 } from 'gl-matrix';
 import './style/index.css';
@@ -63,9 +64,8 @@ let prevTime = -1;
 let timer = 0;
 
 // Create controller
-let controller = new CameraController(canvas, document);
-
-let projMat = mat4.create();
+let camera = new Camera();
+let controller = new CameraController(canvas, document, camera);
 
 function animate(time) {
   if (prevTime === -1) prevTime = time;
@@ -73,15 +73,14 @@ function animate(time) {
   prevTime = time;
   timer += delta / 1000;
 
-  mat4.perspective(projMat, Math.PI / 180 * 70, gl.drawingBufferWidth /
-    gl.drawingBufferHeight, 0.1, 200);
   controller.update(delta);
 
   if (update) {
     update(delta, {
       camera: {
-        uProjection: projMat,
-        uView: controller.viewMat
+        uProjection: camera.getProjection,
+        uView: camera.getView,
+        uProjectionView: camera.getPV
       }
     });
   }

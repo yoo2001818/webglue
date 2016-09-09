@@ -48,10 +48,10 @@ Fields would have two kinds of input:
 Fields evaluate when the program requests to do so (lazy evaluation). That
 means, it'll start calculation when get() is called.
 
-get() will check if the inputs have been changed, and call evaluate() when
+get() will check if the inputs have been changed, and call validate() when
 the check passes. Otherwise, it'll return its output.
 
-evaluate() will actually calculate the output according to the input,
+validate() will actually calculate the output according to the input,
 update the fields, and increment its own tick count.
 
 It'd be better to make it as an interface instead of a class. Sure it won't be
@@ -70,7 +70,7 @@ let feeder = {
     if (!this.valid) return this.evaluate();
     return this.original;
   },
-  evaluate() {
+  validate() {
     this.tickCount ++;
     this.valid = true;
     return this.original;
@@ -85,7 +85,7 @@ let inverter = {
     if (!this.originalTick !== this.original.getTicks()) return this.evaluate();
     return this.output;
   },
-  evaluate() {
+  validate() {
     mat4.invert(this.output, this.original);
     this.originalTick = this.original.getTicks();
     return this.output;

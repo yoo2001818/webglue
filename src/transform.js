@@ -5,22 +5,23 @@ export default class Transform {
     this.rotation = quat.create();
     this.scale = vec3.create();
     vec3.set(this.scale, 1, 1, 1);
-    
+
     this.matrix = mat4.create();
     this.valid = false;
+    this.ticks = 0;
     this.validate();
   }
-  getMatrix() {
-    this.validate();
-    return this.matrix;
+  get() {
+    return this.validate();
   }
   validate() {
-    if (this.valid) return false;
+    if (this.valid) return this.matrix;
     // Recalculate transform matrix
     mat4.fromRotationTranslation(this.matrix, this.rotation, this.position);
     mat4.scale(this.matrix, this.matrix, this.scale);
     this.valid = true;
-    return true;
+    this.ticks ++;
+    return this.matrix;
   }
   invalidate() {
     this.valid = false;

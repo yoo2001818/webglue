@@ -11,14 +11,13 @@ varying lowp vec3 vPosition;
 varying lowp vec3 vNormal;
 varying lowp vec2 vTexCoord;
 
-uniform mat4 uProjection;
-uniform lowp mat4 uView;
+uniform mat4 uProjectionView;
 uniform mat4 uModel;
 uniform mat3 uNormal;
 
 void main() {
   vec4 fragPos = uModel * vec4(aPosition, 1.0) + vec4(aInstPos, 0.0);
-  gl_Position = uProjection * uView * fragPos;
+  gl_Position = uProjectionView * fragPos;
   vPosition = fragPos.xyz;
 
   vTexCoord = vec2(aTexCoord.x, aTexCoord.y);

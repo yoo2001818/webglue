@@ -1,9 +1,8 @@
-import { quat, vec3, mat4 } from 'gl-matrix';
+import { quat, vec3 } from 'gl-matrix';
 
 export default class CameraController {
-  constructor(node, keyNode) {
+  constructor(node, keyNode, camera) {
     // Blender-like control mode
-    this.rotation = quat.create();
     this.center = vec3.create();
     this.radius = 6;
 
@@ -25,8 +24,7 @@ export default class CameraController {
     this.mode = false;
 
     this.hasChanged = true;
-    this.projMat = mat4.create();
-    this.viewMat = mat4.create();
+    this.camera = camera;
 
     this.node = node;
     this.keyNode = keyNode;
@@ -40,15 +38,16 @@ export default class CameraController {
       let offsetY = e.clientY - this.mouseY;
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
+      let transform = this.camera.transform;
       if (e.shiftKey) {
         // Do translation instead - we'd need two vectors to make translation
         // relative to the camera rotation
         let vecX = vec3.create();
         let vecY = vec3.create();
         vec3.transformQuat(vecX, [-offsetX * this.radius / 600, 0, 0],
-          this.rotation);
+          transform.rotation);
         vec3.transformQuat(vecY, [0, offsetY * this.radius / 600, 0],
-          this.rotation);
+          transform.rotation);
         vec3.add(this.center, this.center, vecX);
         vec3.add(this.center, this.center, vecY);
         this.hasChanged = true;
@@ -58,8 +57,9 @@ export default class CameraController {
       let rot = quat.create();
       quat.rotateY(rot, rot, Math.PI / 180 * -offsetX *
         this.rotateDir / 4);
-      quat.multiply(this.rotation, rot, this.rotation);
-      quat.rotateX(this.rotation, this.rotation, Math.PI / 180 * -offsetY / 4);
+      quat.multiply(transform.rotation, rot, transform.rotation);
+      quat.rotateX(transform.rotation, transform.rotation,
+        Math.PI / 180 * -offsetY / 4);
       this.hasChanged = true;
     });
     this.node.addEventListener('contextmenu', e => {
@@ -72,7 +72,7 @@ export default class CameraController {
       let upLocal = vec3.create();
       let up = vec3.fromValues(0, 1, 0);
       vec3.transformQuat(upLocal, [0, 1, 0],
-        this.rotation);
+        this.camera.transform.rotation);
       let upDot = vec3.dot(up, upLocal);
       this.rotateDir = upDot >= 0 ? 1 : -1;
       // Set position
@@ -112,15 +112,11 @@ export default class CameraController {
   }
   update() {
     if (this.hasChanged) {
-      let rot = quat.create();
-      quat.invert(rot, this.rotation);
-      let pos = vec3.create();
-      vec3.transformQuat(pos, [0, 0, -this.radius], this.rotation);
-      vec3.subtract(pos, pos, this.center);
-      // Create view matrix
-      mat4.fromQuat(this.viewMat, rot);
-      mat4.translate(this.viewMat, this.viewMat, pos);
-      // mat4.fromRotationTranslation(this.viewMat, rot, pos);
+      let transform = this.camera.transform;
+      vec3.transformQuat(transform.position, [0, 0, this.radius],
+        transform.rotation);
+      vec3.add(transform.position, transform.position, this.center);
+      transform.invalidate();
       this.hasChanged = false;
     }
   }

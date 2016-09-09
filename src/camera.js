@@ -2,58 +2,77 @@ import { mat4 } from 'gl-matrix';
 
 import Object3D from './object3D';
 
+export function perspective(fov, near, far) {
+  return (out, aspect) => mat4.perspective(out, fov, aspect, near, far);
+}
+
+// Zoom value may be changed often...
+export function orthogonal(zoom, near, far) {
+  return (out, aspect) => mat4.ortho(out, -aspect * zoom, aspect * zoom,
+    -zoom, zoom, near, far);
+}
+
 export default class Camera extends Object3D {
-  constructor(options) {
+  constructor(projection = perspective(Math.PI / 180 * 70, 0.3, 1000)) {
     super();
-    this.aspect = 1;
-    this.options = Object.assign({
-      type: 'persp',
-      near: 0.3,
-      far: 1000,
-      fov: Math.PI / 180 * 70,
-      zoom: 1
-    }, options);
-    this.projectMatrix = mat4.create();
-    this.inverseMatrix = mat4.create();
+    this.projection = projection;
+
+    this.getProjection = this.getProjection.bind(this);
+    this.getView = this.getView.bind(this);
+    this.getPV = this.getPV.bind(this);
+
+    // This is awkward.... TODO Refactor
+    this._prevProjection = null;
+    this._aspect = 1;
+    this.projectionTicks = 0;
+    this.projectionMatrix = mat4.create();
+
+    this.viewTicks = 0;
+    this.viewMatrix = mat4.create();
+
+    this._pvProjectionTicks = -1;
+    this._pvViewTicks = -1;
+    this.pvTicks = 0;
     this.pvMatrix = mat4.create();
   }
-  validate() {
-    let hasChanged = super.validate() || !this.valid;
-    if (!this.valid) {
-      if (this.options.type === 'ortho') {
-        mat4.ortho(this.projectMatrix,
-          -this.aspect * this.options.zoom, this.aspect * this.options.zoom,
-          -1 * this.options.zoom, 1 * this.options.zoom,
-          this.options.near, this.options.far);
-      } else {
-        mat4.perspective(this.projectMatrix, this.options.fov, this.aspect,
-          this.options.near, this.options.far);
-      }
-      this.valid = true;
+  getProjection(input) {
+    let aspect;
+    if (typeof input === 'number') {
+      aspect = input;
+    } else if (typeof input === 'object') {
+      // Received a shader object - we need to get current aspect ratio.
+      aspect = input.renderer.width / input.renderer.height;
+    } else {
+      aspect = this._aspect;
     }
-    return hasChanged;
-  }
-  invalidate() {
-    this.valid = false;
-  }
-  validateAspect(aspect) {
-    // Called by RenderContext to validate aspect ratio.
-    if (this.aspect !== aspect) {
-      this.aspect = aspect;
-      this.invalidate();
-      this.validate();
-      // This is calculated at the update time; however this should be done
-      // now.
-      mat4.multiply(this.pvMatrix, this.projectMatrix, this.inverseMatrix);
-      return true;
+    if (this._aspect !== aspect || this._prevProjection !== this.projection) {
+      this._prevProjection = this.projection;
+      this._aspect = aspect;
+      this.projection(this.projectionMatrix, aspect);
+      this.projectionTicks ++;
     }
-    return false;
+    return this.projectionMatrix;
   }
-  update(context, parent) {
-    super.update(context, parent);
-    if (this.hasChanged || (parent && parent.hasChanged)) {
-      mat4.invert(this.inverseMatrix, this.globalMatrix);
-      mat4.multiply(this.pvMatrix, this.projectMatrix, this.inverseMatrix);
+  getView() {
+    let transformMat = this.transform.get();
+    if (this.viewTicks !== this.transform.ticks) {
+      // We can directly copy transform's ticks
+      this.viewTicks = this.transform.ticks;
+      mat4.invert(this.viewMatrix, transformMat);
     }
+    return this.viewMatrix;
+  }
+  getPV(input) {
+    this.getProjection(input);
+    this.getView();
+    if (this._pvViewTicks !== this.viewTicks ||
+      this._pvProjectionTicks !== this.projectionTicks
+    ) {
+      this._pvViewTicks = this.viewTicks;
+      this._pvProjectionTicks = this.projectionTicks;
+      mat4.multiply(this.pvMatrix, this.projectionMatrix, this.viewMatrix);
+      this.pvTicks ++;
+    }
+    return this.pvMatrix;
   }
 }
