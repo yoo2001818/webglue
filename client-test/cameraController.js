@@ -94,6 +94,7 @@ export default class CameraController {
           this.rotation);
         vec3.add(this.center, this.center, vecY);
         this.hasChanged = true;
+        e.preventDefault();
         return;
       } else if (e.ctrlKey) {
         let vecX = vec3.create();

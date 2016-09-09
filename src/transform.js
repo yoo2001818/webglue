@@ -5,11 +5,12 @@ export default class Transform {
     this.rotation = quat.create();
     this.scale = vec3.create();
     vec3.set(this.scale, 1, 1, 1);
+    
     this.matrix = mat4.create();
     this.valid = false;
     this.validate();
   }
-  get() {
+  getMatrix() {
     this.validate();
     return this.matrix;
   }
