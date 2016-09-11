@@ -1,31 +1,52 @@
 import translateWidget from 'webglue/geom/translateWidget';
-
-import { mat4 } from 'gl-matrix';
+import scaleWidget from 'webglue/geom/scaleWidget';
+import rotateWidget from 'webglue/geom/rotateWidget';
+import Transform from 'webglue/transform';
 
 export default function widget(renderer) {
   const gl = renderer.gl;
-  let geom = renderer.geometries.create(translateWidget());
+  let translate = renderer.geometries.create(translateWidget());
+  let scale = renderer.geometries.create(scaleWidget());
+  let rotate = renderer.geometries.create(rotateWidget());
   let shader = renderer.shaders.create(
-    require('../shader/staticColor.vert'),
+    require('../shader/widget.vert'),
     require('../shader/staticColor.frag')
   );
+  let shaderRotate = renderer.shaders.create(
+    require('../shader/widgetRotate.vert'),
+    require('../shader/widgetRotate.frag')
+  );
 
-  let model1Mat = mat4.create();
+  let model1 = new Transform();
+  let model2 = new Transform([2, 0, 0]);
+  let model3 = new Transform([-2, 0, 0]);
 
   return (delta, context) => {
     renderer.render({
       options: {
         clearColor: '#222222',
         clearDepth: 1,
-        // cull: gl.BACK,
+        cull: gl.BACK,
         depth: gl.LEQUAL
       },
       uniforms: context.camera,
       passes: [{
         shader: shader,
-        geometry: geom,
+        geometry: translate,
         uniforms: {
-          uModel: model1Mat
+          uModel: model1.get
+        }
+      }, {
+        shader: shader,
+        geometry: scale,
+        uniforms: {
+          uModel: model2.get
+        }
+      }, {
+        shader: shaderRotate,
+        geometry: rotate,
+        uniforms: {
+          uModel: model3.get
         }
       }]
     });

@@ -1,15 +1,20 @@
 import { mat4, vec3, quat } from 'gl-matrix';
 export default class Transform {
-  constructor() {
-    this.position = vec3.create();
-    this.rotation = quat.create();
-    this.scale = vec3.create();
-    vec3.set(this.scale, 1, 1, 1);
+  constructor(
+    position = vec3.create(),
+    rotation = quat.create(),
+    scale = vec3.fromValues(1, 1, 1)
+  ) {
+    this.position = position;
+    this.rotation = rotation;
+    this.scale = scale;
 
     this.matrix = mat4.create();
     this.valid = false;
     this.ticks = 0;
     this.validate();
+
+    this.get = this.get.bind(this);
   }
   get() {
     return this.validate();
