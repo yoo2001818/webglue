@@ -9,10 +9,14 @@ export default class GeometryManager {
   }
   create(options) {
     if (Array.isArray(options)) {
-      // Create special combinedGeometry object
-      let geometry = new CombinedGeometry(this.renderer, options);
-      this.geometries.push(geometry);
-      return geometry;
+      if (options[0] instanceof Geometry) {
+        // Create special combinedGeometry object
+        let geometry = new CombinedGeometry(this.renderer, options);
+        this.geometries.push(geometry);
+        return geometry;
+      } else {
+        return options.map(v => this.create(v));
+      }
     }
     let finalOpts = options;
     // Old geometry compatibility code
@@ -39,11 +43,23 @@ export default class GeometryManager {
     return geometry;
   }
   use(geometry) {
+    if (Array.isArray(geometry)) {
+      // Can't use :/
+      this.current = geometry;
+      return;
+    }
     if (geometry == null) return;
     geometry.use();
     this.current = geometry;
   }
   draw() {
+    if (Array.isArray(this.current)) {
+      this.current.forEach(v => {
+        v.use();
+        v.draw();
+      });
+      return;
+    }
     this.current.draw();
   }
   reset() {

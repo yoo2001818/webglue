@@ -30,6 +30,7 @@ function getTransformer(axis, transform) {
 }
 
 export default function transform(input, transforms) {
+  if (Array.isArray(input)) return input.map(v => transform(v, transforms));
   // Create exact copy of the input, with some data modified.
   let attributes = parseAttributes(input.attributes);
   let verticesCount = -1;

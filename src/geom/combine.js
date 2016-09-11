@@ -4,9 +4,18 @@ import createIndicesArray from '../util/createIndicesArray';
 import unwrapInstanced from './unwrapInstanced';
 import { TRIANGLES } from '../renderer/geometry';
 
+function flatten(arr) {
+  return arr.reduce(function (prev, t) {
+    return prev.concat(Array.isArray(t) ? flatten(t) : t);
+  }, []);
+}
+
 export default function combine(input) {
-  // Parse the attributes and indices first
-  let geometries = input.map(geometry => {
+  if (!Array.isArray(input) || input.length === 0) {
+    throw new Error('Input must be an array with more than one geometry');
+  }
+  // Flatten the array, then parse the attributes and indices first
+  let geometries = flatten(input).map(geometry => {
     // If instanced, we must unwrap it to combine it to single draw call.
     // But this behavior is kinda weird though.
     if (geometry.instanced) return unwrapInstanced(geometry);
@@ -16,13 +25,24 @@ export default function combine(input) {
       mode: geometry.mode
     };
   });
-  // TODO Support merging multiple modes (Is it even necessary??)
-  let mode = geometries.reduce((mode, geometry) => {
+  // Merge geometries by their modes
+  // TODO If the mode is not one of POINTS, LINES, TRIANGLES, they must be
+  // unwrapped to one of these to be merged.
+  // First, probe the complete list of modes
+  let modes = geometries.reduce((modes, geometry) => {
     let geomMode = geometry.mode == null ? TRIANGLES : geometry.mode;
-    if (mode == null) return geomMode;
-    if (mode !== geomMode) throw new Error('Geometry mode mismatch');
-    return mode;
-  }, null);
+    if (modes.indexOf(geomMode) !== -1) return modes;
+    return modes.concat(geomMode);
+  }, []);
+  if (modes.length > 1) {
+    // More than one modes exist, Run combine for each modes.
+    let modeGeoms = modes.map(mode => geometries.filter(geometry =>
+      (geometry.mode == null ? TRIANGLES : geometry.mode) === mode
+    ));
+    // Done
+    return modeGeoms.map(combine);
+  }
+  let mode = modes[0];
   // First, calculate vertices count per geometry, while creating attribute
   // information (side-effect).
   let attributes = {};
