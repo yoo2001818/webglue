@@ -5,7 +5,7 @@ import { mat3, mat4 } from 'gl-matrix';
 
 export default function channelBox(renderer) {
   const gl = renderer.gl;
-  let box = renderer.geometries.create(calcNormals(channelGeom({
+  let originalData = channelGeom({
     attributes: {
       aPosition: {
         data: new Float32Array([
@@ -49,7 +49,8 @@ export default function channelBox(renderer) {
         0, 1, 3, 3, 2, 0
       ]
     }
-  })));
+  });
+  let box = renderer.geometries.create(calcNormals(originalData));
   let shader = renderer.shaders.create(
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
