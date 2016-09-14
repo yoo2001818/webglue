@@ -67,10 +67,10 @@ export default function loadMTL(data, textures) {
       // 3: Phong model with reflection. color = KaIa + KdId + Ks(Is+Ir)
       //    where Ir = (intensity of reflection map) + (ray trace)
       // 4: Glass model (same as 3, but with strong specular value)
-      // 5: same as 3, but with Frensel reflection.
+      // 5: same as 3, but with Fresnel reflection.
       // 6: Phong model with refraction. color = KaIa + KdId + Ks(Is+Ir) +
       //    (1.0 - Ks) TfIt
-      // 7: same as 6, but with Frensel effect.
+      // 7: same as 6, but with Fresnel effect.
       // 8: same as 3, but without ray tracing.
       // 9: same as 4, but without ray tracing.
       // 10: Cast shadow on invisible surface. color = Pixel color.

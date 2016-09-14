@@ -1,3 +1,6 @@
+import calcNormals from '../geom/channel/calcNormals';
+import calcSmoothNormals from '../geom/channel/calcSmoothNormals';
+
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
 export default function loadOBJ(data, separate = false) {
@@ -21,22 +24,7 @@ export default function loadOBJ(data, separate = false) {
   }
 
   function finalizeGeometry() {
-    /*// Calculate normal vectors, if not specified.
-    if (!normalSpecified) {
-      if (normalSmooth) {
-        geometry.calculateSmoothNormals();
-      } else {
-        geometry.calculateNormals();
-      }
-    }
-    // Calculate tangent vectors.
-    if (normalSmooth) {
-      geometry.calculateTangents();
-    } else {
-      geometry.calculateTangents();
-    }*/
-    // Add geometry to output geometries list.
-    geometries.push({
+    let geometry = {
       name: objName,
       material: objMaterial,
       attributes: {
@@ -49,7 +37,23 @@ export default function loadOBJ(data, separate = false) {
         aNormal: new Uint16Array(normalIndices),
         aTexCoord: new Uint16Array(texCoordIndices)
       }
-    });
+    };
+    // Calculate normal vectors, if not specified.
+    if (!normalSpecified) {
+      if (normalSmooth) {
+        geometry = calcSmoothNormals(geometry);
+      } else {
+        geometry = calcNormals(geometry);
+      }
+    }
+    /*// Calculate tangent vectors.
+    if (normalSmooth) {
+      geometry.calculateTangents();
+    } else {
+      geometry.calculateTangents();
+    }*/
+    // Add geometry to output geometries list.
+    geometries.push(geometry);
     // Empty current indices buffer.
     vertexIndices = [];
     normalIndices = [];

@@ -1,13 +1,11 @@
 import loadOBJ from 'webglue/loader/obj';
 import channelGeom from 'webglue/geom/channel';
-import calcNormals from 'webglue/geom/channel/calcNormals';
 
 import { mat3, mat4 } from 'gl-matrix';
 
 export default function teapot(renderer) {
   const gl = renderer.gl;
-  let originalData = channelGeom(
-    calcNormals(loadOBJ(require('../geom/wt-teapot.obj'))));
+  let originalData = channelGeom(loadOBJ(require('../geom/wt-teapot.obj')));
   let box = renderer.geometries.create(originalData);
   let shader = renderer.shaders.create(
     require('../shader/phong.vert'),

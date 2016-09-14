@@ -45,13 +45,18 @@ export default function channel(input) {
     if (index == null) {
       indicesArr.forEach(({ indices, axis, data, outData }) => {
         let offset = indices[i] * axis;
-        outData.push(data.slice(offset, offset + axis));
+        if ((offset + axis) > data.length) {
+          outData.push(new Float32Array(axis));
+        } else {
+          outData.push(data.subarray(offset, offset + axis));
+        }
       });
       index = indicesCache[key] = vertexCount;
       vertexCount ++;
     }
     outputIndices.push(index);
   }
+  console.log(indicesCache);
   return Object.assign({}, input, {
     attributes: parseAttributes(outputAttribs),
     indices: parseIndices(outputIndices)
