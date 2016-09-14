@@ -1,13 +1,13 @@
-// import createIndicesArray from '../util/createIndicesArray';
-import parseAttributes from '../util/parseAttributes';
-import parseIndices from '../util/parseIndices';
+// import createIndicesArray from '../../util/createIndicesArray';
+import parseAttributes from '../../util/parseAttributes';
+import parseIndices from '../../util/parseIndices';
 
 export default function channel(input) {
   let attributes = parseAttributes(input.attributes);
   let indicesArr = [];
   let indicesSize = -1;
 
-  let indicesCache = [];
+  let indicesCache = {};
   let vertexCount = 0;
 
   let outputAttribs = {};
@@ -40,19 +40,14 @@ export default function channel(input) {
   // Populate indices array while generating attributes data.
   for (let i = 0; i < indicesSize; ++i) {
     // Validate cache
-    let cache = indicesArr.reduce((current, { indices, data }, j) => {
-      if (j === (indicesArr.length - 1)) return current;
-      if (current[indices[i]] == null) current[indices[i]] = [];
-      return current[indices[i]];
-    }, indicesCache);
-    let lastIndex = indicesArr[indicesArr.length - 1].indices[i];
-    let index = cache[lastIndex];
+    let key = indicesArr.map(({indices}) => indices[i]).join('/');
+    let index = indicesCache[key];
     if (index == null) {
       indicesArr.forEach(({ indices, axis, data, outData }) => {
         let offset = indices[i] * axis;
         outData.push(data.slice(offset, offset + axis));
       });
-      index = cache[lastIndex] = vertexCount;
+      index = indicesCache[key] = vertexCount;
       vertexCount ++;
     }
     outputIndices.push(index);

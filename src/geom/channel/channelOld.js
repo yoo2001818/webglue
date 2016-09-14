@@ -1,5 +1,5 @@
-import createIndicesArray from '../util/createIndicesArray';
-import parseAttributes from '../util/parseAttributes';
+import createIndicesArray from '../../util/createIndicesArray';
+import parseAttributes from '../../util/parseAttributes';
 
 export default function channelOld(input) {
   let attributes = parseAttributes(input.attributes);

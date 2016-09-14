@@ -1,5 +1,3 @@
-import ChannelGeometry3D from '../geom/channelGeometry3D';
-
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
 export default function loadOBJ(data, separate = false) {
@@ -23,16 +21,7 @@ export default function loadOBJ(data, separate = false) {
   }
 
   function finalizeGeometry() {
-    let geometry = new ChannelGeometry3D(Symbol(objName));
-
-    geometry.vertices = new Float32Array(vertices);
-    geometry.normals = new Float32Array(normals);
-    geometry.texCoords = new Float32Array(texCoords);
-
-    geometry.vertexIndices = new Uint16Array(vertexIndices);
-    geometry.normalIndices = new Uint16Array(normalIndices);
-    geometry.texCoordIndices = new Uint16Array(texCoordIndices);
-    // Calculate normal vectors, if not specified.
+    /*// Calculate normal vectors, if not specified.
     if (!normalSpecified) {
       if (normalSmooth) {
         geometry.calculateSmoothNormals();
@@ -45,10 +34,21 @@ export default function loadOBJ(data, separate = false) {
       geometry.calculateTangents();
     } else {
       geometry.calculateTangents();
-    }
+    }*/
     // Add geometry to output geometries list.
     geometries.push({
-      geometry, name: objName, material: objMaterial
+      name: objName,
+      material: objMaterial,
+      attributes: {
+        aPosition: {data: new Float32Array(vertices), axis: 3},
+        aNormal: {data: new Float32Array(normals), axis: 3},
+        aTexCoord: {data: new Float32Array(texCoords), axis: 2}
+      },
+      indices: {
+        aPosition: new Uint16Array(vertexIndices),
+        aNormal: new Uint16Array(normalIndices),
+        aTexCoord: new Uint16Array(texCoordIndices)
+      }
     });
     // Empty current indices buffer.
     vertexIndices = [];

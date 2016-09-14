@@ -3,7 +3,7 @@ import parseIndices from '../util/parseIndices';
 
 import { vec3 } from 'gl-matrix';
 
-export default function calcNormals(geometry, smooth = false) {
+export default function calcNormals(geometry) {
   let vertices = parseAttribute(geometry.attributes.aPosition);
   if (vertices == null) throw new Error('aPosition must be specified');
   let normals = new Float32Array(vertices.data.length);
@@ -35,16 +35,15 @@ export default function calcNormals(geometry, smooth = false) {
     normals[vertexId3 * 3 + 1] += uv[1];
     normals[vertexId3 * 3 + 2] += uv[2];
   }
-  if (smooth) {
-    for (let vertexId = 0; vertexId < normals.length; vertexId += 3) {
-      let len = Math.sqrt(
-        normals[vertexId] * normals[vertexId] +
-        normals[vertexId + 1] * normals[vertexId + 1] +
-        normals[vertexId + 2] * normals[vertexId + 2]);
-      normals[vertexId] /= len;
-      normals[vertexId + 1] /= len;
-      normals[vertexId + 2] /= len;
-    }
+  // This isn't necessary for 'hard' normals, but whatever.
+  for (let vertexId = 0; vertexId < normals.length; vertexId += 3) {
+    let len = Math.sqrt(
+      normals[vertexId] * normals[vertexId] +
+      normals[vertexId + 1] * normals[vertexId + 1] +
+      normals[vertexId + 2] * normals[vertexId + 2]);
+    normals[vertexId] /= len;
+    normals[vertexId + 1] /= len;
+    normals[vertexId + 2] /= len;
   }
   return Object.assign({}, geometry, {
     attributes: Object.assign({}, geometry.attributes, {
