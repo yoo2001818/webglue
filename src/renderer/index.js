@@ -50,23 +50,46 @@ export default class Renderer {
       this.height = gl.drawingBufferHeight;
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
-    if (!Array.isArray(data)) return this.renderPass(data);
+    if (!Array.isArray(data)) return this.renderPass(data, {});
     // Render each pass
-    data.forEach(pass => this.renderPass(pass));
+    data.forEach(pass => this.renderPass(pass, {}));
   }
-  renderPass(pass, parent) {
+  renderPass(pass, tree) {
     const gl = this.gl;
-    let currentLevel = {
-      uniforms: Object.assign({}, parent && parent.uniforms, pass.uniforms),
-      options: Object.assign({}, parent && parent.options, pass.options),
-      shader: pass.shader || (parent && parent.shader),
-      geometry: pass.geometry || (parent && parent.geometry)
-    };
+    if (tree.uniforms == null) tree.uniforms = {};
+    if (tree.options == null) tree.options = {};
+    let parent = {};
+    if (pass.uniforms) {
+      parent.uniforms = {};
+      for (let key in pass.uniforms) {
+        parent.uniforms[key] = tree.uniforms[key];
+        tree.uniforms[key] = pass.uniforms[key];
+      }
+    }
+    if (pass.options) {
+      parent.options = {};
+      for (let key in pass.options) {
+        parent.options[key] = tree.options[key];
+        tree.options[key] = pass.options[key];
+      }
+    }
+    if (pass.shader) {
+      parent.shader = tree.shader;
+      tree.shader = pass.shader;
+    }
+    if (pass.geometry) {
+      parent.geometry = tree.geometry;
+      tree.geometry = pass.geometry;
+    }
+    if (pass.framebuffer) {
+      parent.framebuffer = tree.framebuffer;
+      tree.framebuffer = pass.framebuffer;
+    }
     // -- Push (Enter)
     // Set state
     if (pass.framebuffer) {
       this.framebuffers.use(pass.framebuffer);
-      // TODO Check options and if viewport doesn't exists, continue to use
+      // TODO Check options and if viewport doesn't exist, continue to use
       // framebuffer's size.
       if (this.framebuffers.current == null) {
         this.width = gl.drawingBufferWidth;
@@ -78,7 +101,7 @@ export default class Renderer {
         gl.viewport(0, 0, pass.framebuffer.width, pass.framebuffer.height);
       }
     }
-    if (parent == null && pass.framebuffer == null) {
+    if (parent.framebuffer != null && pass.framebuffer == null) {
       this.framebuffers.use(null);
     }
     if (pass.options) {
@@ -87,9 +110,9 @@ export default class Renderer {
     if (pass.shader) {
       this.shaders.use(pass.shader);
       // Reset all uniforms, including parent uniforms
-      this.shaders.setUniforms(currentLevel.uniforms);
+      this.shaders.setUniforms(tree.uniforms);
       // Reuse geometry
-      this.geometries.use(this.geometries.current);
+      this.geometries.use(tree.geometry);
     } else if (pass.uniforms) {
       // Set uniforms normally
       this.shaders.setUniforms(pass.uniforms);
@@ -103,16 +126,18 @@ export default class Renderer {
     }
     // -- Children
     if (pass.passes) {
-      pass.passes.forEach(data => this.renderPass(data, currentLevel));
+      pass.passes.forEach(data => this.renderPass(data, tree));
     }
     // -- Pop (Exit)
-    if (parent == null) return;
     // Restore uniforms and shader
     if (parent.shader && pass.shader) {
+      tree.shader = parent.shader;
       this.shaders.use(parent.shader);
       // Reset all uniforms, including parent uniforms
       this.shaders.setUniforms(parent.uniforms);
-    } else if (parent.uniforms && pass.uniforms) {
+    }
+    if (parent.uniforms && pass.uniforms) {
+      Object.assign(tree.uniforms, parent.uniforms);
       // Restore uniforms...
       /*
       let recoverOpts = {};
@@ -124,14 +149,17 @@ export default class Renderer {
     }
     // Restore geometry
     if (parent.geometry && pass.geometry) {
+      tree.geometry = parent.geometry;
       this.geometries.use(parent.geometry);
     }
     // Restore framebuffer
     if (pass.framebuffer) {
+      tree.framebuffer = parent.framebuffer;
       this.framebuffers.use(parent.framebuffer);
     }
     // Restore options
     if (parent.options && pass.options) {
+      Object.assign(tree.options, parent.options);
       let recoverOpts = {};
       for (let key in pass.options) {
         if (key === 'clearStencil') continue;

@@ -153,6 +153,7 @@ export default class Shader {
   }
   setUniforms(originalValues, uniforms = this.uniforms) {
     let values = originalValues;
+    if (values === undefined) return;
     if (typeof originalValues === 'function') {
       values = originalValues(this, this.renderer);
     }
