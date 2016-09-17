@@ -107,21 +107,11 @@ export default class Renderer {
     if (pass.options) {
       this.state.set(pass.options, parent == null);
     }
-    if (pass.shader) {
-      this.shaders.use(pass.shader);
-      // Reset all uniforms, including parent uniforms
-      this.shaders.setUniforms(tree.uniforms);
-      // Reuse geometry
-      this.geometries.use(tree.geometry);
-    } else if (pass.uniforms) {
-      // Set uniforms normally
-      this.shaders.setUniforms(pass.uniforms);
-    }
-    if (pass.geometry) {
-      this.geometries.use(pass.geometry);
-    }
     // -- Draw call... quite simple.
     if (pass.passes == null) {
+      this.shaders.use(tree.shader);
+      this.shaders.setUniforms(tree.uniforms);
+      this.geometries.use(tree.geometry);
       this.geometries.draw();
     }
     // -- Children
@@ -132,25 +122,12 @@ export default class Renderer {
     // Restore uniforms and shader
     if (parent.shader && pass.shader) {
       tree.shader = parent.shader;
-      this.shaders.use(parent.shader);
-      // Reset all uniforms, including parent uniforms
-      this.shaders.setUniforms(parent.uniforms);
     }
     if (parent.uniforms && pass.uniforms) {
       Object.assign(tree.uniforms, parent.uniforms);
-      // Restore uniforms...
-      /*
-      let recoverOpts = {};
-      for (let key in pass.uniforms) {
-        recoverOpts[key] = parent.uniforms[key] || false;
-      }
-      this.shaders.setUniforms(recoverOpts);
-      */
     }
-    // Restore geometry
     if (parent.geometry && pass.geometry) {
       tree.geometry = parent.geometry;
-      this.geometries.use(parent.geometry);
     }
     // Restore framebuffer
     if (pass.framebuffer) {

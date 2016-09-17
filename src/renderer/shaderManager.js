@@ -12,6 +12,7 @@ export default class ShaderManager {
     return shader;
   }
   use(shader) {
+    if (this.current === shader) return;
     this.current = shader;
     shader.use();
   }
