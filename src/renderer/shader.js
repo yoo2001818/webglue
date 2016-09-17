@@ -1,5 +1,21 @@
 import parseUniform from '../util/parseUniform';
 
+const PRODUCTION = typeof process != 'undefined' &&
+  process.env.NODE_ENV === 'production';
+
+function compileShader(gl, data, type) {
+  let shader = gl.createShader(type);
+  gl.shaderSource(shader, data);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS) &&
+    !gl.isContextLost()
+  ) {
+    throw new Error('Shader compilation failed: ' +
+      gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
 export default class Shader {
   constructor(renderer, vert, frag) {
     this.renderer = renderer;
@@ -34,13 +50,13 @@ export default class Shader {
         gl.getProgramInfoLog(program));
     }
 
-    /*
-    // Clean up the shaders
-    gl.detachShader(program, this.shader.vert);
-    gl.detachShader(program, this.shader.frag);
-    gl.deleteShader(this.shader.vert);
-    gl.deleteShader(this.shader.frag);
-    */
+    if (PRODUCTION) {
+      // Clean up the shaders
+      gl.detachShader(program, this.shader.vert);
+      gl.detachShader(program, this.shader.frag);
+      gl.deleteShader(this.shader.vert);
+      gl.deleteShader(this.shader.frag);
+    }
 
     this.program = program;
     this.attributes = {};
@@ -146,10 +162,12 @@ export default class Shader {
       }
     } while (!hasFinished);
   }
-  use() {
+  use(uniforms, current) {
     const gl = this.renderer.gl;
     if (this.program === null) this.upload();
-    gl.useProgram(this.program);
+    if (current !== this) gl.useProgram(this.program);
+    this.setUniforms(uniforms);
+    return this;
   }
   setUniforms(originalValues, uniforms = this.uniforms) {
     let values = originalValues;
@@ -247,17 +265,4 @@ export default class Shader {
     gl.deleteProgram(this.program);
     this.program = null;
   }
-}
-
-function compileShader(gl, data, type) {
-  let shader = gl.createShader(type);
-  gl.shaderSource(shader, data);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS) &&
-    !gl.isContextLost()
-  ) {
-    throw new Error('Shader compilation failed: ' +
-      gl.getShaderInfoLog(shader));
-  }
-  return shader;
 }

@@ -11,9 +11,6 @@ export default function teapot(renderer) {
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
   );
-  let texture = renderer.textures.create({
-    source: require('../texture/2.png')
-  });
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
@@ -49,8 +46,7 @@ export default function teapot(renderer) {
             diffuse: '#ffffff',
             specular: '#555555',
             shininess: 30
-          },
-          uTexture: texture
+          }
         }
       }]
     });

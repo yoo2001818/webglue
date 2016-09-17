@@ -1,4 +1,6 @@
 #version 100
+#pragma webglue: feature(USE_DEPTH, uTexture)
+
 precision lowp float;
 
 varying lowp vec3 vPosition;
@@ -88,9 +90,11 @@ void main(void) {
   matColor.diffuse = uMaterial.diffuse;
   matColor.specular = uMaterial.specular;
 
+  #ifdef USE_DEPTH
   lowp vec4 diffuseTex = vec4(texture2D(uTexture, vTexCoord).xyz + uTint, 1.0);
   matColor.ambient *= diffuseTex.xyz;
   matColor.diffuse *= diffuseTex.xyz;
+  #endif
 
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < 1; ++i) {

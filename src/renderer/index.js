@@ -109,8 +109,7 @@ export default class Renderer {
     }
     // -- Draw call... quite simple.
     if (pass.passes == null) {
-      this.shaders.use(tree.shader);
-      this.shaders.setUniforms(tree.uniforms);
+      this.shaders.use(tree.shader, tree.uniforms);
       this.geometries.use(tree.geometry);
       this.geometries.draw();
     }

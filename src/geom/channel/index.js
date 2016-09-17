@@ -56,7 +56,6 @@ export default function channel(input) {
     }
     outputIndices.push(index);
   }
-  console.log(indicesCache);
   return Object.assign({}, input, {
     attributes: parseAttributes(outputAttribs),
     indices: parseIndices(outputIndices)

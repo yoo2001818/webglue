@@ -1,4 +1,4 @@
-import Shader from './shader';
+import PreprocessShader from './preprocessShader';
 export default class ShaderManager {
   constructor(renderer) {
     this.renderer = renderer;
@@ -6,19 +6,12 @@ export default class ShaderManager {
     this.current = null;
   }
   create(vert, frag) {
-    // TODO It should support 'define', but not for now.
-    let shader = new Shader(this.renderer, vert, frag);
+    let shader = new PreprocessShader(this.renderer, vert, frag);
     this.shaders.push(shader);
     return shader;
   }
-  use(shader) {
-    if (this.current === shader) return;
-    this.current = shader;
-    shader.use();
-  }
-  setUniforms(values) {
-    if (this.current == null) return;
-    this.current.setUniforms(values);
+  use(shader, uniforms) {
+    this.current = shader.use(uniforms, this.current);
   }
   reset() {
     this.current = null;
