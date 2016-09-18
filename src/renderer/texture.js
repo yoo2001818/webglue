@@ -122,7 +122,9 @@ export default class Texture {
         continue;
       }
       if (key === 'maxAnisotropy') {
-        gl.texParameterf(target, OPTIONS_KEY[key], this.options.params[key]);
+        if (this.renderer.anisotropic) {
+          gl.texParameterf(target, OPTIONS_KEY[key], this.options.params[key]);
+        }
         continue;
       }
       gl.texParameteri(target, OPTIONS_KEY[key], this.options.params[key]);

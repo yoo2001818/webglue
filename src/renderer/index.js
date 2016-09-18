@@ -37,6 +37,7 @@ export default class Renderer {
     this.uint = this.gl.getExtension('OES_element_index_uint');
     this.instanced = this.gl.getExtension('ANGLE_instanced_arrays');
     this.derivatives = this.gl.getExtension('OES_standard_derivatives');
+    this.anisotropic = this.gl.getExtension('EXT_texture_filter_anisotropic');
 
     this.width = this.gl.drawingBufferWidth;
     this.height = this.gl.drawingBufferHeight;

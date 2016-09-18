@@ -46,6 +46,12 @@ export default class TextureManager {
     return texture.unit;
   }
   reset() {
+    if (this.renderer.anisotropic &&
+      this.defaults.params.maxAnisotropy == null
+    ) {
+      this.defaults.params.maxAnisotropy = this.renderer.gl.
+        getParameter(this.renderer.anisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+    }
     // Unload all pre-loaded textures
     this.activeTextures = [];
     this.textures.forEach(texture => texture.dispose());
