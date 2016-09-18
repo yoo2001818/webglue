@@ -1,7 +1,6 @@
 import Renderer from 'webglue/renderer';
 import Camera from 'webglue/camera';
 import CameraController from './cameraController';
-import { mat4 } from 'gl-matrix';
 import './style/index.css';
 
 function requireAll(context) {
@@ -21,7 +20,7 @@ window.addEventListener('resize', () => {
   canvas.height = document.documentElement.clientHeight;
 });
 
-let gl = canvas.getContext('webgl', { antialias: false }) ||
+let gl = canvas.getContext('webgl', { antialias: true }) ||
   canvas.getContext('experimental-webgl');
 let renderer = new Renderer(gl);
 

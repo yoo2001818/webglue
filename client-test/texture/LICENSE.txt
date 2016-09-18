@@ -22,5 +22,8 @@ theaterExit.png is copied from Wikipedia.
 
 theater*.png is created by myself. It's released under MIT license.
 
+wood4.jpg is from here:
+http://opengameart.org/content/5-wood-textures
+
 anything else is obtained from here:
 http://opengameart.org/content/50-free-textures-4-normalmaps

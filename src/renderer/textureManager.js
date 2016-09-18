@@ -39,7 +39,7 @@ export default class TextureManager {
     // TODO This swaps texture unit even if that's unnecessary - However
     // anything but draw calls aren't expensive. So we'd just stick with it?
     // If the texture is already bound at right unit, don't do anything
-    if (this.activeTextures[unit] === texture && texture.loaded) return;
+    if (this.activeTextures[unit] === texture && texture.loaded) return unit;
     // Otherwise, bind the texture at specified unit.
     texture.use(unit);
     this.activeTextures[unit] = texture;

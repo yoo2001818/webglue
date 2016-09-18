@@ -1,5 +1,6 @@
 #version 100
 #pragma webglue: feature(USE_DEPTH, uTexture)
+#pragma webglue: feature(USE_ENVIRONMENT, uEnvironment)
 
 precision lowp float;
 
@@ -12,7 +13,13 @@ struct Material {
   lowp vec3 diffuse;
   lowp vec3 specular;
 
-  lowp float shininess;
+  #ifdef USE_ENVIRONMENT
+    lowp vec3 reflectivity;
+    // shininess, microsurface
+    lowp vec2 shininess;
+  #else
+    lowp float shininess;
+  #endif
 };
 
 struct MaterialColor {
@@ -35,22 +42,29 @@ uniform lowp mat4 uView;
 
 uniform lowp vec3 uTint;
 uniform sampler2D uTexture;
+uniform samplerCube uEnvironment;
 
 // It's Blinn-Phong actually.
-lowp vec2 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
+lowp vec3 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
   // Diffuse
   lowp float lambertian = max(dot(lightDir, normal), 0.0);
 
   // Specular
   lowp float spec = 0.0;
+  lowp float fresnel = 0.0;
   if (lambertian > 0.0) {
     lowp vec3 halfDir = normalize(lightDir + viewDir);
     lowp float specAngle = max(dot(halfDir, normal), 0.0);
 
+    #ifdef USE_ENVIRONMENT
+    spec = pow(specAngle, uMaterial.shininess.x);
+    #else
     spec = pow(specAngle, uMaterial.shininess);
+    #endif
+    fresnel = pow(1.0 - max(0.0, dot(halfDir, viewDir)), 5.0);
   }
 
-  return vec2(lambertian, spec);
+  return vec3(lambertian, spec, fresnel);
 }
 
 lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
@@ -65,11 +79,12 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   lowp float attenuation = 1.0 / ( 1.0 +
     light.intensity.w * (distance * distance));
 
-  lowp vec2 phong = calcPhong(lightDir, viewDir, normal);
+  lowp vec3 phong = calcPhong(lightDir, viewDir, normal);
 
   // Combine everything together
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
-  result += matColor.specular * light.intensity.b * phong.y;
+  result += mix(matColor.specular, vec3(1.0), phong.z) *
+    light.intensity.b * phong.y;
   result += matColor.ambient * light.intensity.r;
   result *= attenuation;
   result *= light.color;
@@ -96,7 +111,19 @@ void main(void) {
   matColor.diffuse *= diffuseTex.xyz;
   #endif
 
+  #ifdef USE_ENVIRONMENT
+  lowp vec3 outVec = reflect(viewDir, normalize(vNormal));
+  lowp vec4 environmentTex = vec4(textureCube(uEnvironment, outVec).xyz + uTint, 1.0);
+  lowp float fresnel = pow(1.0 - dot(vNormal, viewDir), 5.0);
+  lowp vec3 result = environmentTex.xyz *
+  mix(uMaterial.reflectivity, vec3(uMaterial.shininess.y), fresnel);
+  lowp float power = mix(1.0, 1.0 - uMaterial.shininess.y, fresnel);
+  matColor.ambient *= power;
+  matColor.diffuse *= power;
+  #else
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
+  #endif
+
   for (int i = 0; i < 1; ++i) {
     result += calcPoint(uPointLight[i], matColor, viewDir, normal);
   }

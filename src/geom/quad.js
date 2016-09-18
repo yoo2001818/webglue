@@ -14,11 +14,11 @@ export default function quad(hSlice = 1, vSlice = 1) {
     for (let x = 0; x <= hSlice; ++x) {
       let xPos = x / hSlice * 2 - 1;
       let pos = y * (hSlice + 1) + x;
-      vertices[pos* 3] = xPos;
+      vertices[pos * 3] = xPos;
       vertices[pos * 3 + 1] = yPos;
       vertices[pos * 3 + 2] = 0;
-      texCoords[pos * 2] = xPos;
-      texCoords[pos * 2+ 1] = yPos;
+      texCoords[pos * 2] = (xPos + 1) / 2;
+      texCoords[pos * 2 + 1] = (yPos + 1) / 2;
     }
   }
   // Mark indices

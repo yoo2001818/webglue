@@ -40,9 +40,9 @@ export default function combine(renderer) {
       },
       uniforms: Object.assign({}, context.camera, {
         uPointLight: [{
-          position: [0, 0, 8],
+          position: [0, -8, 3],
           color: '#ffffff',
-          intensity: [0.3, 0.7, 0.5, 0.00015]
+          intensity: [0.3, 0.7, 1.0, 0.00015]
         }]
       }),
       passes: [{
@@ -54,7 +54,7 @@ export default function combine(renderer) {
           uMaterial: {
             ambient: '#ffffff',
             diffuse: '#ffffff',
-            specular: '#555555',
+            specular: '#111111',
             shininess: 30
           },
           uTexture: texture

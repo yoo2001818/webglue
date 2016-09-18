@@ -75,8 +75,8 @@ export default class PreprocessShader {
       // Build current feature map
       let featureKey = this.metadata.features.map(v => {
         if (uniforms[v.key]) {
-          vertFeatures = vertFeatures.concat(v.vert || []);
-          fragFeatures = fragFeatures.concat(v.frag || []);
+          vertFeatures.push.apply(vertFeatures, v.vert || []);
+          fragFeatures.push.apply(fragFeatures, v.frag || []);
           return 'o';
         } else {
           return 'x';
