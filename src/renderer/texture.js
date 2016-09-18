@@ -6,13 +6,13 @@ const OPTIONS_KEY = {
   maxAnisotropy: 0x84FE
 };
 
-function isSource(source) {
+export function isSource(source) {
   if (source instanceof HTMLElement) return true;
   if (source instanceof ImageData) return true;
   return false;
 }
 
-function isLoaded(source) {
+export function isLoaded(source) {
   if (isSource(source)) {
     // Check readystate...
     if (source.readyState != null && source.readyState !== 4) {
@@ -50,6 +50,8 @@ export default class Texture {
     this.unit = -1;
     this.texture = null;
     this.loaded = false;
+
+    this.mipmapPending = false;
 
     this.width = null;
     this.height = null;
@@ -92,6 +94,7 @@ export default class Texture {
     } else {
       target = gl.TEXTURE_2D;
     }
+    this.target = target;
     gl.bindTexture(target, this.texture);
 
     this.width = null;
@@ -127,7 +130,10 @@ export default class Texture {
     this.loaded = true;
     // All done!
   }
-  use(unit) {
+  generateMipmap() {
+    this.mipmapPending = true;
+  }
+  use(unit, isFramebuffer) {
     const gl = this.renderer.gl;
     this.unit = unit;
     gl.activeTexture(gl.TEXTURE0 + unit);
@@ -136,14 +142,11 @@ export default class Texture {
     if (!this.loaded) {
       this.upload();
     } else {
-      // Just rebind it.
-      let target;
-      if (Array.isArray(this.options.source)) {
-        target = gl.TEXTURE_CUBE_MAP;
-      } else {
-        target = gl.TEXTURE_2D;
+      gl.bindTexture(this.target, this.texture);
+      if (this.mipmapPending && !isFramebuffer) {
+        this.mipmapPending = false;
+        gl.generateMipmap(this.target);
       }
-      gl.bindTexture(target, this.texture);
     }
   }
   dispose() {

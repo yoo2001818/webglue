@@ -112,6 +112,11 @@ export default class Renderer {
       this.shaders.use(tree.shader, tree.uniforms);
       this.geometries.use(tree.geometry);
       this.geometries.draw();
+      // Check mipmap
+      if (tree.framebuffer != null && tree.options.mipmap === true) {
+        // TODO This will be a problem if color texture is not specified
+        tree.framebuffer.options.color.generateMipmap();
+      }
     }
     // -- Children
     if (pass.passes) {

@@ -14,12 +14,7 @@ export default function onLoad(renderer) {
   });
   let outTexture = renderer.textures.create({
     width: 1024,
-    height: 1024,
-    params: {
-      magFilter: gl.LINEAR,
-      minFilter: gl.LINEAR,
-      mipmap: false
-    }
+    height: 1024
   });
   let framebuffer = renderer.framebuffers.create({
     color: outTexture,
@@ -42,7 +37,8 @@ export default function onLoad(renderer) {
     // Bake sobel filter
     renderer.render({
       options: {
-        clearColor: new Float32Array([0, 0, 0, 1])
+        clearColor: new Float32Array([0, 0, 0, 1]),
+        mipmap: true
       },
       framebuffer: framebuffer,
       shader: sobelShader,

@@ -38,7 +38,7 @@ export default class Framebuffer {
     // Also, no stencil for now, and no draw_buffers extension.
     if (this.options.color && typeof this.options.color !== 'number') {
       if (!this.options.color.loaded) {
-        this.renderer.textures.use(0, this.options.color);
+        this.renderer.textures.use(0, this.options.color, true);
       }
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
         gl.TEXTURE_2D, this.options.color.texture, 0);
