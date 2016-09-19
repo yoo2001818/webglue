@@ -6,14 +6,14 @@ There are few types of that, mainly:
 - Number definition. It should have max limit (Since there is uniform budget
   limit), and it should adaptively changed because it affects the performance.
   Maybe some kind of 'governor' should be implemented.
-- Capability definition. Anisotropic filtering, standard derivatives, etc.
+  Or, it should be an exact number (Kernel size)
 
 It'd be written in the vertex or/and fragment shader, like:
 
 ```glsl
 #pragma webglue: feature(USE_DEPTH, uDepth)
 #pragma webglue: count(LIGHTS_COUNT, uLights, max=1)
-#pragma webglue: capability(INSTANCED, ANGLE_instanced_arrays)
+#pragma webglue: define(KERNEL_SIZE, uKernel)
 ```
 
 Then at the render time, the shader would check if current shader is valid

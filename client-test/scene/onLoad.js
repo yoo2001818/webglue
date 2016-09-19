@@ -17,7 +17,7 @@ export default function onLoad(renderer) {
     height: 1024
   });
   let framebuffer = renderer.framebuffers.create({
-    color: outTexture,
+    color: { texture: outTexture, target: gl.TEXTURE_2D },
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
   });
   let sobelShader = renderer.shaders.create(
@@ -37,10 +37,11 @@ export default function onLoad(renderer) {
     // Bake sobel filter
     renderer.render({
       options: {
-        clearColor: new Float32Array([0, 0, 0, 1]),
-        mipmap: true
+        clearColor: new Float32Array([0, 0, 0, 1])
       },
-      framebuffer: framebuffer,
+      framebuffer: {
+        framebuffer, color: { texture: outTexture, target: gl.TEXTURE_2D }
+      },
       shader: sobelShader,
       geometry: quad,
       uniforms: {

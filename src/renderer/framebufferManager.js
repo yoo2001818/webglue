@@ -11,7 +11,9 @@ export default class FramebufferManager {
     this.framebuffers.push(framebuffer);
     return framebuffer;
   }
-  use(framebuffer) {
+  use(input) {
+    let framebuffer = input;
+    let options;
     if (framebuffer == null || framebuffer === false) {
       if (this.current == null) return;
       const gl = this.renderer.gl;
@@ -20,8 +22,12 @@ export default class FramebufferManager {
       this.current = null;
       return;
     }
+    if (input.renderer == null) {
+      options = input;
+      framebuffer = input.framebuffer;
+    }
     if (this.current === framebuffer) return;
-    framebuffer.use();
+    framebuffer.use(options);
     this.current = framebuffer;
   }
   reset() {

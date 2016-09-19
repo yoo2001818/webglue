@@ -97,9 +97,10 @@ export default class Renderer {
         this.height = gl.drawingBufferHeight;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       } else {
-        this.width = pass.framebuffer.width;
-        this.height = pass.framebuffer.height;
-        gl.viewport(0, 0, pass.framebuffer.width, pass.framebuffer.height);
+        let framebuffer = this.framebuffers.current;
+        this.width = framebuffer.width;
+        this.height = framebuffer.height;
+        gl.viewport(0, 0, framebuffer.width, framebuffer.height);
       }
     }
     if (parent.framebuffer != null && pass.framebuffer == null) {
@@ -116,7 +117,9 @@ export default class Renderer {
       // Check mipmap
       if (tree.framebuffer != null && tree.options.mipmap === true) {
         // TODO This will be a problem if color texture is not specified
-        tree.framebuffer.options.color.generateMipmap();
+        let texture = this.framebuffers.current.options.color;
+        if (texture.renderer == null) texture = texture.texture;
+        texture.generateMipmap();
       }
     }
     // -- Children

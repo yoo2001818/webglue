@@ -114,7 +114,7 @@ void main(void) {
   #ifdef USE_ENVIRONMENT
   lowp vec3 outVec = reflect(viewDir, normalize(vNormal));
   lowp vec4 environmentTex = vec4(textureCube(uEnvironment, outVec).xyz + uTint, 1.0);
-  lowp float fresnel = pow(1.0 - dot(vNormal, viewDir), 5.0);
+  lowp float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 5.0);
   lowp vec3 result = environmentTex.xyz *
   mix(uMaterial.reflectivity, vec3(uMaterial.shininess.y), fresnel);
   lowp float power = mix(1.0, 1.0 - uMaterial.shininess.y, fresnel);
