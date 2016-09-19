@@ -124,7 +124,11 @@ export default class Renderer {
     }
     // -- Children
     if (pass.passes) {
-      pass.passes.forEach(data => this.renderPass(data, tree));
+      if (Array.isArray(pass.passes)) {
+        pass.passes.forEach(data => this.renderPass(data, tree));
+      } else {
+        this.renderPass(pass.passes, tree);
+      }
     }
     // -- Pop (Exit)
     // Restore uniforms and shader
