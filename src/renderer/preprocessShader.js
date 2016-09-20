@@ -113,8 +113,8 @@ export default class PreprocessShader {
             uniformData[v.key] = uniforms[v.key].length;
           });
           // Create the shader
-          let vertStr = vertDefines.map(v => `#define ${v}`).join('\n');
-          let fragStr = fragDefines.map(v => `#define ${v}`).join('\n');
+          let vertStr = vertDefines.map(v => `#define ${v}\n`).join('');
+          let fragStr = fragDefines.map(v => `#define ${v}\n`).join('');
           let shader = new Shader(this.renderer,
             attachAppendage(this.source.vert, vertStr),
             attachAppendage(this.source.frag, fragStr)
@@ -127,8 +127,8 @@ export default class PreprocessShader {
       } else {
         if (this.shaders[featureKey] == null) {
           // Create the shader
-          let vertStr = vertDefines.map(v => `#define ${v}`).join('\n');
-          let fragStr = fragDefines.map(v => `#define ${v}`).join('\n');
+          let vertStr = vertDefines.map(v => `#define ${v}\n`).join('');
+          let fragStr = fragDefines.map(v => `#define ${v}\n`).join('');
           let shader = new Shader(this.renderer,
             attachAppendage(this.source.vert, vertStr),
             attachAppendage(this.source.frag, fragStr)

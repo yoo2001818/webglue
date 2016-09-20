@@ -3,6 +3,10 @@
 #pragma webglue: feature(USE_ENVIRONMENT, uEnvironment)
 #pragma webglue: count(POINT_LIGHT_SIZE, uPointLight)
 
+#ifndef POINT_LIGHT_SIZE
+#define POINT_LIGHT_SIZE 1
+#endif
+
 precision lowp float;
 
 varying lowp vec3 vPosition;
@@ -36,7 +40,9 @@ struct PointLight {
   lowp vec4 intensity;
 };
 
-uniform PointLight uPointLight[1];
+#if POINT_LIGHT_SIZE > 0
+uniform PointLight uPointLight[POINT_LIGHT_SIZE];
+#endif
 uniform Material uMaterial;
 
 uniform lowp mat4 uView;
@@ -133,10 +139,11 @@ void main(void) {
   #else
   lowp vec3 result = vec3(0.0, 0.0, 0.0);
   #endif
-
-  for (int i = 0; i < 1; ++i) {
+	#if POINT_LIGHT_SIZE > 0
+  for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
     result += calcPoint(uPointLight[i], matColor, viewDir, normal);
   }
+	#endif
 
   gl_FragColor = vec4(result, 1.0);
 

@@ -72,9 +72,17 @@ export default function teapot(renderer) {
       uniforms: Object.assign({}, context.camera, {
         uPointLight: [{
           position: [Math.sin(timer / 1000) * 8,
-            10, Math.cos(timer / 1000) * 8],
-          color: '#ffffff',
+            8, Math.cos(timer / 1000) * 8],
+          color: '#aaaaaa',
           intensity: [0.3, 1.0, 1.0, 0.00015]
+        }, {
+          position: [1.5, 0.8, 1.5],
+          color: '#ff0000',
+          intensity: [0, 1.0, 1.0, 0.1]
+        }, {
+          position: [1.5, 0.8, -1.5],
+          color: '#0000ff',
+          intensity: [0, 1.0, 1.0, 0.1]
         }]
       }),
       passes: [{
