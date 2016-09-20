@@ -18,6 +18,11 @@ function parseMetadata(code) {
       if (output.features[match[3]] == null) output.features[match[3]] = [];
       output.features[match[3]].push(match[2]);
       break;
+    case 'count':
+      // TODO Implement non-exact match
+      if (output.counts[match[3]] == null) output.counts[match[3]] = [];
+      output.counts[match[3]].push(match[2]);
+      break;
     // TODO other stuff
     default:
       throw new Error('Unknown webglue pragma ' + match[1]);
@@ -70,30 +75,69 @@ export default class PreprocessShader {
   use(uniforms, current) {
     if (this.useFeatures) {
       if (this.shaders == null) this.shaders = {};
-      let vertFeatures = [];
-      let fragFeatures = [];
+      let vertDefines = [];
+      let fragDefines = [];
       // Build current feature map
       let featureKey = this.metadata.features.map(v => {
         if (uniforms[v.key]) {
-          vertFeatures.push.apply(vertFeatures, v.vert || []);
-          fragFeatures.push.apply(fragFeatures, v.frag || []);
+          vertDefines.push.apply(vertDefines, v.vert || []);
+          fragDefines.push.apply(fragDefines, v.frag || []);
           return 'o';
         } else {
           return 'x';
         }
       }).join('');
-      if (this.shaders[featureKey] == null) {
-        // Create the shader
-        let vertDefines = vertFeatures.map(v => `#define ${v}`).join('\n');
-        let fragDefines = fragFeatures.map(v => `#define ${v}`).join('\n');
-        let shader = new Shader(this.renderer,
-          attachAppendage(this.source.vert, vertDefines),
-          attachAppendage(this.source.frag, fragDefines)
-        );
-        this.shaders[featureKey] = shader;
+      if (this.useCounts) {
+        let selected;
+        if (this.shaders[featureKey] == null) {
+          selected = this.shaders[featureKey] = [];
+        } else {
+          selected = this.shaders[featureKey];
+        }
+        // Scan the counts list and find good match
+        // TODO This is too costy and bad
+        let match = selected.find(entry => {
+          return this.metadata.counts.every(v => {
+            return uniforms[v.key].length === entry.uniforms[v.key];
+          });
+        });
+        if (match == null) {
+          let uniformData = {};
+          this.metadata.counts.forEach(v => {
+            vertDefines.push.apply(vertDefines,
+              (v.vert || []).map(field => field + ' ' +
+                uniforms[v.key].length));
+            fragDefines.push.apply(fragDefines,
+              (v.frag || []).map(field => field + ' ' +
+                uniforms[v.key].length));
+            uniformData[v.key] = uniforms[v.key].length;
+          });
+          // Create the shader
+          let vertStr = vertDefines.map(v => `#define ${v}`).join('\n');
+          let fragStr = fragDefines.map(v => `#define ${v}`).join('\n');
+          let shader = new Shader(this.renderer,
+            attachAppendage(this.source.vert, vertStr),
+            attachAppendage(this.source.frag, fragStr)
+          );
+          selected.push({shader, uniforms: uniformData});
+          return shader.use(uniforms, current);
+        } else {
+          return match.shader.use(uniforms, current);
+        }
+      } else {
+        if (this.shaders[featureKey] == null) {
+          // Create the shader
+          let vertStr = vertDefines.map(v => `#define ${v}`).join('\n');
+          let fragStr = fragDefines.map(v => `#define ${v}`).join('\n');
+          let shader = new Shader(this.renderer,
+            attachAppendage(this.source.vert, vertStr),
+            attachAppendage(this.source.frag, fragStr)
+          );
+          this.shaders[featureKey] = shader;
+        }
+        let selected = this.shaders[featureKey];
+        return selected.use(uniforms, current);
       }
-      let selected = this.shaders[featureKey];
-      return selected.use(uniforms, current);
     } else {
       if (this.shaders == null) {
         this.shaders = new Shader(this.renderer,
