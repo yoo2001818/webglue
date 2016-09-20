@@ -1,6 +1,7 @@
 #version 100
 #pragma webglue: feature(USE_DEPTH, uTexture)
 #pragma webglue: feature(USE_ENVIRONMENT, uEnvironment)
+#pragma webglue: count(POINT_LIGHT_SIZE, uPointLight)
 
 precision lowp float;
 
@@ -112,10 +113,19 @@ void main(void) {
   #endif
 
   #ifdef USE_ENVIRONMENT
-  lowp vec3 outVec = reflect(viewDir, normalize(vNormal));
-  lowp vec4 environmentTex = vec4(textureCube(uEnvironment, outVec).xyz + uTint, 1.0);
+  lowp vec3 result = vec3(0.0, 0.0, 0.0);
+	// TODO Support matte PBR (Disabled for now due to
+	// https://github.com/KhronosGroup/WebGL/issues/1528)
+	lowp vec4 environmentTex = vec4(0.0);
+	if (uMaterial.shininess.y > 0.5) {
+	  lowp vec3 outVec = reflect(viewDir, normalize(vNormal));
+	  environmentTex = vec4(textureCube(uEnvironment, outVec).xyz, 1.0);
+	} else {
+		// Fallback: Sample random direction (to match colors)
+	  environmentTex = vec4(textureCube(uEnvironment, vec3(0.0, 0.0, 1.0)).xyz, 1.0);
+	}
   lowp float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 5.0);
-  lowp vec3 result = environmentTex.xyz *
+	result = environmentTex.xyz *
   mix(uMaterial.reflectivity, vec3(uMaterial.shininess.y), fresnel);
   lowp float power = mix(1.0, 1.0 - uMaterial.shininess.y, fresnel);
   matColor.ambient *= power;
