@@ -23,9 +23,11 @@ Feature definition will use a BitSet to save it, (Thus limited to 32 features)
 and fragment/vertex shader will share same context (If same uniform is
 specified, it'd use shared bitset key)
 
-Count definition will be created on-demand, while capping to maximum value.
+Since feature definition doesn't change a lot, we should precache it - how?
 
-Capability definition never changes, so it wouldn't be changed at all.
+Count definition will be created on-demand, while capping to maximum value.
+But a 'governor' should exist to get maximum performance (or we can just use
+deferred lighting)
 
 ```js
 /^\s*#pragma webglue: ([a-z]+)\(([^\)]+)(?:,[\t ]*([^\)]+))*\)\s*$/gm

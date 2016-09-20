@@ -2,7 +2,12 @@ import Shader from './shader';
 import attachAppendage from '../util/attachAppendage';
 
 const HEADER_PATTERN =
-  /^\s*#pragma webglue: ([a-z]+)\(([^\),]+)(?:,\s*([^\)]+))*\)\s*$/gm;
+  /^\s*#pragma webglue: ([a-z]+)\((([^\),]+)(,\s*(?:[^\),]+))*)\)\s*$/gm;
+
+const GOVERNORS = {
+  max: (shader, current) => shader >= current,
+  equal: (shader, current) => shader === current
+};
 
 function parseMetadata(code) {
   let output = {
@@ -13,15 +18,20 @@ function parseMetadata(code) {
   let match;
   HEADER_PATTERN.lastIndex = 0;
   while ((match = HEADER_PATTERN.exec(code)) != null) {
+    let args = match[2].split(/,\s*/g);
     switch (match[1]) {
     case 'feature':
-      if (output.features[match[3]] == null) output.features[match[3]] = [];
-      output.features[match[3]].push(match[2]);
+      if (output.features[args[1]] == null) output.features[args[1]] = [];
+      output.features[args[1]].push(args[0]);
       break;
     case 'count':
-      // TODO Implement non-exact match
-      if (output.counts[match[3]] == null) output.counts[match[3]] = [];
-      output.counts[match[3]].push(match[2]);
+      if (output.counts[args[1]] == null) {
+        output.counts[args[1]] = {
+          governor: GOVERNORS[args[2]] || GOVERNORS.equal,
+          defines: []
+        };
+      }
+      output.counts[args[1]].defines.push(args[0]);
       break;
     // TODO other stuff
     default:
@@ -98,17 +108,19 @@ export default class PreprocessShader {
         // TODO This is too costy and bad
         let match = selected.find(entry => {
           return this.metadata.counts.every(v => {
-            return uniforms[v.key].length === entry.uniforms[v.key];
+            let governor = (v.vert && v.vert.governor) ||
+              (v.frag && v.frag.governor);
+            return governor(entry.uniforms[v.key], uniforms[v.key].length);
           });
         });
         if (match == null) {
           let uniformData = {};
           this.metadata.counts.forEach(v => {
             vertDefines.push.apply(vertDefines,
-              (v.vert || []).map(field => field + ' ' +
+              ((v.vert && v.vert.defines) || []).map(field => field + ' ' +
                 uniforms[v.key].length));
             fragDefines.push.apply(fragDefines,
-              (v.frag || []).map(field => field + ' ' +
+              ((v.frag && v.frag.defines) || []).map(field => field + ' ' +
                 uniforms[v.key].length));
             uniformData[v.key] = uniforms[v.key].length;
           });

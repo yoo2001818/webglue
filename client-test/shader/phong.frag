@@ -1,7 +1,7 @@
 #version 100
 #pragma webglue: feature(USE_DEPTH, uTexture)
 #pragma webglue: feature(USE_ENVIRONMENT, uEnvironment)
-#pragma webglue: count(POINT_LIGHT_SIZE, uPointLight)
+#pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, max)
 
 #ifndef POINT_LIGHT_SIZE
 #define POINT_LIGHT_SIZE 1
