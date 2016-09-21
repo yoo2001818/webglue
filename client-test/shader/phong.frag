@@ -14,10 +14,18 @@
 
 precision lowp float;
 
+lowp vec3 normal;
+lowp vec3 fragPos;
+
 varying lowp vec3 vPosition;
 varying lowp vec3 vNormal;
 varying lowp vec2 vTexCoord;
 varying lowp vec3 vViewPos;
+
+#ifdef USE_TANGENT_SPACE
+  varying lowp vec4 vTangent;
+  lowp mat3 tangent;
+#endif
 
 struct Material {
   lowp vec3 ambient;
@@ -48,12 +56,15 @@ uniform PointLight uPointLight[POINT_LIGHT_SIZE];
 #endif
 uniform Material uMaterial;
 
+uniform mat4 uModel;
+uniform mat3 uNormal;
 uniform lowp vec3 uTint;
+uniform sampler2D uNormalMap;
 uniform sampler2D uDiffuseMap;
 uniform samplerCube uEnvironmentMap;
 
 // It's Blinn-Phong actually.
-lowp vec3 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
+lowp vec3 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir) {
   // Diffuse
   lowp float lambertian = max(dot(lightDir, normal), 0.0);
 
@@ -71,10 +82,13 @@ lowp vec3 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir, lowp vec3 normal) {
   return vec3(lambertian, spec, fresnel);
 }
 
-lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
-  lowp vec3 normal
+lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir
 ) {
-  lowp vec3 lightDir = light.position - vPosition;
+  #ifdef USE_TANGENT_SPACE
+    lowp vec3 lightDir = tangent * light.position - fragPos;
+  #else
+    lowp vec3 lightDir = light.position - fragPos;
+  #endif
 
   lowp float distance = length(lightDir);
   lightDir = lightDir / distance;
@@ -83,7 +97,7 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
   lowp float attenuation = 1.0 / ( 1.0 +
     light.intensity.w * (distance * distance));
 
-  lowp vec3 phong = calcPhong(lightDir, viewDir, normal);
+  lowp vec3 phong = calcPhong(lightDir, viewDir);
 
   // Combine everything together
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
@@ -97,16 +111,46 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir,
 }
 
 void main(void) {
-  lowp vec3 viewDir = normalize(vViewPos - vPosition);
-  lowp vec3 normal = normalize(vNormal);
+  #ifdef USE_TANGENT_SPACE
+    // Normal vector.
+    vec3 N = normalize(vNormal);
+    // Tangent vector.
+    vec3 T = normalize(vec3(uNormal * vTangent.xyz));
+    T = normalize(T - dot(T, N) * N);
+    // Bi-tangent vector.
+    vec3 B = cross(T, N) * vTangent.w;
+    // Transpose the matrix by hand
+    tangent = mat3(
+      vec3(T.x, B.x, N.x),
+      vec3(T.y, B.y, N.y),
+      vec3(T.z, B.z, N.z)
+    );
+    fragPos = tangent * vPosition;
+    lowp vec3 viewDir = normalize(tangent * vViewPos - fragPos);
+  #else
+    fragPos = (uModel * vec4(vPosition, 1.0)).xyz;
+    lowp vec3 viewDir = normalize(vViewPos - vPosition);
+    normal = normalize(vNormal);
+  #endif
+
   lowp vec2 texCoord = vTexCoord;
+
+  #ifdef USE_TANGENT_SPACE
+    #ifdef USE_NORMAL_MAP
+      normal = normalize(texture2D(uNormalMap, texCoord).xyz * 2.0 - 1.0);
+      normal.y = -normal.y;
+    #else
+      normal = vec3(0.0, 0.0, 1.0);
+    #endif
+  #endif
+
   MaterialColor matColor;
   matColor.ambient = uMaterial.ambient;
   matColor.diffuse = uMaterial.diffuse;
   matColor.specular = uMaterial.specular;
 
   #ifdef USE_DIFFUSE_MAP
-  lowp vec4 diffuseTex = vec4(texture2D(uDiffuseMap, vTexCoord).xyz + uTint, 1.0);
+  lowp vec4 diffuseTex = vec4(texture2D(uDiffuseMap, texCoord).xyz + uTint, 1.0);
   matColor.ambient *= diffuseTex.xyz;
   matColor.diffuse *= diffuseTex.xyz;
   #endif
@@ -134,7 +178,7 @@ void main(void) {
   #endif
 	#if POINT_LIGHT_SIZE > 0
   for (int i = 0; i < POINT_LIGHT_SIZE; ++i) {
-    result += calcPoint(uPointLight[i], matColor, viewDir, normal);
+    result += calcPoint(uPointLight[i], matColor, viewDir);
   }
 	#endif
 

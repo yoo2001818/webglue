@@ -53,7 +53,7 @@ function mergeMetadata(vert, frag) {
     }
     for (let key in fragData) {
       if (categoryData[key] == null) categoryData[key] = {};
-      categoryData[key] = { frag: fragData[key] };
+      categoryData[key].frag = fragData[key];
     }
   }
   return output;
@@ -114,6 +114,7 @@ export default class PreprocessShader {
           });
         });
         if (match == null) {
+          console.log(this.metadata);
           let uniformData = {};
           this.metadata.counts.forEach(v => {
             vertDefines.push.apply(vertDefines,
