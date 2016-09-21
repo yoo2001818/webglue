@@ -53,7 +53,7 @@ export default function geometryTransform(renderer) {
             specular: '#555555',
             shininess: 30
           },
-          uTexture: texture
+          uDiffuseMap: texture
         }
       }]
     });

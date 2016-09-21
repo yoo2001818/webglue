@@ -57,7 +57,7 @@ export default function combine(renderer) {
             specular: '#111111',
             shininess: 30
           },
-          uTexture: texture
+          uDiffuseMap: texture
         }
       }]
     });

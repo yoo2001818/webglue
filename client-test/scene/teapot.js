@@ -91,13 +91,13 @@ export default function teapot(renderer) {
         uniforms: {
           uModel: model1Mat,
           uNormal: model1Normal,
-          uEnvironment: skybox,
+          uEnvironmentMap: skybox,
           uMaterial: {
             ambient: '#aaaaaa',
             diffuse: '#aaaaaa',
             specular: '#444444',
-            reflectivity: '#292929',
-            shininess: [90, 140/256]
+            reflectivity: '#8c292929',
+            shininess: 90
           }
         }
       }, {
@@ -106,14 +106,14 @@ export default function teapot(renderer) {
         uniforms: {
           uModel: floorMat,
           uNormal: floorNormal,
-          uTexture: floorTexture,
-          uEnvironment: skybox,
+          uDiffuseMap: floorTexture,
+          uEnvironmentMap: skybox,
           uMaterial: {
             ambient: '#ffffff',
             diffuse: '#999999',
             specular: '#222222',
-            reflectivity: '#52514F',
-            shininess: [30, 83/256]
+            reflectivity: '#5352514F',
+            shininess: 30
           }
         }
       }, {

@@ -63,7 +63,7 @@ export default function instanced(renderer) {
             specular: '#555555',
             shininess: 30
           },
-          uTexture: texture
+          uDiffuseMap: texture
         }
       }]
     });

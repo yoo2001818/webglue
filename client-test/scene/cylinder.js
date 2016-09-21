@@ -46,7 +46,7 @@ export default function cylinder(renderer) {
             specular: '#555555',
             shininess: 30
           },
-          uTexture: texture
+          uDiffuseMap: texture
         }
       }]
     });

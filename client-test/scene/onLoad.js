@@ -79,7 +79,7 @@ export default function onLoad(renderer) {
             specular: '#000000',
             shininess: 30
           },
-          uTexture: outTexture
+          uDiffuseMap: outTexture
         }
       }]
     });
