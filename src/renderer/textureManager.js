@@ -26,9 +26,10 @@ export default class TextureManager {
   setDefault(options) {
     this.defaults = options;
   }
-  create(options) {
+  create(source, options) {
     let combinedOptions = Object.assign({}, this.defaults, options, {
-      params: Object.assign({}, this.defaults.params, options.params)
+      source,
+      params: Object.assign({}, this.defaults.params, options && options.params)
     });
     let texture = new Texture(this.renderer, combinedOptions);
     this.textures.push(texture);

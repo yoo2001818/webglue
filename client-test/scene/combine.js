@@ -19,8 +19,7 @@ export default function combine(renderer) {
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
   );
-  let texture = renderer.textures.create({
-    source: require('../texture/2.png'),
+  let texture = renderer.textures.create(require('../texture/2.png'), {
     params: {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT

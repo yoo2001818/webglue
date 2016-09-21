@@ -22,8 +22,7 @@ export default function teapot(renderer) {
       0, 2
     ]
   }));
-  let floorTexture = renderer.textures.create({
-    source: require('../texture/wood4.jpg'),
+  let floorTexture = renderer.textures.create(require('../texture/wood4.jpg'), {
     params: {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT
@@ -31,16 +30,14 @@ export default function teapot(renderer) {
   });
 
   let box = renderer.geometries.create(boxGeom());
-  let skybox = renderer.textures.create({
-    source: [
-      require('../texture/stormyday/front.jpg'),
-      require('../texture/stormyday/back.jpg'),
-      require('../texture/stormyday/down.jpg'),
-      require('../texture/stormyday/up.jpg'),
-      require('../texture/stormyday/right.jpg'),
-      require('../texture/stormyday/left.jpg')
-    ]
-  });
+  let skybox = renderer.textures.create([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ]);
   let skyboxShader = renderer.shaders.create(
     require('../shader/skybox.vert'),
     require('../shader/skybox.frag')

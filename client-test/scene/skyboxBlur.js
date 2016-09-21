@@ -60,22 +60,20 @@ export default function skyboxBlur(renderer) {
   const gl = renderer.gl;
 
   let box = renderer.geometries.create(calcTangents(calcNormals(boxGeom())));
-  let skyboxInput = renderer.textures.create({
-    source: [
-      require('../texture/stormyday/front.jpg'),
-      require('../texture/stormyday/back.jpg'),
-      require('../texture/stormyday/down.jpg'),
-      require('../texture/stormyday/up.jpg'),
-      require('../texture/stormyday/right.jpg'),
-      require('../texture/stormyday/left.jpg')
-    ],
+  let skyboxInput = renderer.textures.create([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ], {
     params: {
       minFilter: gl.LINEAR,
       mipmap: false
     }
   });
-  let skyboxOutput = renderer.textures.create({
-    source: [],
+  let skyboxOutput = renderer.textures.create([], {
     width: 64,
     height: 64,
     params: {

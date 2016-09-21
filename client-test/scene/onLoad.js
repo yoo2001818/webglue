@@ -9,10 +9,8 @@ export default function onLoad(renderer) {
   const gl = renderer.gl;
 
   let quad = renderer.geometries.create(quadGeom());
-  let inTexture = renderer.textures.create({
-    source: require('../texture/stone.jpg')
-  });
-  let outTexture = renderer.textures.create({
+  let inTexture = renderer.textures.create(require('../texture/stone.jpg'));
+  let outTexture = renderer.textures.create(null, {
     width: 1024,
     height: 1024
   });

@@ -11,12 +11,10 @@ export default function normalMap(renderer) {
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
   );
-  let texture = renderer.textures.create({
-    source: require('../texture/texture2.png')
-  });
-  let normalMap = renderer.textures.create({
-    source: require('../texture/texture2_normal.png')
-  });
+  let texture = renderer.textures.create(
+    require('../texture/texture2.png'));
+  let normalMap = renderer.textures.create(
+    require('../texture/texture2_normal.png'));
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
