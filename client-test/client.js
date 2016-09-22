@@ -68,9 +68,9 @@ let controller = new CameraController(canvas, document, camera);
 
 function animate(time) {
   if (prevTime === -1) prevTime = time;
-  let delta = time - prevTime;
+  let delta = (time - prevTime) / 1000;
   prevTime = time;
-  timer += delta / 1000;
+  timer += delta;
 
   controller.update(delta);
 

@@ -35,6 +35,13 @@ export default class Camera extends Object3D {
     this.pvTicks = 0;
     this.pvMatrix = mat4.create();
   }
+  get(input) {
+    return {
+      uProjection: this.getProjection(input),
+      uView: this.getView(),
+      uProjectionView: this.getPV(input)
+    };
+  }
   getProjection(input) {
     let aspect;
     if (typeof input === 'number') {

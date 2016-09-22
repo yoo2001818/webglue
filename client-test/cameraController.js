@@ -1,4 +1,12 @@
 import { quat, vec3 } from 'gl-matrix';
+import { perspective, orthogonal } from 'webglue/camera';
+
+function easeInOutQuad (t) {
+  t *= 2;
+  if (t < 1) return t*t/2;
+  t--;
+  return (t*(t-2) - 1) / -2;
+}
 
 export default class CameraController {
   constructor(node, keyNode, camera) {
@@ -22,6 +30,8 @@ export default class CameraController {
     // false - Blender-like control
     // true - FPS-like control
     this.mode = false;
+    //
+    this.perspective = true;
 
     this.hasChanged = true;
     this.camera = camera;
@@ -85,6 +95,52 @@ export default class CameraController {
       this.mouseHeld = false;
       e.preventDefault();
     });
+    this.keyNode.addEventListener('keydown', e => {
+      if (e.shiftKey) return;
+      const { camera } = this;
+      if (e.keyCode === 32) {
+        vec3.copy(this.lerpStart, this.center);
+        vec3.set(this.lerpEnd, 0, 0, 0);
+        this.lerpCounter = 0;
+      }
+      // Persp - Ortho swap
+      if (e.keyCode === 101 || e.keyCode === 53) {
+        this.perspective = !this.perspective;
+        if (this.perspective) {
+          camera.projection = perspective(Math.PI / 180 * 70, 0.3, 1000);
+        }
+        this.hasChanged = true;
+      }
+      // Front
+      if (e.keyCode === 97 || e.keyCode === 49) {
+        quat.copy(this.slerpStart, camera.transform.rotation);
+        quat.identity(this.slerpEnd);
+        if (e.ctrlKey) {
+          quat.rotateY(this.slerpEnd, this.slerpEnd, Math.PI);
+        }
+        this.slerpCounter = 0;
+      }
+      // Right
+      if (e.keyCode === 99 || e.keyCode === 51) {
+        quat.copy(this.slerpStart, camera.transform.rotation);
+        quat.identity(this.slerpEnd);
+        quat.rotateY(this.slerpEnd, this.slerpEnd, Math.PI / 2);
+        if (e.ctrlKey) {
+          quat.rotateY(this.slerpEnd, this.slerpEnd, -Math.PI);
+        }
+        this.slerpCounter = 0;
+      }
+      // Top
+      if (e.keyCode === 103 || e.keyCode === 55) {
+        quat.copy(this.slerpStart, camera.transform.rotation);
+        quat.identity(this.slerpEnd);
+        quat.rotateX(this.slerpEnd, this.slerpEnd, -Math.PI / 2);
+        if (e.ctrlKey) {
+          quat.rotateX(this.slerpEnd, this.slerpEnd, Math.PI);
+        }
+        this.slerpCounter = 0;
+      }
+    });
     this.node.addEventListener('wheel', e => {
       let diff = e.deltaY / 50;
       if (e.deltaMode === 0) diff /= 12;
@@ -110,9 +166,28 @@ export default class CameraController {
       e.preventDefault();
     });
   }
-  update() {
+  update(delta) {
+    let transform = this.camera.transform;
+    if (this.lerpCounter !== -1) {
+      this.lerpCounter = Math.min(1, this.lerpCounter + delta * 4);
+      vec3.lerp(this.center,
+        this.lerpStart, this.lerpEnd, easeInOutQuad(this.lerpCounter)
+      );
+      this.hasChanged = true;
+      if (this.lerpCounter >= 1) this.lerpCounter = -1;
+    }
+    if (this.slerpCounter !== -1) {
+      this.slerpCounter = Math.min(1, this.slerpCounter + delta * 4);
+      quat.slerp(transform.rotation,
+        this.slerpStart, this.slerpEnd, easeInOutQuad(this.slerpCounter)
+      );
+      this.hasChanged = true;
+      if (this.slerpCounter >= 1) this.slerpCounter = -1;
+    }
     if (this.hasChanged) {
-      let transform = this.camera.transform;
+      if (!this.perspective) {
+        this.camera.projection = orthogonal(this.radius / 2, 0.1, 1000);
+      }
       vec3.transformQuat(transform.position, [0, 0, this.radius],
         transform.rotation);
       vec3.add(transform.position, transform.position, this.center);
