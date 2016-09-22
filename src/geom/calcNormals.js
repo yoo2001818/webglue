@@ -6,7 +6,14 @@ import { vec3 } from 'gl-matrix';
 export default function calcNormals(geometry) {
   let vertices = parseAttribute(geometry.attributes.aPosition);
   if (vertices == null) throw new Error('aPosition must be specified');
-  let normals = new Float32Array(vertices.data.length);
+  let normals;
+  if (geometry.attributes.aNormal && geometry.attributes.aNormal.data &&
+    geometry.attributes.aNormal.data.length === vertices.data.length
+  ) {
+    normals = geometry.attributes.aNormal.data;
+  } else {
+    normals = new Float32Array(vertices.data.length);
+  }
   let indices = parseIndices(geometry.indices);
   if (indices == null) throw new Error('Indices must be specified');
   // Uh, maybe the variable names are too verbose. I think.

@@ -28,11 +28,8 @@ export default function geomReupload(renderer) {
       let y = positionBuf.data[i + 1];
       positionBuf.data[i + 2] = Math.sin(x + y + timer / 300);
     }
-    let newData = calcNormals({
-      attributes: { aPosition: positionBuf },
-      indices: quadData.indices
-    });
-    quad.update({ attributes: newData.attributes });
+    quadData = calcNormals(quadData);
+    quad.update({ attributes: quadData.attributes });
     // mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000 / 2);
     // mat3.normalFromMat4(model1Normal, model1Mat);
 
