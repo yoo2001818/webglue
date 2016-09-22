@@ -18,6 +18,15 @@ export default class Geometry {
     this.instanced = options.instanced;
     // gl.POINTS is 0
     this.mode = options.mode == null ? renderer.gl.TRIANGLES : options.mode;
+    this.usage = options.usage == null ? renderer.gl.STATIC_DRAW :
+      options.usage;
+    if (this.indices && this.indices.usage != null) {
+      this.indicesUsage = this.indices.usage;
+    } else if (options.indicesUsage != null) {
+      this.indicesUsage = options.indicesUsage;
+    } else {
+      this.indicesUsage = this.usage;
+    }
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
@@ -132,7 +141,7 @@ export default class Geometry {
     }
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, pos, this.usage);
     // Upload each attribute, one at a time
     for (let i = 0; i < this.attributePos.length; ++i) {
       let attribute = this.attributePos[i];
@@ -161,8 +170,7 @@ export default class Geometry {
       }
       if (this.ebo == null) this.ebo = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices,
-        gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, this.indicesUsage);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
   }

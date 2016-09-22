@@ -40,6 +40,9 @@ export default class CombinedGeometry extends Geometry {
     }, -1);
     // Who shall supply the ebo? the rightmost object will.
     this.indices = this.geometries.reduce((p, g) => g.indices || p, null);
+    this.usage = this.geometries.reduce((p, g) => g.usage || p, null);
+    this.indicesUsage = this.geometries.reduce((p, g) => g.indicesUsage
+      || p, null);
     this.ebo = this.geometries.reduce((p, g) => g.ebo || p, null);
     this.eboType = this.geometries.reduce((p, g) => g.eboType || p, null);
     this.mode = this.geometries.reduce((p, g) => g.mode || p, null);
