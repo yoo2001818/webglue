@@ -15,6 +15,18 @@ export default function normalMap(renderer) {
     require('../texture/texture2.png'));
   let normalMap = renderer.textures.create(
     require('../texture/texture2_normal.png'));
+  let skybox = renderer.textures.create([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ]);
+  let skyboxShader = renderer.shaders.create(
+    require('../shader/skybox.vert'),
+    require('../shader/skybox.frag')
+  );
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
@@ -46,11 +58,22 @@ export default function normalMap(renderer) {
           uMaterial: {
             ambient: '#ffffff',
             diffuse: '#ffffff',
-            specular: '#555555',
+            specular: '#444444',
+            reflectivity: '#ff333333',
             shininess: 100
           },
+          uEnvironmentMap: skybox,
           uNormalMap: normalMap,
           uDiffuseMap: texture
+        }
+      }, {
+        shader: skyboxShader,
+        geometry: box,
+        options: {
+          cull: gl.FRONT
+        },
+        uniforms: {
+          uSkybox: skybox
         }
       }]
     });

@@ -11,6 +11,8 @@ attribute vec3 aNormal;
 attribute vec3 aPosition;
 attribute vec4 aTangent;
 
+attribute vec3 aInstPos;
+
 varying lowp vec3 vPosition;
 varying lowp vec2 vTexCoord;
 varying lowp vec3 vViewPos;
@@ -34,13 +36,13 @@ vec3 getViewPosWorld() {
 }
 
 void main() {
-  vec4 fragPos = uModel * vec4(aPosition, 1.0);
+  vec4 fragPos = uModel * vec4(aPosition, 1.0) + vec4(aInstPos, 0.0);
   gl_Position = uProjectionView * fragPos;
   vTexCoord = vec2(aTexCoord.x, aTexCoord.y);
   #ifdef USE_TANGENT_SPACE
     vTangent = aTangent;
   #endif
-  vPosition = aPosition;
+  vPosition = fragPos.xyz;
   vNormal = uNormal * aNormal;
   vViewPos = getViewPosWorld();
 }

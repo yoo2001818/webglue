@@ -128,8 +128,8 @@ void main(void) {
     fragPos = tangent * vPosition;
     lowp vec3 viewDir = normalize(tangent * vViewPos - fragPos);
   #else
-    fragPos = (uModel * vec4(vPosition, 1.0)).xyz;
-    lowp vec3 viewDir = normalize(vViewPos - vPosition);
+    fragPos = vPosition;
+    lowp vec3 viewDir = normalize(vViewPos - fragPos);
     normal = normalize(vNormal);
   #endif
 
@@ -161,13 +161,19 @@ void main(void) {
 	// https://github.com/KhronosGroup/WebGL/issues/1528)
 	lowp vec4 environmentTex = vec4(0.0);
 	if (uMaterial.reflectivity.w > 0.5) {
-	  lowp vec3 outVec = reflect(viewDir, normalize(vNormal));
+    #ifdef USE_TANGENT_SPACE
+      // (Sigh) Get world space viewDir
+      lowp vec3 worldViewDir = vViewPos - (uModel * vec4(vPosition, 1.0)).xyz;
+	    lowp vec3 outVec = reflect(worldViewDir, normal);
+    #else
+	    lowp vec3 outVec = reflect(viewDir, normal);
+    #endif
 	  environmentTex = vec4(textureCube(uEnvironmentMap, outVec).xyz, 1.0);
 	} else {
 		// Fallback: Sample random direction (to match colors)
 	  environmentTex = vec4(textureCube(uEnvironmentMap, vec3(0.0, 0.0, 1.0)).xyz, 1.0);
 	}
-  lowp float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 5.0);
+  lowp float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 5.0);
 	result = environmentTex.xyz *
   mix(uMaterial.reflectivity.xyz, vec3(uMaterial.reflectivity.w), fresnel);
   lowp float power = mix(1.0, 1.0 - uMaterial.reflectivity.w, fresnel);
