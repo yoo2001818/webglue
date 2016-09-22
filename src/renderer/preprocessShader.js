@@ -114,7 +114,6 @@ export default class PreprocessShader {
           });
         });
         if (match == null) {
-          console.log(this.metadata);
           let uniformData = {};
           this.metadata.counts.forEach(v => {
             vertDefines.push.apply(vertDefines,

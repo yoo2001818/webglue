@@ -39,11 +39,57 @@ export default class Geometry {
 
     this.standard = false;
   }
-  upload() {
-    if (this.vbo !== null) return;
+  update(options) {
+    const gl = this.renderer.gl;
+    if (options.indices) this.indices = parseIndices(options.indices);
+    if (options.instanced) {
+      Object.assign(this.instanced, parseAttributes(options.instanced));
+    }
+    if (options.mode != null) this.mode = options.mode;
+    if (options.usage != null) this.usage = options.usage;
+    if (options.indicesUsage != null) this.indicesUsage = options.indicesUsage;
+    if (this.vbo == null) {
+      if (options.attributes) {
+        Object.assign(this.attributes, parseAttributes(options.attributes));
+      }
+      return this.upload();
+    }
+    // TODO This should be changed if we're going to support multiple VBO
+    if (options.attributes) {
+      let passed = true;
+      // Check if each attributes has matching size
+      for (let key in options.attributes) {
+        let original = this.attributes[key];
+        let changed = options.attributes[key];
+        if (original == null || original.axis !== changed.axis ||
+          original.data.length !== changed.data.length
+        ) {
+          passed = false;
+          break;
+        }
+      }
+      Object.assign(this.attributes, parseAttributes(options.attributes));
+      if (passed) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+        // Reupload that specified data
+        for (let key in options.attributes) {
+          let pos = this.attributePos.find(v => v.name === key);
+          if (pos == null) continue;
+          pos.data = options.attributes[key].data;
+          gl.bufferSubData(gl.ARRAY_BUFFER, pos.pos, pos.data);
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      } else {
+        // Reupload whole buffer
+        this.upload(false);
+      }
+    }
+    if (options.indices) this.uploadIndices();
+  }
+  upload(uploadIndices = true) {
     const gl = this.renderer.gl;
     // Create VBO...
-    this.vbo = gl.createBuffer();
+    if (this.vbo == null) this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Then bind the data to VBO.
     this.attributePos = [];
@@ -60,6 +106,7 @@ export default class Geometry {
       let size = 0;
       let instDiv = 0;
       if (this.instanced != null) instDiv = this.instanced[key] || 0;
+      if (entry == null) continue;
       if (entry.data == null) {
         continue;
       }
@@ -150,32 +197,34 @@ export default class Geometry {
     // Done!
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     // Upload indices if requested to do so
-    if (this.indices != null) {
-      if (this.indices instanceof Uint8Array) {
-        this.eboType = gl.UNSIGNED_BYTE;
-        this.eboSize = 1;
-      } else if (this.indices instanceof Uint16Array) {
-        this.eboType = gl.UNSIGNED_SHORT;
-        this.eboSize = 2;
-      } else if (this.indices instanceof Uint32Array) {
-        // TODO OES_element_index_uint extension must be enabled before doing
-        // this
-        /* if (context.uintExt == null) {
-          throw new Error('Uint32Array indices is not supported by the device');
-        } */
-        this.eboType = gl.UNSIGNED_INT;
-        this.eboSize = 4;
-      } else {
-        throw new Error('Unsupported indices array type');
-      }
-      if (this.ebo == null) this.ebo = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, this.indicesUsage);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if (uploadIndices && this.indices != null) this.uploadIndices();
+  }
+  uploadIndices() {
+    const gl = this.renderer.gl;
+    if (this.indices == null) return;
+    if (this.indices instanceof Uint8Array) {
+      this.eboType = gl.UNSIGNED_BYTE;
+      this.eboSize = 1;
+    } else if (this.indices instanceof Uint16Array) {
+      this.eboType = gl.UNSIGNED_SHORT;
+      this.eboSize = 2;
+    } else if (this.indices instanceof Uint32Array) {
+      // TODO OES_element_index_uint extension must be enabled before doing
+      // this
+      /* if (context.uintExt == null) {
+        throw new Error('Uint32Array indices is not supported by the device');
+      } */
+      this.eboType = gl.UNSIGNED_INT;
+      this.eboSize = 4;
+    } else {
+      throw new Error('Unsupported indices array type');
     }
+    if (this.ebo == null) this.ebo = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, this.indicesUsage);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
   useVAO() {
-    const gl = this.renderer.gl;
     let shader = this.renderer.shaders.current;
     // TODO VAO logic must be changed if we're going to use instancing.
     // Use VAO if supported by the device.
@@ -185,11 +234,11 @@ export default class Geometry {
           this.vao = this.renderer.vao.createVertexArrayOES();
           this.renderer.vao.bindVertexArrayOES(this.vao);
           // Continue.....
+          // TODO This might make a problem in some browsers?
+          this.vao.valid = true;
         } else {
           this.renderer.vao.bindVertexArrayOES(this.vao);
-          // Use EBO
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-          return true;
+          if (this.vao.valid) return true;
         }
       } else {
         // Non-standard geometry
@@ -197,17 +246,16 @@ export default class Geometry {
           let vao = this.renderer.vao.createVertexArrayOES();
           this.renderer.vao.bindVertexArrayOES(vao);
           this.vao.set(shader, vao);
+          // TODO This might make a problem in some browsers?
+          vao.valid = true;
           // Continue.....
         } else {
           let vao = this.vao.get(shader);
           this.renderer.vao.bindVertexArrayOES(vao);
-          // Use EBO
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-          return true;
+          if (vao.valid) return true;
         }
       }
     }
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
     return false;
   }
   use(useVAO = true) {
@@ -216,9 +264,16 @@ export default class Geometry {
     if (this.vbo === null) this.upload();
     if (this.standard && this.renderer.geometries.current === this) {
       // This doesn't have to be 'used' again in this case
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
       return;
     }
-    if (useVAO && this.useVAO()) return;
+    if (useVAO) {
+      if (this.useVAO()) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+        return;
+      }
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+    }
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);

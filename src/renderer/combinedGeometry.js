@@ -57,12 +57,14 @@ export default class CombinedGeometry extends Geometry {
     }
   }
   use() {
+    const gl = this.renderer.gl;
     if (!this.uploaded) this.upload();
     if (this.standard && this.renderer.geometries.current === this) {
       // This doesn't have to be 'used' again in this case
       return;
     }
     this.useVAO();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
     // 'Use' each geometry objects
     this.geometries.forEach(v => v.use(false));
   }

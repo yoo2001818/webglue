@@ -43,7 +43,6 @@ export default class GeometryManager {
     return geometry;
   }
   use(geometry) {
-    if (this.current === geometry) return;
     if (Array.isArray(geometry)) {
       // Can't use :/
       this.current = geometry;
