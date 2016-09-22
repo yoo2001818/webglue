@@ -2,6 +2,7 @@
 #pragma webglue: feature(USE_ENVIRONMENT_MAP, uEnvironmentMap)
 #pragma webglue: feature(USE_DIFFUSE_MAP, uDiffuseMap)
 #pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
+#pragma webglue: feature(USE_HEIGHT_MAP, uHeightMap)
 #pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, max)
 
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
@@ -61,8 +62,12 @@ uniform mat3 uNormal;
 uniform lowp vec3 uTint;
 uniform sampler2D uNormalMap;
 uniform sampler2D uDiffuseMap;
+uniform sampler2D uHeightMap;
 uniform samplerCube uEnvironmentMap;
 
+#ifdef USE_HEIGHT_MAP
+  uniform lowp vec2 uHeightMapScale;
+#endif
 // It's Blinn-Phong actually.
 lowp vec3 calcPhong(lowp vec3 lightDir, lowp vec3 viewDir) {
   // Diffuse
@@ -136,6 +141,12 @@ void main(void) {
   lowp vec2 texCoord = vTexCoord;
 
   #ifdef USE_TANGENT_SPACE
+    #ifdef USE_HEIGHT_MAP
+      lowp float angle = min(1.0, pow(abs(dot(vec3(0.0, 0.0, 1.0), viewDir)), uHeightMapScale.y));
+      lowp float height = texture2D(uHeightMap, vTexCoord).r * 2.0 - 1.0;
+      lowp vec2 p = vec2(viewDir.x, -viewDir.y) / viewDir.z * (height * uHeightMapScale.x * angle);
+      texCoord = vTexCoord + p;
+    #endif
     #ifdef USE_NORMAL_MAP
       normal = normalize(texture2D(uNormalMap, texCoord).xyz * 2.0 - 1.0);
       normal.y = -normal.y;
