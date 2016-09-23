@@ -12,8 +12,7 @@ const GOVERNORS = {
 function parseMetadata(code) {
   let output = {
     features: {},
-    counts: {},
-    capabilities: {}
+    counts: {}
   };
   let match;
   HEADER_PATTERN.lastIndex = 0;
@@ -82,7 +81,7 @@ export default class PreprocessShader {
     // What if there is no 'count'? It'll fallback to raw shader object.
     this.shaders = null;
   }
-  use(uniforms, current) {
+  getShader(uniforms) {
     if (this.useFeatures) {
       if (this.shaders == null) this.shaders = {};
       let vertDefines = [];
@@ -132,9 +131,9 @@ export default class PreprocessShader {
             attachAppendage(this.source.frag, fragStr)
           );
           selected.push({shader, uniforms: uniformData});
-          return shader.use(uniforms, current);
+          return shader;
         } else {
-          return match.shader.use(uniforms, current);
+          return match.shader;
         }
       } else {
         if (this.shaders[featureKey] == null) {
@@ -148,16 +147,19 @@ export default class PreprocessShader {
           this.shaders[featureKey] = shader;
         }
         let selected = this.shaders[featureKey];
-        return selected.use(uniforms, current);
+        return selected;
       }
     } else {
       if (this.shaders == null) {
         this.shaders = new Shader(this.renderer,
           this.source.vert, this.source.frag);
       }
-      return this.shaders.use(uniforms, current);
+      return this.shaders;
     }
-    // TODO Implement useCounts
+  }
+  use(uniforms, current) {
+    let shader = this.getShader(uniforms);
+    return shader.use(uniforms, current);
   }
   dispose() {
     // Dispose all shader objects. This is awkward since we have to write

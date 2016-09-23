@@ -9,24 +9,22 @@ export default class Transform {
     this.rotation = rotation;
     this.scale = scale;
 
-    this.matrix = mat4.create();
+    this.localMatrix = mat4.create();
     this.valid = false;
     this.ticks = 0;
-    this.validate();
+    this.get();
 
     this.get = this.get.bind(this);
   }
   get() {
-    return this.validate();
-  }
-  validate() {
-    if (this.valid) return this.matrix;
+    if (this.valid) return this.localMatrix;
     // Recalculate transform matrix
-    mat4.fromRotationTranslation(this.matrix, this.rotation, this.position);
-    mat4.scale(this.matrix, this.matrix, this.scale);
+    mat4.fromRotationTranslation(this.localMatrix, this.rotation,
+      this.position);
+    mat4.scale(this.localMatrix, this.localMatrix, this.scale);
     this.valid = true;
     this.ticks ++;
-    return this.matrix;
+    return this.localMatrix;
   }
   invalidate() {
     this.valid = false;

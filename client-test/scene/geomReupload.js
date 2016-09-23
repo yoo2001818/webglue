@@ -26,7 +26,7 @@ export default function geomReupload(renderer) {
     for (let i = 0; i < positionBuf.data.length; i += 3) {
       let x = positionBuf.data[i];
       let y = positionBuf.data[i + 1];
-      positionBuf.data[i + 2] = Math.sin(x + y + timer / 300);
+      positionBuf.data[i + 2] = Math.sin(x + y + timer * 3);
     }
     quadData = calcNormals(quadData);
     quad.update({ attributes: quadData.attributes });

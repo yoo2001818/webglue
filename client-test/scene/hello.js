@@ -1,7 +1,9 @@
 import boxGeom from 'webglue/geom/box';
 import calcNormals from 'webglue/geom/calcNormals';
 
-import { mat3, mat4 } from 'gl-matrix';
+import MeshTransform from 'webglue/meshTransform';
+
+import { quat } from 'gl-matrix';
 
 export default function hello(renderer) {
   const gl = renderer.gl;
@@ -12,12 +14,19 @@ export default function hello(renderer) {
   );
   let texture = renderer.textures.create(require('../texture/2.png'));
 
-  let model1Mat = mat4.create();
-  let model1Normal = mat3.create();
+  let parent = new MeshTransform();
+  let model = new MeshTransform();
+  model.parent = parent;
 
+  let timer = 0;
   return (delta, context) => {
-    // mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000 / 2);
-    // mat3.normalFromMat4(model1Normal, model1Mat);
+    timer += delta;
+
+    quat.rotateZ(parent.rotation, parent.rotation, delta * 2);
+    parent.invalidate();
+    quat.rotateX(model.rotation, model.rotation, delta * 10);
+    model.position[0] = Math.sin(timer * 7) * 2 + 2;
+    model.invalidate();
 
     renderer.render({
       options: {
@@ -37,8 +46,8 @@ export default function hello(renderer) {
         shader: shader,
         geometry: box,
         uniforms: {
-          uModel: model1Mat,
-          uNormal: model1Normal,
+          uModel: model.get,
+          uNormal: model.getNormal,
           uMaterial: {
             ambient: '#ffffff',
             diffuse: '#ffffff',
