@@ -28,19 +28,19 @@ export default function calcTangents(input) {
     const texId2 = texIndices[faceId + 1];
     const texId3 = texIndices[faceId + 2];
     // Calculate tangent vector.
-    let origin = this.vertices.slice(vertexId1 * 3, vertexId1 * 3 + 3);
+    let origin = positions.data.subarray(vertexId1 * 3, vertexId1 * 3 + 3);
     let p1 = vec3.create();
-    vec3.subtract(p1, this.vertices.slice(vertexId2 * 3, vertexId2 * 3 + 3),
+    vec3.subtract(p1, positions.data.subarray(vertexId2 * 3, vertexId2 * 3 + 3),
       origin);
     let p2 = vec3.create();
-    vec3.subtract(p2, this.vertices.slice(vertexId3 * 3, vertexId3 * 3 + 3),
+    vec3.subtract(p2, positions.data.subarray(vertexId3 * 3, vertexId3 * 3 + 3),
       origin);
-    let texOrigin = this.texCoords.slice(texId1 * 2, texId1 * 2 + 2);
+    let texOrigin = texCoords.data.subarray(texId1 * 2, texId1 * 2 + 2);
     let texP1 = vec2.create();
-    vec2.subtract(texP1, this.texCoords.slice(texId2 * 2,
+    vec2.subtract(texP1, texCoords.data.subarray(texId2 * 2,
       texId2 * 2 + 2), texOrigin);
     let texP2 = vec2.create();
-    vec2.subtract(texP2, this.texCoords.slice(texId3 * 2,
+    vec2.subtract(texP2, texCoords.data.subarray(texId3 * 2,
       texId3 * 2 + 2), texOrigin);
     // Honestly I don't know what this does.
     let f = 1 / (texP1[0] * texP2[1] - texP2[0] * texP1[1]);
@@ -75,7 +75,7 @@ export default function calcTangents(input) {
   return Object.assign({}, input, {
     attributes: Object.assign({}, input.attributes, {
       aPosition: positions, aTexCoord: texCoords,
-      aTangent: { axis: 3, data: tangents }
+      aTangent: { axis: 4, data: tangents }
     }),
     indices: Object.assign({}, input.indices, {
       aPosition: indices, aTexCoord: texIndices, aTangent: tangentIndices

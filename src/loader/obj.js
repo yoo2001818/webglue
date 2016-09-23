@@ -1,3 +1,4 @@
+import calcTangents from '../geom/channel/calcTangents';
 import calcNormals from '../geom/channel/calcNormals';
 import calcSmoothNormals from '../geom/channel/calcSmoothNormals';
 
@@ -46,6 +47,7 @@ export default function loadOBJ(data, separate = false) {
         geometry = calcNormals(geometry);
       }
     }
+    geometry = calcTangents(geometry);
     /*// Calculate tangent vectors.
     if (normalSmooth) {
       geometry.calculateTangents();

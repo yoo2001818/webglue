@@ -121,6 +121,7 @@ export default function loadMTL(data, textures) {
       currentMaterial.displacementMap = parseTexture(args);
       break;
     case 'bump':
+    case 'map_Bump':
       // Is this bump map or normal map?
       currentMaterial.normalMap = parseTexture(args);
       break;

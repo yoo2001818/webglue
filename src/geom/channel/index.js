@@ -3,6 +3,7 @@ import parseAttributes from '../../util/parseAttributes';
 import parseIndices from '../../util/parseIndices';
 
 export default function channel(input) {
+  if (Array.isArray(input)) return input.map(v => channel(v));
   let attributes = parseAttributes(input.attributes);
   let indicesArr = [];
   let indicesSize = -1;
