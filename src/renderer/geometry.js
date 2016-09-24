@@ -12,10 +12,10 @@ export const TRIANGLE_FAN = 6;
 export default class Geometry {
   constructor(renderer, options) {
     this.renderer = renderer;
+    this.options = options;
     // Raw options given by the user
     this.attributes = parseAttributes(options.attributes);
     this.indices = parseIndices(options.indices);
-    this.instanced = options.instanced;
     // gl.POINTS is 0
     this.mode = options.mode == null ? renderer.gl.TRIANGLES : options.mode;
     this.usage = options.usage == null ? renderer.gl.STATIC_DRAW :
@@ -27,15 +27,16 @@ export default class Geometry {
     } else {
       this.indicesUsage = this.usage;
     }
+    this.count = options.count == null ? -1 : options.count;
+    this.primCount = options.primCount == null ? -1 : options.primCount;
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
     this.eboType = null;
-    this.attributePos = null;
-    this.instancedPos = null;
-    this.vertexCount = 0;
-    this.primCount = 0;
     this.vao = null;
+
+    this.attributeList = null;
+    this.instancedList = null;
 
     this.standard = false;
   }
@@ -92,46 +93,25 @@ export default class Geometry {
     if (this.vbo == null) this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Then bind the data to VBO.
-    this.attributePos = [];
-    this.instancedPos = [];
     this.standard = true;
-    // TODO Some use separate VBO per each attribute. if that's better,
-    // we should use it.
-    let vertexCount = -1;
-    let primCount = -1;
-    let pos = 0;
+
+    this.attributeList = [];
+    this.instancedList = [];
+
+    let uploadAttributes = [];
+
+    let vboPos = 0;
     for (let key in this.attributes) {
       let entry = this.attributes[key];
       let typeId = 0;
       let size = 0;
-      let instDiv = 0;
-      if (this.instanced != null) instDiv = this.instanced[key] || 0;
       if (entry == null) continue;
+      // Legacy fallback
+      if (this.options.instanced && this.options.instanced[key] != null) {
+        entry.instanced = this.options.instanced[key];
+      }
       if (entry.data == null) {
         continue;
-      }
-      if (instDiv !== 0) {
-        if (primCount === -1) {
-          primCount = entry.data.length / entry.axis * instDiv;
-        } else if (entry.data.length !== primCount * entry.axis / instDiv) {
-          throw new Error('Instanced primitive data size mismatch');
-        }
-        // Do not upload it to the buffer if instancing is not supported
-        if (this.renderer.instanced == null) {
-          this.instancedPos.push({
-            name: key,
-            axis: entry.axis,
-            data: entry.data,
-            instanced: instDiv
-          });
-          continue;
-        }
-      } else {
-        if (vertexCount === -1) {
-          vertexCount = entry.data.length / entry.axis;
-        } else if (entry.data.length !== entry.axis * vertexCount) {
-          throw new Error('Vertex data size mismatch');
-        }
       }
       // Obtain buffer size and type from data type
       if (entry.data instanceof Float32Array) {
@@ -162,23 +142,44 @@ export default class Geometry {
         // Nope
         throw new Error('Unknown vertex data type');
       }
-      this.attributePos.push({
-        name: key,
-        axis: entry.axis,
-        type: typeId,
-        size: size * entry.axis,
-        pos: pos,
-        data: entry.data,
-        instanced: instDiv || 0
-      });
+      // TODO We shouldn't do mutation?
+      entry.name = key;
+      if (entry.type == null) entry.type = typeId;
+      if (entry.typeSize == null) entry.typeSize = size;
+      if (entry.stride == null) entry.stride = size * entry.axis;
+      if (entry.instanced != null && entry.instanced !== 0) {
+        if (this.primCount === -1) {
+          this.primCount = entry.data.length / entry.axis * entry.instanced;
+        }
+        // Do not upload it to the buffer if instancing is not supported
+        // TODO This breaks compatibility since it doesn't get uploaded on VBO
+        if (this.renderer.instanced == null) {
+          this.instancedList.push({
+            name: key,
+            axis: entry.axis,
+            data: entry.data,
+            instanced: entry.instanced
+          });
+          continue;
+        }
+      } else {
+        let attributeCount = entry.data.length / entry.stride / size;
+        if (this.count === -1 || this.count > attributeCount) {
+          this.count = attributeCount;
+        }
+      }
+      if (entry.offset == null) entry.offset = 0;
+      if (entry.buffer == null) {
+        entry.buffer = this.vbo;
+        entry.offset = vboPos;
+        vboPos += entry.data.length * size;
+        uploadAttributes.push(entry);
+      }
+      this.attributeList.push(entry);
       if (this.renderer.attributes.indexOf(key) === -1) {
         this.standard = false;
       }
-      pos += entry.data.length * size;
     }
-    // Instancing is enabled if not -1
-    this.primCount = primCount;
-    this.vertexCount = vertexCount;
     // Populate VAO variable (initialization will be done at use time though)
     if (this.standard) {
       this.vao = null;
@@ -188,16 +189,17 @@ export default class Geometry {
     }
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
-    gl.bufferData(gl.ARRAY_BUFFER, pos, this.usage);
+    gl.bufferData(gl.ARRAY_BUFFER, vboPos, this.usage);
     // Upload each attribute, one at a time
-    for (let i = 0; i < this.attributePos.length; ++i) {
-      let attribute = this.attributePos[i];
-      gl.bufferSubData(gl.ARRAY_BUFFER, attribute.pos, attribute.data);
+    for (let i = 0; i < uploadAttributes.length; ++i) {
+      let attribute = uploadAttributes[i];
+      gl.bufferSubData(gl.ARRAY_BUFFER, attribute.offset, attribute.data);
     }
     // Done!
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     // Upload indices if requested to do so
     if (uploadIndices && this.indices != null) this.uploadIndices();
+    console.log(this.attributes);
   }
   uploadIndices() {
     const gl = this.renderer.gl;
@@ -278,13 +280,13 @@ export default class Geometry {
     let shaderAttribs = shader.attributes;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Read each attribute, and set pointer to it
-    for (let i = 0; i < this.attributePos.length; ++i) {
-      let attribute = this.attributePos[i];
+    for (let i = 0; i < this.attributeList.length; ++i) {
+      let attribute = this.attributeList[i];
       let attribPos = shaderAttribs[attribute.name];
       if (attribPos == null) continue;
       gl.enableVertexAttribArray(attribPos);
       gl.vertexAttribPointer(attribPos, attribute.axis, attribute.type,
-        false, attribute.size, attribute.pos);
+        false, attribute.stride, attribute.offset);
       if (instancedExt) {
         // It's not memorized on VAO?
         instancedExt.vertexAttribDivisorANGLE(attribPos,
@@ -301,7 +303,7 @@ export default class Geometry {
           instancedExt.drawElementsInstancedANGLE(this.mode,
             this.indices.length, this.eboType, 0, this.primCount);
         } else {
-          instancedExt.drawArraysInstancedANGLE(this.mode, 0, this.vertexCount,
+          instancedExt.drawArraysInstancedANGLE(this.mode, 0, this.count,
             this.primCount);
         }
       } else {
@@ -335,7 +337,7 @@ export default class Geometry {
           if (this.ebo !== null) {
             gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
           } else {
-            gl.drawArrays(this.mode, 0, this.vertexCount);
+            gl.drawArrays(this.mode, 0, this.count);
           }
         }
       }
@@ -343,7 +345,7 @@ export default class Geometry {
       if (this.ebo !== null) {
         gl.drawElements(this.mode, this.indices.length, this.eboType, 0);
       } else {
-        gl.drawArrays(this.mode, 0, this.vertexCount);
+        gl.drawArrays(this.mode, 0, this.count);
       }
     }
   }

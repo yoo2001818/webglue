@@ -1,5 +1,4 @@
 import Geometry from './geometry';
-import CombinedGeometry from './combinedGeometry';
 
 export default class GeometryManager {
   constructor(renderer) {
@@ -9,14 +8,7 @@ export default class GeometryManager {
   }
   create(options) {
     if (Array.isArray(options)) {
-      if (options[0] instanceof Geometry) {
-        // Create special combinedGeometry object
-        let geometry = new CombinedGeometry(this.renderer, options);
-        this.geometries.push(geometry);
-        return geometry;
-      } else {
-        return options.map(v => this.create(v));
-      }
+      return options.map(v => this.create(v));
     }
     let finalOpts = options;
     // Old geometry compatibility code

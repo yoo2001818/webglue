@@ -5,7 +5,7 @@ import { mat3, mat4 } from 'gl-matrix';
 
 export default function instanced(renderer) {
   const gl = renderer.gl;
-  let box = renderer.geometries.create(calcNormals(boxGeom()));
+  let box = calcNormals(boxGeom());
   function range(v) {
     let out = [];
     for (let i = 0; i < v; ++i) out.push(i);
@@ -13,18 +13,17 @@ export default function instanced(renderer) {
   }
 
   // Test instancing data...
-  let instancedData = renderer.geometries.create({
-    attributes: {
+  let boxes = renderer.geometries.create(Object.assign({}, box, {
+    attributes: Object.assign({}, box.attributes, {
       aInstPos: range(100).map(() => [
         Math.random() * 50 - 25, Math.random() * 50 - 25,
         Math.random() * 50 - 25
       ])
-    },
+    }),
     instanced: {
       aInstPos: 1
     }
-  });
-  let boxes = renderer.geometries.create([box, instancedData]);
+  }));
   let shader = renderer.shaders.create(
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
