@@ -9,6 +9,30 @@ export const TRIANGLES = 4;
 export const TRIANGLE_STRIP = 5;
 export const TRIANGLE_FAN = 6;
 
+function getDataSize(gl, data) {
+  if (data instanceof Float32Array) {
+    return { type: gl.FLOAT, size: 4 };
+  } else if (data instanceof Float64Array) {
+    // Not supported by WebGL at all
+    throw new Error('Float64Array is not supported by WebGL');
+  } else if (data instanceof Int8Array) {
+    return { type: gl.BYTE, size: 1 };
+  } else if (data instanceof Int16Array) {
+    return { type: gl.SHORT, size: 2 };
+  } else if (data instanceof Int32Array) {
+    return { type: gl.INT, size: 4 };
+  } else if (data instanceof Uint8Array) {
+    return { type: gl.UNSIGNED_BYTE, size: 1 };
+  } else if (data instanceof Uint16Array) {
+    return { type: gl.UNSIGNED_SHORT, size: 2 };
+  } else if (data instanceof Uint32Array) {
+    return { type: gl.UNSIGNED_INT, size: 4 };
+  } else {
+    // Nope
+    throw new Error('Unknown vertex data type');
+  }
+}
+
 export default class Geometry {
   constructor(renderer, options) {
     this.renderer = renderer;
@@ -39,6 +63,8 @@ export default class Geometry {
     this.instancedList = null;
 
     this.standard = false;
+
+    this.upload();
   }
   update(options) {
     const gl = this.renderer.gl;
@@ -91,8 +117,6 @@ export default class Geometry {
     const gl = this.renderer.gl;
     // Create VBO...
     if (this.vbo == null) this.vbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    // Then bind the data to VBO.
     this.standard = true;
 
     this.attributeList = [];
@@ -111,45 +135,35 @@ export default class Geometry {
         entry.instanced = this.options.instanced[key];
       }
       if (entry.data == null) {
-        continue;
-      }
-      // Obtain buffer size and type from data type
-      if (entry.data instanceof Float32Array) {
-        typeId = gl.FLOAT;
-        size = 4;
-      } else if (entry.data instanceof Float64Array) {
-        // Not supported by WebGL at all
-        throw new Error('Float64Array is not supported by WebGL');
-      } else if (entry.data instanceof Int8Array) {
-        typeId = gl.BYTE;
-        size = 1;
-      } else if (entry.data instanceof Int16Array) {
-        typeId = gl.SHORT;
-        size = 2;
-      } else if (entry.data instanceof Int32Array) {
-        typeId = gl.INT;
-        size = 4;
-      } else if (entry.data instanceof Uint8Array) {
-        typeId = gl.UNSIGNED_BYTE;
-        size = 1;
-      } else if (entry.data instanceof Uint16Array) {
-        typeId = gl.UNSIGNED_SHORT;
-        size = 2;
-      } else if (entry.data instanceof Uint32Array) {
-        typeId = gl.UNSIGNED_INT;
-        size = 4;
+        if (entry.buffer == null) continue;
+        if (entry.buffer.buffer == null) {
+          entry.buffer.upload();
+        }
+        if (entry.buffer.data) {
+          // Obtain buffer size and type from data type
+          let sizeInfo = getDataSize(gl, entry.buffer.data);
+          typeId = sizeInfo.type;
+          size = sizeInfo.size;
+          entry.data = entry.buffer.data.subarray(
+            (entry.offset || 0) / size
+          );
+        }
       } else {
-        // Nope
-        throw new Error('Unknown vertex data type');
+        // Obtain buffer size and type from data type
+        let sizeInfo = getDataSize(gl, entry.data);
+        typeId = sizeInfo.type;
+        size = sizeInfo.size;
       }
       // TODO We shouldn't do mutation?
       entry.name = key;
       if (entry.type == null) entry.type = typeId;
       if (entry.typeSize == null) entry.typeSize = size;
-      if (entry.stride == null) entry.stride = size * entry.axis;
+      if (entry.stride == null) entry.stride = entry.typeSize * entry.axis;
       if (entry.instanced != null && entry.instanced !== 0) {
-        if (this.primCount === -1) {
-          this.primCount = entry.data.length / entry.axis * entry.instanced;
+        let attributeCount = entry.data.length / entry.stride * entry.typeSize
+          * entry.instanced;
+        if (this.primCount === -1 || this.primCount > attributeCount) {
+          this.primCount = attributeCount;
         }
         // Do not upload it to the buffer if instancing is not supported
         // TODO This breaks compatibility since it doesn't get uploaded on VBO
@@ -163,7 +177,7 @@ export default class Geometry {
           continue;
         }
       } else {
-        let attributeCount = entry.data.length / entry.stride / size;
+        let attributeCount = entry.data.length / entry.stride * entry.typeSize;
         if (this.count === -1 || this.count > attributeCount) {
           this.count = attributeCount;
         }
@@ -172,7 +186,7 @@ export default class Geometry {
       if (entry.buffer == null) {
         entry.buffer = this.vbo;
         entry.offset = vboPos;
-        vboPos += entry.data.length * size;
+        vboPos += entry.data.length * entry.typeSize;
         uploadAttributes.push(entry);
       }
       this.attributeList.push(entry);
@@ -187,6 +201,8 @@ export default class Geometry {
       // TODO ES5 compatibility
       this.vao = new WeakMap();
     }
+    // Write to VBO
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Set the buffer size needed by geometry
     // TODO Maybe it can be dynamically edited?
     gl.bufferData(gl.ARRAY_BUFFER, vboPos, this.usage);
@@ -199,7 +215,6 @@ export default class Geometry {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     // Upload indices if requested to do so
     if (uploadIndices && this.indices != null) this.uploadIndices();
-    console.log(this.attributes);
   }
   uploadIndices() {
     const gl = this.renderer.gl;
@@ -278,12 +293,20 @@ export default class Geometry {
     }
     let shader = this.renderer.shaders.current;
     let shaderAttribs = shader.attributes;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+    let currentBuffer = null;
     // Read each attribute, and set pointer to it
     for (let i = 0; i < this.attributeList.length; ++i) {
       let attribute = this.attributeList[i];
       let attribPos = shaderAttribs[attribute.name];
       if (attribPos == null) continue;
+      if (attribute.buffer !== currentBuffer) {
+        if (attribute.buffer.buffer) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer.buffer);
+        } else {
+          gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer);
+        }
+        currentBuffer = attribute.buffer;
+      }
       gl.enableVertexAttribArray(attribPos);
       gl.vertexAttribPointer(attribPos, attribute.axis, attribute.type,
         false, attribute.stride, attribute.offset);

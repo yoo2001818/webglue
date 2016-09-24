@@ -1,10 +1,17 @@
 import Geometry from './geometry';
+import Buffer from './buffer';
 
 export default class GeometryManager {
   constructor(renderer) {
     this.renderer = renderer;
     this.geometries = [];
+    this.buffers = [];
     this.current = null;
+  }
+  createBuffer(data) {
+    let buffer = new Buffer(this.renderer, data);
+    this.buffers.push(buffer);
+    return buffer;
   }
   create(options) {
     if (Array.isArray(options)) {
@@ -57,5 +64,6 @@ export default class GeometryManager {
   reset() {
     this.current = null;
     this.geometries.forEach(geometry => geometry.dispose());
+    this.buffers.forEach(buffer => buffer.dispose());
   }
 }
