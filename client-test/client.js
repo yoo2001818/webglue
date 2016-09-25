@@ -25,12 +25,38 @@ let gl = canvas.getContext('webgl', { antialias: true }) ||
 let renderer = new Renderer(gl);
 
 // Create scene
+let scene;
+let sceneEvents = [];
 let update;
 let currentIndex = 0;
 let sceneNodes = [];
 function loadScene(index) {
   renderer.reset();
-  update = SCENES[index].default(renderer);
+  sceneEvents.forEach(({key, listener}) => {
+    document.removeEventListener(key, listener);
+  });
+  scene = SCENES[index].default(renderer);
+  if (typeof scene === 'function') {
+    update = scene;
+  } else {
+    update = scene.update;
+  }
+  for (let key in scene) {
+    if (key === 'update') continue;
+    let listener = event => {
+      // Calculate NDC
+      if (event.clientX != null) {
+        let ndc = [
+          event.clientX / canvas.width * 2 - 1,
+          -(event.clientY / canvas.height * 2 - 1)
+        ];
+        return scene[key](event, ndc);
+      }
+      return scene[key](event);
+    };
+    sceneEvents.push({key, listener});
+    document.addEventListener(key, listener);
+  }
   sceneNodes[currentIndex].className = '';
   sceneNodes[index].className = 'selected';
   currentIndex = index;

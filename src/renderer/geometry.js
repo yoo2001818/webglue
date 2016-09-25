@@ -109,8 +109,8 @@ export default class Geometry {
       this.uploadIndices();
     }
     if (options.attributes) {
-      let count = options.count == null ? -1 : options.count;
-      let primCount = options.primCount == null ? -1 : options.primCount;
+      let count = output.count == null ? -1 : output.count;
+      let primCount = output.primCount == null ? -1 : output.primCount;
       let uploadAttributes = [];
       // Determine if we need to update whole VBO / or we can overwrite on
       // some of them
@@ -172,8 +172,8 @@ export default class Geometry {
         vaoValid = false;
         Object.assign(original, entry);
       }
-      this.count = count;
-      this.primCount = primCount;
+      if (count !== -1) this.count = count;
+      if (primCount !== -1) this.primCount = primCount;
       if (!vaoValid) this.clearVAO();
       // Write to VBO
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);

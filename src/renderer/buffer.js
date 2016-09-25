@@ -8,6 +8,13 @@ export default class Buffer {
     this.usage = usage == null ? renderer.gl.STATIC_DRAW : usage;
     this.buffer = null;
   }
+  update(data) {
+    this.data = data;
+    if (Array.isArray(data)) {
+      this.data = new Float32Array(data);
+    }
+    this.upload();
+  }
   upload() {
     const gl = this.renderer.gl;
     if (this.buffer == null) this.buffer = gl.createBuffer();
