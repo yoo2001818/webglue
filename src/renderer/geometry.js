@@ -33,26 +33,39 @@ function getDataSize(gl, data) {
   }
 }
 
+function fillMetadata(gl, entry) {
+  let typeId, size;
+  if (entry.data == null) {
+    if (entry.buffer == null) return entry;
+    if (entry.buffer.buffer == null) {
+      entry.buffer.upload();
+    }
+    if (entry.buffer.data) {
+      // Obtain buffer size and type from data type
+      let sizeInfo = getDataSize(gl, entry.buffer.data);
+      typeId = sizeInfo.type;
+      size = sizeInfo.size;
+      entry.data = entry.buffer.data.subarray(
+        (entry.offset || 0) / size
+      );
+    }
+  } else {
+    // Obtain buffer size and type from data type
+    let sizeInfo = getDataSize(gl, entry.data);
+    typeId = sizeInfo.type;
+    size = sizeInfo.size;
+  }
+  if (entry.type == null) entry.type = typeId;
+  if (entry.typeSize == null) entry.typeSize = size;
+  if (entry.stride == null) entry.stride = entry.typeSize * entry.axis;
+  if (entry.offset == null) entry.offset = 0;
+  return entry;
+}
+
 export default class Geometry {
   constructor(renderer, options) {
     this.renderer = renderer;
     this.options = options;
-    // Raw options given by the user
-    this.attributes = parseAttributes(options.attributes);
-    this.indices = parseIndices(options.indices);
-    // gl.POINTS is 0
-    this.mode = options.mode == null ? renderer.gl.TRIANGLES : options.mode;
-    this.usage = options.usage == null ? renderer.gl.STATIC_DRAW :
-      options.usage;
-    if (this.indices && this.indices.usage != null) {
-      this.indicesUsage = this.indices.usage;
-    } else if (options.indicesUsage != null) {
-      this.indicesUsage = options.indicesUsage;
-    } else {
-      this.indicesUsage = this.usage;
-    }
-    this.count = options.count == null ? -1 : options.count;
-    this.primCount = options.primCount == null ? -1 : options.primCount;
     // Geometry buffer objects.
     this.vbo = null;
     this.ebo = null;
@@ -68,53 +81,136 @@ export default class Geometry {
   }
   update(options) {
     const gl = this.renderer.gl;
-    if (options.indices) this.indices = parseIndices(options.indices);
+    let output = this.options;
+    // Legacy code compatibility
     if (options.instanced) {
-      Object.assign(this.instanced, parseAttributes(options.instanced));
+      Object.assign(output.instanced, options.instanced);
     }
-    if (options.mode != null) this.mode = options.mode;
-    if (options.usage != null) this.usage = options.usage;
-    if (options.indicesUsage != null) this.indicesUsage = options.indicesUsage;
+    if (options.mode != null) output.mode = options.mode;
+    if (options.count != null) output.count = options.count;
+    if (options.primCount != null) output.primCount = options.primCount;
+    if (options.usage != null) output.usage = options.usage;
+    if (options.indicesUsage != null) {
+      output.indicesUsage = options.indicesUsage;
+    }
     if (this.vbo == null) {
-      if (options.attributes) {
-        Object.assign(this.attributes, parseAttributes(options.attributes));
+      if (options.indices) {
+        this.indices = parseIndices(options.indices);
       }
+      if (options.attributes) {
+        Object.assign(output.attributes, parseAttributes(options.attributes));
+      }
+      this.attributes = null;
+      this.indices = null;
       return this.upload();
     }
-    // TODO This should be changed if we're going to support multiple VBO
-    if (options.attributes) {
-      let passed = true;
-      // Check if each attributes has matching size
-      for (let key in options.attributes) {
-        let original = this.attributes[key];
-        let changed = options.attributes[key];
-        if (original == null || original.axis !== changed.axis ||
-          original.data.length !== changed.data.length
-        ) {
-          passed = false;
-          break;
-        }
-      }
-      Object.assign(this.attributes, parseAttributes(options.attributes));
-      if (passed) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        // Reupload that specified data
-        for (let key in options.attributes) {
-          let pos = this.attributePos.find(v => v.name === key);
-          if (pos == null) continue;
-          pos.data = options.attributes[key].data;
-          gl.bufferSubData(gl.ARRAY_BUFFER, pos.pos, pos.data);
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-      } else {
-        // Reupload whole buffer
-        this.upload(false);
-      }
+    if (options.indices) {
+      this.indices = parseIndices(options.indices);
+      this.uploadIndices();
     }
-    if (options.indices) this.uploadIndices();
+    if (options.attributes) {
+      let count = options.count == null ? -1 : options.count;
+      let primCount = options.primCount == null ? -1 : options.primCount;
+      let uploadAttributes = [];
+      // Determine if we need to update whole VBO / or we can overwrite on
+      // some of them
+      let vaoValid = true;
+      let attributes = parseAttributes(options.attributes);
+      for (let key in attributes) {
+        let entry = attributes[key];
+        let original = this.attributes[key];
+        if ((entry == null || entry === false) && original == null) {
+          // Remove the entry from attribute
+          vaoValid = false;
+          delete this.attributes[key];
+          this.attributeList.splice(this.attributeList.indexOf(original));
+          continue;
+        }
+        // Legacy code compatibility
+        if (output.instanced && output.instanced[key] != null) {
+          entry.instanced = this.options.instanced[key];
+        }
+        fillMetadata(gl, entry);
+        if (entry.instanced != null && entry.instanced !== 0) {
+          let attributeCount = entry.data.length / entry.stride *
+            entry.typeSize * entry.instanced;
+          if (primCount === -1 || primCount > attributeCount) {
+            primCount = attributeCount;
+          }
+          // Instancing is unsupported? TODO Add proper routine for this
+          if (this.renderer.instanced == null) {
+            Object.assign(output.attributes,
+              parseAttributes(options.attributes));
+            this.attributes = null;
+            this.indices = null;
+            return this.upload();
+          }
+        } else {
+          let attributeCount = entry.data.length / entry.stride *
+            entry.typeSize;
+          if (count === -1 || count > attributeCount) {
+            count = attributeCount;
+          }
+        }
+        if (entry.buffer == null || entry.buffer === this.vbo) {
+          // Check if the size EXACTLY matches
+          if (entry.data.length !== original.data.length) {
+            // Failed!
+            Object.assign(output.attributes,
+              parseAttributes(options.attributes));
+            this.attributes = null;
+            this.indices = null;
+            return this.upload();
+          }
+          entry.offset = original.offset;
+          uploadAttributes.push(entry);
+        }
+        if (this.renderer.attributes.indexOf(key) === -1) {
+          this.standard = false;
+        }
+        // TODO Add routine to check VAO validity
+        vaoValid = false;
+        Object.assign(original, entry);
+      }
+      this.count = count;
+      this.primCount = primCount;
+      if (!vaoValid) this.clearVAO();
+      // Write to VBO
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+      // Upload each attribute, one at a time
+      for (let i = 0; i < uploadAttributes.length; ++i) {
+        let attribute = uploadAttributes[i];
+        gl.bufferSubData(gl.ARRAY_BUFFER, attribute.offset, attribute.data);
+      }
+      // Done!
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      // return this.upload(false);
+    }
   }
   upload(uploadIndices = true) {
     const gl = this.renderer.gl;
+
+    let options = this.options;
+    // Raw options given by the user
+    if (this.attributes == null) {
+      this.attributes = parseAttributes(options.attributes);
+    }
+    if (this.indices == null) {
+      this.indices = parseIndices(options.indices);
+    }
+    // gl.POINTS is 0
+    this.mode = options.mode == null ? gl.TRIANGLES : options.mode;
+    this.usage = options.usage == null ? gl.STATIC_DRAW : options.usage;
+    if (this.indices && this.indices.usage != null) {
+      this.indicesUsage = this.indices.usage;
+    } else if (options.indicesUsage != null) {
+      this.indicesUsage = options.indicesUsage;
+    } else {
+      this.indicesUsage = this.usage;
+    }
+    this.count = options.count == null ? -1 : options.count;
+    this.primCount = options.primCount == null ? -1 : options.primCount;
+
     // Create VBO...
     if (this.vbo == null) this.vbo = gl.createBuffer();
     this.standard = true;
@@ -127,38 +223,13 @@ export default class Geometry {
     let vboPos = 0;
     for (let key in this.attributes) {
       let entry = this.attributes[key];
-      let typeId = 0;
-      let size = 0;
       if (entry == null) continue;
-      // Legacy fallback
+      // Legacy code compatibility
       if (this.options.instanced && this.options.instanced[key] != null) {
         entry.instanced = this.options.instanced[key];
       }
-      if (entry.data == null) {
-        if (entry.buffer == null) continue;
-        if (entry.buffer.buffer == null) {
-          entry.buffer.upload();
-        }
-        if (entry.buffer.data) {
-          // Obtain buffer size and type from data type
-          let sizeInfo = getDataSize(gl, entry.buffer.data);
-          typeId = sizeInfo.type;
-          size = sizeInfo.size;
-          entry.data = entry.buffer.data.subarray(
-            (entry.offset || 0) / size
-          );
-        }
-      } else {
-        // Obtain buffer size and type from data type
-        let sizeInfo = getDataSize(gl, entry.data);
-        typeId = sizeInfo.type;
-        size = sizeInfo.size;
-      }
-      // TODO We shouldn't do mutation?
+      fillMetadata(gl, entry);
       entry.name = key;
-      if (entry.type == null) entry.type = typeId;
-      if (entry.typeSize == null) entry.typeSize = size;
-      if (entry.stride == null) entry.stride = entry.typeSize * entry.axis;
       if (entry.instanced != null && entry.instanced !== 0) {
         let attributeCount = entry.data.length / entry.stride * entry.typeSize
           * entry.instanced;
@@ -182,8 +253,7 @@ export default class Geometry {
           this.count = attributeCount;
         }
       }
-      if (entry.offset == null) entry.offset = 0;
-      if (entry.buffer == null) {
+      if (entry.buffer == null || entry.buffer === this.vbo) {
         entry.buffer = this.vbo;
         entry.offset = vboPos;
         vboPos += entry.data.length * entry.typeSize;
@@ -195,12 +265,7 @@ export default class Geometry {
       }
     }
     // Populate VAO variable (initialization will be done at use time though)
-    if (this.standard) {
-      this.vao = null;
-    } else {
-      // TODO ES5 compatibility
-      this.vao = new WeakMap();
-    }
+    this.clearVAO();
     // Write to VBO
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     // Set the buffer size needed by geometry
@@ -241,6 +306,22 @@ export default class Geometry {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, this.indicesUsage);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
+  clearVAO() {
+    if (this.standard) {
+      if (this.vao) {
+        this.renderer.vao.deleteVertexArrayOES(this.vao);
+        this.vao = null;
+      }
+    } else {
+      // TODO ES5 compatibility
+      if (this.vao) {
+        this.vao.forEach(value => {
+          this.renderer.vao.deleteVertexArrayOES(value);
+        });
+      }
+      this.vao = new Map();
+    }
+  }
   useVAO() {
     let shader = this.renderer.shaders.current;
     // TODO VAO logic must be changed if we're going to use instancing.
@@ -279,11 +360,11 @@ export default class Geometry {
     const gl = this.renderer.gl;
     const instancedExt = this.renderer.instanced;
     if (this.vbo === null) this.upload();
-    if (this.standard && this.renderer.geometries.current === this) {
+    /* if (this.standard && this.renderer.geometries.current === this) {
       // This doesn't have to be 'used' again in this case
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
       return;
-    }
+    } */
     if (useVAO) {
       if (this.useVAO()) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);

@@ -93,6 +93,11 @@ Updating attributes can be simple or complex depending on whether resizing has
 occurred or not. If resizing has occurred, we have to update VAO to latest
 state.
 
+1. Calculate stride, offset, size, axis, etc... and check if it matches with
+   current VAO. If it doesn't match, VAO update is required.
+2. If the object uses geometry's own VBO, try to overwrite the data to VBO.
+   However, if the size mismatches, it fails - do full reupload.
+
 Currently it shouldn't overwrite VBO if custom VBO is specified; otherwise
 we can simply overwrite it to geometry's VBO. However it can be changed later.
 

@@ -2,7 +2,7 @@ export default function buffer(renderer) {
   const gl = renderer.gl;
 
   let buffer = renderer.geometries.createBuffer([
-    0, 0, 0, 0.5, 0.5, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0.5, 0.5
+    -1, -1, -1, 0.5, 0.5, -1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 0.5, 0.5
   ]);
   let geom = renderer.geometries.create({
     attributes: {

@@ -10,7 +10,9 @@ export default function geomReupload(renderer) {
   for (let i = 0; i < positionBuf.data.length; i += 3) {
     positionBuf.data[i + 2] = Math.random();
   }
-  let quad = renderer.geometries.create(calcNormals(quadData));
+  let quad = renderer.geometries.create(Object.assign(calcNormals(quadData), {
+    usage: gl.STREAM_DRAW
+  }));
   let shader = renderer.shaders.create(
     require('../shader/phong.vert'),
     require('../shader/phong.frag')
