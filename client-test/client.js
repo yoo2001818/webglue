@@ -102,6 +102,7 @@ function animate(time) {
 
   if (update) {
     update(delta, {
+      cameraObj: camera,
       camera: {
         uProjection: camera.getProjection,
         uView: camera.getView,

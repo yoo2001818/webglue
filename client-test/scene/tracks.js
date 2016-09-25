@@ -26,6 +26,8 @@ export default function tracks(renderer) {
   let track = renderer.geometries.create(
     channelGeom(loadOBJ(require('../geom/track.obj')))
   );
+  let lerpTimer = -1;
+  let lerpAccel = 0;
   let buffer, geom;
   let geometries = [];
 
@@ -60,7 +62,6 @@ export default function tracks(renderer) {
     });
     geometries.push(geom);
   }
-  createStroke();
 
   let shader = renderer.shaders.create(
     require('../shader/phongLine.vert'),
@@ -75,6 +76,40 @@ export default function tracks(renderer) {
 
   return {
     update(delta, context) {
+      if (lerpTimer >= 0 && buffer != null) {
+        let pos = lerpTimer | 0;
+        let start = buffer.data.subarray(pos * 9, pos * 9 + 3);
+        let startRight = buffer.data.subarray(pos * 9 + 3, pos * 9 + 6);
+        let startUp = buffer.data.subarray(pos * 9 + 6, pos * 9 + 9);
+        let end = buffer.data.subarray((pos + 1) * 9, (pos + 1) * 9 + 3);
+        let endRight = buffer.data.subarray(
+          (pos + 1) * 9 + 3, (pos + 1) * 9 + 6);
+        let endUp = buffer.data.subarray(
+          (pos + 1) * 9 + 6, (pos + 1) * 9 + 9);
+        // Then lerp... kinda.
+        let right = vec3.create();
+        vec3.lerp(right, startRight, endRight, lerpTimer % 1);
+        let up = vec3.create();
+        vec3.lerp(up, startUp, endUp, lerpTimer % 1);
+        let eye = vec3.create();
+        vec3.lerp(eye, start, end, lerpTimer % 1);
+        vec3.add(eye, eye, up);
+        let front = vec3.create();
+        vec3.cross(front, up, right);
+        vec3.normalize(front, front);
+        let center = vec3.create();
+        vec3.add(center, front, eye);
+        // console.log(start, end);
+        // Last, create view matrix from these three vectors.
+        mat4.lookAt(context.cameraObj.viewMatrix, eye, center, up);
+        // context.cameraObj.transform.position.set(eye);
+        // context.cameraObj.transform.invalidate();
+        lerpAccel += vec3.dot(front, [0, -1, 0]) / 10;
+        lerpTimer += delta * 5 * lerpAccel;
+        if ((lerpTimer + 1) >= buffer.data.length / 9) {
+          lerpTimer = -1;
+        }
+      }
       renderer.render({
         options: {
           clearColor: '#222222',
@@ -110,6 +145,7 @@ export default function tracks(renderer) {
     },
     mousedown(event, ndc) {
       if (event.button !== 0) return;
+      lerpTimer = -1;
       drawing = true;
       let pos = vec3.fromValues(ndc[0], ndc[1], 0.987);
       vec3.transformMat4(pos, pos, perspRev);
@@ -119,6 +155,9 @@ export default function tracks(renderer) {
     mouseup(event) {
       if (event.button !== 0) return;
       drawing = false;
+      // Start lerp
+      lerpTimer = 0;
+      lerpAccel = 1;
     },
     mousemove(event, ndc) {
       if (!drawing) return;
