@@ -271,10 +271,16 @@ export default class Geometry {
         uploadAttributes.push(entry);
       }
       this.attributeList.push(entry);
-      if (this.renderer.attributes.indexOf(key) === -1) {
+      let attribPos = this.renderer.attributes.indexOf(key);
+      if (attribPos === -1) {
         this.standard = false;
+      } else {
+        entry.attribPos = attribPos;
       }
     }
+    // TODO Use single VAO if possible (Which isn't possible due to
+    // strange error; will investigate)
+    this.standard = false;
     // Populate VAO variable (initialization will be done at use time though)
     this.clearVAO();
     // Write to VBO
@@ -390,6 +396,11 @@ export default class Geometry {
     for (let i = 0; i < this.attributeList.length; ++i) {
       let attribute = this.attributeList[i];
       let attribPos = shaderAttribs[attribute.name];
+      /*
+      if (attribPos == null && attribute.attribPos != null) {
+        attribPos = attribute.attribPos;
+      }
+      */
       if (attribPos == null) continue;
       if (attribute.buffer !== currentBuffer) {
         if (attribute.buffer.buffer) {

@@ -20,7 +20,7 @@ export default class Renderer {
     // WebGLue geometries use this attributes, however, users can change this
     // to other one.
     // TODO Bind multiple attributes to single index??
-    this.attributes = ['aPosition', 'aNormal', 'aTangent', 'aTexCoord'];
+    this.attributes = ['aPosition', 'aNormal', 'aTexCoord', 'aTangent'];
     this.width = null;
     this.height = null;
     this.reset();
@@ -55,8 +55,26 @@ export default class Renderer {
     // Render each pass
     data.forEach(pass => this.renderPass(pass, {}));
   }
-  renderPass(pass, tree) {
+  setViewport() {
     const gl = this.gl;
+    // TODO Check options and if viewport doesn't exist, continue to use
+    // framebuffer's size.
+    if (this.framebuffers.current == null) {
+      this.width = gl.drawingBufferWidth;
+      this.height = gl.drawingBufferHeight;
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    } else {
+      let framebuffer = this.framebuffers.current;
+      this.width = framebuffer.width;
+      this.height = framebuffer.height;
+      gl.viewport(0, 0, framebuffer.width, framebuffer.height);
+    }
+  }
+  renderPass(pass, tree) {
+    if (Array.isArray(pass)) {
+      pass.forEach(data => this.renderPass(data, tree));
+      return;
+    }
     if (tree.uniforms == null) tree.uniforms = {};
     if (tree.options == null) tree.options = {};
     let parent = {};
@@ -77,7 +95,7 @@ export default class Renderer {
     if (pass.shaderHandler) {
       parent.shaderHandler = tree.shaderHandler;
       tree.shaderHandler = pass.shaderHandler;
-      this.shaders.handler = tree.shaderHandler;
+      this.shaders.handler = pass.shaderHandler;
     }
     if (pass.shader) {
       parent.shader = tree.shader;
@@ -95,18 +113,7 @@ export default class Renderer {
     // Set state
     if (pass.framebuffer) {
       this.framebuffers.use(pass.framebuffer);
-      // TODO Check options and if viewport doesn't exist, continue to use
-      // framebuffer's size.
-      if (this.framebuffers.current == null) {
-        this.width = gl.drawingBufferWidth;
-        this.height = gl.drawingBufferHeight;
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-      } else {
-        let framebuffer = this.framebuffers.current;
-        this.width = framebuffer.width;
-        this.height = framebuffer.height;
-        gl.viewport(0, 0, framebuffer.width, framebuffer.height);
-      }
+      this.setViewport();
     }
     if (parent.framebuffer != null && pass.framebuffer == null) {
       this.framebuffers.use(null);
@@ -139,7 +146,7 @@ export default class Renderer {
     // Restore uniforms and shader
     if (pass.shaderHandler) {
       tree.shaderHandler = parent.shaderHandler;
-      this.shaders.handler = tree.shaderHandler;
+      this.shaders.handler = parent.shaderHandler;
     }
     if (parent.shader && pass.shader) {
       tree.shader = parent.shader;
@@ -154,6 +161,7 @@ export default class Renderer {
     if (pass.framebuffer) {
       tree.framebuffer = parent.framebuffer;
       this.framebuffers.use(parent.framebuffer);
+      this.setViewport();
     }
     // Restore options
     if (parent.options && pass.options) {
