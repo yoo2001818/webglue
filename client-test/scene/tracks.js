@@ -1,5 +1,6 @@
 import loadOBJ from 'webglue/loader/obj';
 import channelGeom from 'webglue/geom/channel';
+import boxGeom from 'webglue/geom/box';
 
 import { mat3, mat4, vec3 } from 'gl-matrix';
 
@@ -28,7 +29,8 @@ export default function tracks(renderer) {
   );
   let lerpTimer = -1;
   let lerpAccel = 0;
-  let buffer, geom;
+  let buffer, geom, minimapGeom;
+  let buffers = [];
   let geometries = [];
 
   function createStroke() {
@@ -60,12 +62,46 @@ export default function tracks(renderer) {
       },
       indices: track.indices
     });
+    if (minimapGeom == null) {
+      minimapGeom = renderer.geometries.create({
+        attributes: {
+          aPosition: [[0], [1]],
+          aStart: {
+            buffer, offset: 0, axis: 3, stride: 36, instanced: 1
+          },
+          aEnd: {
+            buffer, offset: 36, axis: 3, stride: 36, instanced: 1
+          }
+        },
+        mode: gl.LINES
+      });
+    }
+    buffers.push(buffer);
     geometries.push(geom);
   }
 
   let shader = renderer.shaders.create(
     require('../shader/phongLine.vert'),
     require('../shader/phong.frag')
+  );
+
+  let lineShader = renderer.shaders.create(
+    require('../shader/screenMinimap.vert'),
+    require('../shader/monoColor.frag')
+  );
+
+  let box = renderer.geometries.create(boxGeom());
+  let skybox = renderer.textures.create([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ]);
+  let skyboxShader = renderer.shaders.create(
+    require('../shader/skybox.vert'),
+    require('../shader/skybox.frag')
   );
   let drawBefore = [];
   let drawing = false;
@@ -104,8 +140,11 @@ export default function tracks(renderer) {
         mat4.lookAt(context.cameraObj.viewMatrix, eye, center, up);
         // context.cameraObj.transform.position.set(eye);
         // context.cameraObj.transform.invalidate();
-        lerpAccel += vec3.dot(front, [0, -1, 0]) / 10;
-        lerpTimer += delta * 5 * lerpAccel;
+        let slope = vec3.dot(front, [0, -1, 0]);
+        lerpAccel *= 0.98;
+        lerpAccel += slope / 30;
+        lerpAccel = Math.max(0.5, Math.min(1.5, lerpAccel));
+        lerpTimer += delta * 5 * (lerpAccel + Math.max(0, slope + 1));
         if ((lerpTimer + 1) >= buffer.data.length / 9) {
           lerpTimer = -1;
         }
@@ -118,11 +157,12 @@ export default function tracks(renderer) {
           depth: gl.LEQUAL
         },
         uniforms: Object.assign({
-          uPointLight: [{
-            position: [0, 8, 0],
+          uPointLight: [],
+          uDirectionalLight: {
+            direction: [-0.590945, 0.216439, -0.777132],
             color: '#ffffff',
-            intensity: [0.3, 0.7, 1.0, 0.00015]
-          }]
+            intensity: [0.3, 0.7, 1.0]
+          }
         }, context.camera),
         passes: [{
           shader: shader,
@@ -139,6 +179,24 @@ export default function tracks(renderer) {
             },
             uDiffuseMap: texture
           }
+        }, {
+          shader: skyboxShader,
+          geometry: box,
+          options: {
+            cull: gl.FRONT
+          },
+          uniforms: {
+            uSkybox: skybox
+          }
+        }, {
+          options: {
+            depth: false
+          },
+          shader: lineShader,
+          geometry: minimapGeom,
+          uniforms: {
+            uColor: '#ffffffff'
+          }
         }]
       });
       mat4.invert(perspRev, context.camera.uProjectionView());
@@ -151,6 +209,14 @@ export default function tracks(renderer) {
       vec3.transformMat4(pos, pos, perspRev);
       drawBefore = pos;
       createStroke();
+    },
+    keydown(event) {
+      if (event.keyCode === 82) {
+        buffers.forEach(buffer => buffer.dispose());
+        geometries.forEach(geom => geom.dispose());
+        buffers = [];
+        geometries = [];
+      }
     },
     mouseup(event) {
       if (event.button !== 0) return;
@@ -227,6 +293,16 @@ export default function tracks(renderer) {
           },
           aEndUp: {
             buffer, offset: 60, axis: 3, stride: 36, instanced: 1
+          }
+        }
+      });
+      minimapGeom.update({
+        attributes: {
+          aStart: {
+            buffer, offset: 0, axis: 3, stride: 36, instanced: 1
+          },
+          aEnd: {
+            buffer, offset: 36, axis: 3, stride: 36, instanced: 1
           }
         }
       });

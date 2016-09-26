@@ -119,12 +119,17 @@ export default class Geometry {
       for (let key in attributes) {
         let entry = attributes[key];
         let original = this.attributes[key];
-        if ((entry == null || entry === false) && original == null) {
+        if ((entry == null || entry === false) && original != null) {
           // Remove the entry from attribute
           vaoValid = false;
           delete this.attributes[key];
           this.attributeList.splice(this.attributeList.indexOf(original));
           continue;
+        }
+        if (original == null) {
+          original = {};
+          this.attributes[key] = original;
+          this.attributeList.push(original);
         }
         // Legacy code compatibility
         if (output.instanced && output.instanced[key] != null) {

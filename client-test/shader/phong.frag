@@ -52,9 +52,17 @@ struct PointLight {
   lowp vec4 intensity;
 };
 
+struct DirectionalLight {
+  lowp vec3 direction;
+
+  lowp vec3 color;
+  lowp vec3 intensity;
+};
+
 #if POINT_LIGHT_SIZE > 0
 uniform PointLight uPointLight[POINT_LIGHT_SIZE];
 #endif
+uniform DirectionalLight uDirectionalLight;
 uniform Material uMaterial;
 
 uniform mat4 uModel;
@@ -110,6 +118,27 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir
     light.intensity.b * phong.y;
   result += matColor.ambient * light.intensity.r;
   result *= attenuation;
+  result *= light.color;
+
+  return result;
+}
+
+lowp vec3 calcDirectional(DirectionalLight light, MaterialColor matColor,
+  lowp vec3 viewDir
+) {
+  #ifdef USE_TANGENT_SPACE
+    lowp vec3 lightDir = tangent * light.direction;
+  #else
+    lowp vec3 lightDir = light.direction;
+  #endif
+
+  lowp vec3 phong = calcPhong(lightDir, viewDir);
+
+  // Combine everything together
+  lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
+  result += mix(matColor.specular, vec3(1.0), phong.z) *
+    light.intensity.b * phong.y;
+  result += matColor.ambient * light.intensity.r;
   result *= light.color;
 
   return result;
@@ -198,6 +227,7 @@ void main(void) {
     result += calcPoint(uPointLight[i], matColor, viewDir);
   }
 	#endif
+  result += calcDirectional(uDirectionalLight, matColor, viewDir);
 
   gl_FragColor = vec4(result, 1.0);
 
