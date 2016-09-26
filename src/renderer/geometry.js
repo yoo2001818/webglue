@@ -87,8 +87,14 @@ export default class Geometry {
       Object.assign(output.instanced, options.instanced);
     }
     if (options.mode != null) output.mode = options.mode;
-    if (options.count != null) output.count = options.count;
-    if (options.primCount != null) output.primCount = options.primCount;
+    if (options.count != null) {
+      output.count = options.count;
+      if (options.count !== -1) this.count = options.count;
+    }
+    if (options.primCount != null) {
+      output.primCount = options.primCount;
+      if (options.primCount !== -1) this.primCount = options.primCount;
+    }
     if (options.usage != null) output.usage = options.usage;
     if (options.indicesUsage != null) {
       output.indicesUsage = options.indicesUsage;

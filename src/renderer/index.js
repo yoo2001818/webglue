@@ -74,6 +74,11 @@ export default class Renderer {
         tree.options[key] = pass.options[key];
       }
     }
+    if (pass.shaderHandler) {
+      parent.shaderHandler = tree.shaderHandler;
+      tree.shaderHandler = pass.shaderHandler;
+      this.shaders.handler = tree.shaderHandler;
+    }
     if (pass.shader) {
       parent.shader = tree.shader;
       tree.shader = pass.shader;
@@ -132,6 +137,10 @@ export default class Renderer {
     }
     // -- Pop (Exit)
     // Restore uniforms and shader
+    if (pass.shaderHandler) {
+      tree.shaderHandler = parent.shaderHandler;
+      this.shaders.handler = tree.shaderHandler;
+    }
     if (parent.shader && pass.shader) {
       tree.shader = parent.shader;
     }

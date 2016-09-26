@@ -4,6 +4,7 @@ export default class ShaderManager {
     this.renderer = renderer;
     this.shaders = [];
     this.current = null;
+    this.handler = null;
   }
   create(vert, frag) {
     let shader = new PreprocessShader(this.renderer, vert, frag);
@@ -11,7 +12,11 @@ export default class ShaderManager {
     return shader;
   }
   use(shader, uniforms) {
-    this.current = shader.use(uniforms, this.current);
+    let returned = shader.getShader(uniforms, this.current);
+    if (this.handler) {
+      returned = this.handler(returned, uniforms, this.renderer);
+    }
+    this.current = returned.use(uniforms, this.current);
   }
   reset() {
     this.current = null;

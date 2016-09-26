@@ -162,6 +162,9 @@ export default class Shader {
       }
     } while (!hasFinished);
   }
+  getShader() {
+    return this;
+  }
   use(uniforms, current) {
     const gl = this.renderer.gl;
     if (this.program === null) this.upload();

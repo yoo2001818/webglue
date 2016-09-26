@@ -275,36 +275,10 @@ export default function tracks(renderer) {
       }
       buffer.update(newArray);
       geom.update({
-        attributes: {
-          aStart: {
-            buffer, offset: 0, axis: 3, stride: 36, instanced: 1
-          },
-          aEnd: {
-            buffer, offset: 36, axis: 3, stride: 36, instanced: 1
-          },
-          aStartRight: {
-            buffer, offset: 12, axis: 3, stride: 36, instanced: 1
-          },
-          aEndRight: {
-            buffer, offset: 48, axis: 3, stride: 36, instanced: 1
-          },
-          aStartUp: {
-            buffer, offset: 24, axis: 3, stride: 36, instanced: 1
-          },
-          aEndUp: {
-            buffer, offset: 60, axis: 3, stride: 36, instanced: 1
-          }
-        }
+        primCount: (newArray.length / 9 - 1)
       });
       minimapGeom.update({
-        attributes: {
-          aStart: {
-            buffer, offset: 0, axis: 3, stride: 36, instanced: 1
-          },
-          aEnd: {
-            buffer, offset: 36, axis: 3, stride: 36, instanced: 1
-          }
-        }
+        primCount: (newArray.length / 9 - 1)
       });
     }
   };

@@ -9,6 +9,20 @@ import { mat3, mat4 } from 'gl-matrix';
 
 export default function teapot(renderer) {
   const gl = renderer.gl;
+
+  let shaders = new Map();
+  function shaderHandler(shader, uniforms, renderer) {
+    if (shaders.has(shader)) {
+      return shaders.get(shader);
+    }
+    let newShader = renderer.shaders.create(
+      shader.source.vert,
+      require('../shader/shadow.frag')
+    );
+    shaders.set(shader, newShader);
+    return newShader;
+  }
+
   let originalData = channelGeom(loadOBJ(require('../geom/wt-teapot.obj')));
   let teapot = renderer.geometries.create(originalData);
   let shader = renderer.shaders.create(
@@ -66,6 +80,7 @@ export default function teapot(renderer) {
         cull: gl.BACK,
         depth: gl.LEQUAL
       },
+      shaderHandler,
       uniforms: Object.assign({}, context.camera, {
         uPointLight: [{
           position: [Math.sin(timer / 1000) * 8,
