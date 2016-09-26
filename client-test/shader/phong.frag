@@ -4,6 +4,7 @@
 #pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
 #pragma webglue: feature(USE_HEIGHT_MAP, uHeightMap)
 #pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, max)
+// #pragma webglue: feature(USE_DIRECTIONAL_LIGHT_SHADOW_MAP, uDirectionalLightShadowMap)
 
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
   #define USE_TANGENT_SPACE
@@ -57,12 +58,21 @@ struct DirectionalLight {
 
   lowp vec3 color;
   lowp vec3 intensity;
+
+  #ifdef USE_DIRECTIONAL_LIGHT_SHADOW_MAP
+    lowp mat4 shadowMatrix;
+  #endif
 };
 
 #if POINT_LIGHT_SIZE > 0
-uniform PointLight uPointLight[POINT_LIGHT_SIZE];
+  uniform PointLight uPointLight[POINT_LIGHT_SIZE];
 #endif
+
 uniform DirectionalLight uDirectionalLight;
+#ifdef USE_DIRECTIONAL_LIGHT_SHADOW_MAP
+  uniform sampler2D uDirectionalLightShadowMap;
+#endif
+
 uniform Material uMaterial;
 
 uniform mat4 uModel;

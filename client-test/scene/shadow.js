@@ -7,8 +7,20 @@ import quadGeom from 'webglue/geom/quad';
 
 import { mat3, mat4 } from 'gl-matrix';
 
-export default function teapot(renderer) {
+export default function shadow(renderer) {
   const gl = renderer.gl;
+
+  let shaders = new Map();
+  function shaderHandler(shader, uniforms, renderer) {
+    if (shaders.has(shader)) return shaders.get(shader);
+    let newShader = renderer.shaders.create(
+      shader.source.vert,
+      require('../shader/shadow.frag'),
+      true
+    );
+    shaders.set(shader, newShader);
+    return newShader;
+  }
 
   let originalData = channelGeom(loadOBJ(require('../geom/wt-teapot.obj')));
   let teapot = renderer.geometries.create(originalData);
@@ -44,6 +56,24 @@ export default function teapot(renderer) {
     require('../shader/skybox.frag')
   );
 
+  let shadowMapShader = renderer.shaders.create(
+    require('../shader/pip.vert'),
+    require('../shader/texture.frag')
+  );
+
+  let shadowMap = renderer.textures.create(null, {
+    width: 512,
+    height: 512,
+    params: {
+      mipmap: false,
+      minFilter: gl.LINEAR
+    }
+  });
+  let shadowFramebuffer = renderer.framebuffers.create({
+    color: shadowMap,
+    depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
+  });
+
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
 
@@ -59,7 +89,38 @@ export default function teapot(renderer) {
     timer += delta;
     // mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000 / 2);
     // mat3.normalFromMat4(model1Normal, model1Mat);
-
+    let world = [{
+      shader: shader,
+      geometry: teapot,
+      uniforms: {
+        uModel: model1Mat,
+        uNormal: model1Normal,
+        uEnvironmentMap: skybox,
+        uMaterial: {
+          ambient: '#aaaaaa',
+          diffuse: '#aaaaaa',
+          specular: '#444444',
+          reflectivity: '#8c292929',
+          shininess: 90
+        }
+      }
+    }, {
+      shader: shader,
+      geometry: quad,
+      uniforms: {
+        uModel: floorMat,
+        uNormal: floorNormal,
+        uDiffuseMap: floorTexture,
+        uEnvironmentMap: skybox,
+        uMaterial: {
+          ambient: '#ffffff',
+          diffuse: '#999999',
+          specular: '#222222',
+          reflectivity: '#5352514F',
+          shininess: 30
+        }
+      }
+    }];
     renderer.render({
       options: {
         clearColor: new Float32Array([0, 0, 0, 1]),
@@ -68,53 +129,24 @@ export default function teapot(renderer) {
         depth: gl.LEQUAL
       },
       uniforms: Object.assign({}, context.camera, {
-        uPointLight: [{
-          position: [Math.sin(timer / 1000) * 8,
-            8, Math.cos(timer / 1000) * 8],
+        uDirectionalLight: {
+          direction: [0, 1, 0],
           color: '#aaaaaa',
-          intensity: [0.3, 1.0, 1.0, 0.00015]
-        }, {
-          position: [1.5, 0.8, 1.5],
-          color: '#ff0000',
-          intensity: [0, 1.0, 1.0, 0.1]
-        }, {
-          position: [1.5, 0.8, -1.5],
-          color: '#0000ff',
-          intensity: [0, 1.0, 1.0, 0.1]
-        }]
+          intensity: [0.3, 1.0, 1.0]
+        },
+        uPointLight: []
       }),
       passes: [{
-        shader: shader,
-        geometry: teapot,
-        uniforms: {
-          uModel: model1Mat,
-          uNormal: model1Normal,
-          uEnvironmentMap: skybox,
-          uMaterial: {
-            ambient: '#aaaaaa',
-            diffuse: '#aaaaaa',
-            specular: '#444444',
-            reflectivity: '#8c292929',
-            shininess: 90
-          }
-        }
-      }, {
-        shader: shader,
-        geometry: quad,
-        uniforms: {
-          uModel: floorMat,
-          uNormal: floorNormal,
-          uDiffuseMap: floorTexture,
-          uEnvironmentMap: skybox,
-          uMaterial: {
-            ambient: '#ffffff',
-            diffuse: '#999999',
-            specular: '#222222',
-            reflectivity: '#5352514F',
-            shininess: 30
-          }
-        }
-      }, {
+        options: {
+          clearColor: new Float32Array([0, 0, 0, 1]),
+          clearDepth: 1,
+          cull: gl.BACK,
+          depth: gl.LEQUAL
+        },
+        shaderHandler,
+        framebuffer: shadowFramebuffer,
+        passes: world
+      }, world, {
         shader: skyboxShader,
         geometry: box,
         options: {
@@ -122,6 +154,19 @@ export default function teapot(renderer) {
         },
         uniforms: {
           uSkybox: skybox
+        }
+      }, {
+        shader: shadowMapShader,
+        geometry: quad,
+        options: {
+          depth: false
+        },
+        uniforms: {
+          uScreenSize: shader => [
+            shader.renderer.width, shader.renderer.height
+          ],
+          uTextureSize: [512, 512],
+          uTexture: shadowMap
         }
       }]
     });

@@ -16,7 +16,7 @@ lowp vec2 encodeFloatToRG(lowp float v) {
 }
 
 void main(void) {
-  lowp float intensity = (gl_FragCoord.z / gl_FragCoord.w) * 0.5 + 0.5;
+  lowp float intensity = gl_FragCoord.z / gl_FragCoord.w;
   lowp float dx = dFdx(intensity);
   lowp float dy = dFdy(intensity);
   lowp float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
