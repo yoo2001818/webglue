@@ -4,7 +4,7 @@
 #pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
 #pragma webglue: feature(USE_HEIGHT_MAP, uHeightMap)
 #pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, max)
-// #pragma webglue: feature(USE_DIRECTIONAL_LIGHT_SHADOW_MAP, uDirectionalLightShadowMap)
+#pragma webglue: feature(USE_DIRECTIONAL_LIGHT_SHADOW_MAP, uDirectionalLightShadowMap)
 
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)
   #define USE_TANGENT_SPACE
@@ -133,6 +133,49 @@ lowp vec3 calcPoint(PointLight light, MaterialColor matColor, lowp vec3 viewDir
   return result;
 }
 
+lowp float decodeRGBToFloat(lowp vec3 v) {
+  return dot(v, vec3(1.0, 1.0 / 255.0, 1.0 / 65025.0));
+}
+
+lowp float decodeRGToFloat(lowp vec2 v) {
+  return dot(v, vec2(1.0, 1.0 / 255.0));
+}
+
+lowp float linstep(lowp float low, lowp float high, lowp float v) {
+  return clamp((v - low) / (high - low), 0.0, 1.0);
+}
+
+lowp float lerpShadow(lowp float depth, lowp float moment, lowp float compare) {
+  if (compare <= depth) return 1.0;
+  float p = smoothstep(compare - 0.0004, compare, depth);
+  float variance = max(moment - depth * depth, 0.00004);
+  float d = compare - depth;
+  float pMax = variance / (variance + d * d);
+  return pMax;
+}
+
+lowp float calcShadow(sampler2D shadowMap, lowp vec4 shadowCoord) {
+  lowp vec3 lightPos = shadowCoord.xyz / shadowCoord.w;
+  lightPos = lightPos * 0.5 + 0.5;
+
+  lowp float shadow;
+
+  if (lightPos.x < 0.0 || lightPos.x > 1.0 ||
+    lightPos.y < 0.0 || lightPos.y > 1.0 ||
+    lightPos.z < 0.0 || lightPos.z > 1.0
+  ) {
+    shadow = 1.0;
+  } else {
+    lowp vec4 lightValue = texture2D(shadowMap,
+      lightPos.xy);
+    lowp float lightDepth = decodeRGToFloat(lightValue.rg);
+    // if (lightDepth + 0.0005 >= lightPos.z) return 1.0;
+    // return 0.0;
+    shadow = lerpShadow(lightDepth, decodeRGToFloat(lightValue.ba), lightPos.z);
+  }
+  return shadow;
+}
+
 lowp vec3 calcDirectional(DirectionalLight light, MaterialColor matColor,
   lowp vec3 viewDir
 ) {
@@ -148,6 +191,12 @@ lowp vec3 calcDirectional(DirectionalLight light, MaterialColor matColor,
   lowp vec3 result = matColor.diffuse * light.intensity.g * phong.x;
   result += mix(matColor.specular, vec3(1.0), phong.z) *
     light.intensity.b * phong.y;
+  #ifdef USE_DIRECTIONAL_LIGHT_SHADOW_MAP
+    lowp float shadow = calcShadow(
+      uDirectionalLightShadowMap,
+      light.shadowMatrix * vec4(vPosition, 1.0));
+    result *= shadow;
+  #endif
   result += matColor.ambient * light.intensity.r;
   result *= light.color;
 

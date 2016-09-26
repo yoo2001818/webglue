@@ -5,7 +5,9 @@ import transformGeom from 'webglue/geom/transform';
 import boxGeom from 'webglue/geom/box';
 import quadGeom from 'webglue/geom/quad';
 
-import { mat3, mat4 } from 'gl-matrix';
+import Camera, { orthogonal } from 'webglue/camera';
+
+import { quat, mat3, mat4 } from 'gl-matrix';
 
 export default function shadow(renderer) {
   const gl = renderer.gl;
@@ -74,6 +76,12 @@ export default function shadow(renderer) {
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
   });
 
+  let lightCamera = new Camera(orthogonal(4, 0.5, 5.5));
+  quat.rotateX(lightCamera.transform.rotation,
+    lightCamera.transform.rotation, Math.PI / -2);
+  lightCamera.transform.position[1] = 5;
+  lightCamera.transform.invalidate();
+
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
 
@@ -132,9 +140,11 @@ export default function shadow(renderer) {
         uDirectionalLight: {
           direction: [0, 1, 0],
           color: '#aaaaaa',
-          intensity: [0.3, 1.0, 1.0]
+          intensity: [0.3, 1.0, 1.0],
+          shadowMatrix: () => lightCamera.getPV()
         },
-        uPointLight: []
+        uPointLight: [],
+        uDirectionalLightShadowMap: shadowMap
       }),
       passes: [{
         options: {
@@ -142,6 +152,11 @@ export default function shadow(renderer) {
           clearDepth: 1,
           cull: gl.BACK,
           depth: gl.LEQUAL
+        },
+        uniforms: {
+          uProjection: lightCamera.getProjection,
+          uView: lightCamera.getView,
+          uProjectionView: lightCamera.getPV
         },
         shaderHandler,
         framebuffer: shadowFramebuffer,
