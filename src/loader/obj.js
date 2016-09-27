@@ -1,6 +1,7 @@
 import calcTangents from '../geom/channel/calcTangents';
 import calcNormals from '../geom/channel/calcNormals';
 import calcSmoothNormals from '../geom/channel/calcSmoothNormals';
+import parseIndices from '../util/parseIndices';
 
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
@@ -34,9 +35,9 @@ export default function loadOBJ(data, separate = false) {
         aTexCoord: {data: new Float32Array(texCoords), axis: 2}
       },
       indices: {
-        aPosition: new Uint16Array(vertexIndices),
-        aNormal: new Uint16Array(normalIndices),
-        aTexCoord: new Uint16Array(texCoordIndices)
+        aPosition: parseIndices(vertexIndices),
+        aNormal: parseIndices(normalIndices),
+        aTexCoord: parseIndices(texCoordIndices)
       }
     };
     // Calculate normal vectors, if not specified.

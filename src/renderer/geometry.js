@@ -77,7 +77,18 @@ export default class Geometry {
 
     this.standard = false;
 
-    this.upload();
+    if (typeof this.options.then === 'function') {
+      // Welcome to Promise
+      this.loaded = false;
+      this.options.then(options => {
+        this.options = options;
+        this.loaded = true;
+        this.upload();
+      });
+    } else {
+      this.loaded = true;
+      this.upload();
+    }
   }
   update(options) {
     const gl = this.renderer.gl;
@@ -199,8 +210,8 @@ export default class Geometry {
     }
   }
   upload(uploadIndices = true) {
+    if (!this.loaded) return;
     const gl = this.renderer.gl;
-
     let options = this.options;
     // Raw options given by the user
     if (this.attributes == null) {
@@ -374,6 +385,7 @@ export default class Geometry {
     return false;
   }
   use(useVAO = true) {
+    if (!this.loaded) return;
     const gl = this.renderer.gl;
     const instancedExt = this.renderer.instanced;
     if (this.vbo === null) this.upload();
@@ -421,6 +433,7 @@ export default class Geometry {
     }
   }
   draw() {
+    if (!this.loaded) return;
     const gl = this.renderer.gl;
     if (this.primCount !== -1) {
       const instancedExt = this.renderer.instanced;

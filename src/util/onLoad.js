@@ -1,6 +1,6 @@
 import { isSource, isLoaded } from '../renderer/texture';
 
-export default function onLoad(texture, callback) {
+export default function onLoad(object, callback) {
   let count = 0;
   function checkLoad(entry) {
     if (isLoaded(entry)) return;
@@ -12,18 +12,27 @@ export default function onLoad(texture, callback) {
       });
     }
   }
-  function checkTexture(entry) {
+  function checkObj(entry) {
+    // Texture check
     let { source } = entry.options;
     if (Array.isArray(source)) {
       source.forEach(checkLoad);
-    } else {
+    } else if (source != null) {
       checkLoad(source);
     }
+    // Geometry check
+    if (typeof entry.options.then === 'function') {
+      count ++;
+      entry.options.then(() => {
+        count --;
+        if (count === 0) callback();
+      });
+    }
   }
-  if (Array.isArray(texture)) {
-    texture.forEach(checkTexture);
+  if (Array.isArray(object)) {
+    object.forEach(checkObj);
   } else {
-    checkTexture(texture);
+    checkObj(object);
   }
   if (count === 0) callback();
 }

@@ -82,7 +82,7 @@ vec2 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution) {
     vec2 rgbSE = shadowTex2D(tex, fragCoord + vec2(1.0, 1.0) * resolution).xy;
     vec2 texColor = shadowTex2D(tex, fragCoord);
     vec2 rgbM  = texColor;
-    vec2 luma = vec2(0.5, 0.5);
+    vec2 luma = vec2(0.3, 0.3);
     float lumaNW = dot(rgbNW, luma);
     float lumaNE = dot(rgbNE, luma);
     float lumaSW = dot(rgbSW, luma);
