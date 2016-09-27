@@ -20,5 +20,5 @@ void main(void) {
   lowp float dx = dFdx(intensity);
   lowp float dy = dFdy(intensity);
   lowp float moment = intensity * intensity + 0.25 * (dx * dx + dy * dy);
-  gl_FragColor = vec4(intensity, moment, 0.0, 0.0);
+  gl_FragColor = vec4(encodeFloatToRG(intensity), encodeFloatToRG(moment));
 }

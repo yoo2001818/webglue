@@ -86,14 +86,18 @@ export default function shadow(renderer) {
     require('../shader/texture.frag')
   );
 
-  let shadowMap = renderer.textures.create(null, {
+  let shadowMapOptions = {
     width: 128,
     height: 128,
+    format: gl.RGBA,
+    type: gl.UNSIGNED_BYTE,
     params: {
-      mipmap: false,
-      minFilter: gl.LINEAR
+      minFilter: gl.LINEAR,
+      mipmap: false
     }
-  });
+  };
+
+  let shadowMap = renderer.textures.create(null, shadowMapOptions);
   let shadowFramebuffer = renderer.framebuffers.create({
     color: shadowMap,
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
@@ -101,36 +105,22 @@ export default function shadow(renderer) {
 
   let fxaaShader = renderer.shaders.create(
     require('../shader/screen.vert'),
-    require('../shader/fxaa.frag')
+    require('../shader/fxaaShadow.frag')
   );
 
-  let shadowFxaaMap = renderer.textures.create(null, {
-    width: 128,
-    height: 128,
-    params: {
-      mipmap: false,
-      minFilter: gl.LINEAR
-    }
-  });
+  let shadowFxaaMap = renderer.textures.create(null, shadowMapOptions);
 
   let blurShader = renderer.shaders.create(
     require('../shader/screen.vert'),
-    require('../shader/blur.frag')
+    require('../shader/blurShadow.frag')
   );
 
-  let shadowBlurMap = renderer.textures.create(null, {
-    width: 128,
-    height: 128,
-    params: {
-      mipmap: false,
-      minFilter: gl.LINEAR
-    }
-  });
+  let shadowBlurMap = renderer.textures.create(null, shadowMapOptions);
   let shadowBlurFramebuffer = renderer.framebuffers.create({
     color: shadowBlurMap
   });
 
-  let lightCamera = new Camera(orthogonal(1.5, 2.5, 5.5));
+  let lightCamera = new Camera(orthogonal(1.5, 1.5, 15.5));
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
@@ -205,7 +195,7 @@ export default function shadow(renderer) {
       }),
       passes: [{
         options: {
-          clearColor: new Float32Array([0, 0, 0, 1]),
+          clearColor: new Float32Array([1, 1, 1, 1]),
           clearDepth: 1,
           cull: gl.BACK,
           depth: gl.LEQUAL
@@ -261,7 +251,7 @@ export default function shadow(renderer) {
           uScreenSize: shader => [
             shader.renderer.width, shader.renderer.height
           ],
-          uTextureSize: [512, 512],
+          uTextureSize: [128, 128],
           uTexture: shadowBlurMap
         }
       }]
