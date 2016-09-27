@@ -63,7 +63,11 @@ export default class Texture {
   uploadTexture(target, source) {
     const gl = this.renderer.gl;
     let format = this.options.format;
+    if (typeof format === 'function') {
+      format = format(this.options, this.renderer);
+    }
     let type = this.options.type;
+    if (typeof type === 'function') type = type(this.options, this.renderer);
     if (isSource(source)) {
       gl.texImage2D(target, 0, format, format, type, source);
 
@@ -115,19 +119,23 @@ export default class Texture {
 
     // Set texture parameters
     for (let key in this.options.params) {
+      let value = this.options.params[key];
+      if (typeof value === 'function') {
+        value = value(this.options, this.renderer);
+      }
       if (key === 'flipY') continue;
       if (key === 'mipmap') {
         if (source == null) continue;
-        if (this.options.params[key]) gl.generateMipmap(target);
+        if (value) gl.generateMipmap(target);
         continue;
       }
       if (key === 'maxAnisotropy') {
         if (this.renderer.anisotropic) {
-          gl.texParameterf(target, OPTIONS_KEY[key], this.options.params[key]);
+          gl.texParameterf(target, OPTIONS_KEY[key], value);
         }
         continue;
       }
-      gl.texParameteri(target, OPTIONS_KEY[key], this.options.params[key]);
+      gl.texParameteri(target, OPTIONS_KEY[key], value);
     }
     this.loaded = true;
     // All done!
