@@ -89,6 +89,8 @@ export default class Framebuffer {
       }
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
         target, texture.texture, 0);
+      this.width = texture.width;
+      this.height = texture.height;
     }
   }
   use(options) {

@@ -87,8 +87,8 @@ export default function shadow(renderer) {
   );
 
   let shadowMap = renderer.textures.create(null, {
-    width: 512,
-    height: 512,
+    width: 128,
+    height: 128,
     params: {
       mipmap: false,
       minFilter: gl.LINEAR
@@ -97,6 +97,37 @@ export default function shadow(renderer) {
   let shadowFramebuffer = renderer.framebuffers.create({
     color: shadowMap,
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
+  });
+
+  let fxaaShader = renderer.shaders.create(
+    require('../shader/screen.vert'),
+    require('../shader/fxaa.frag')
+  );
+
+  let shadowFxaaMap = renderer.textures.create(null, {
+    width: 128,
+    height: 128,
+    params: {
+      mipmap: false,
+      minFilter: gl.LINEAR
+    }
+  });
+
+  let blurShader = renderer.shaders.create(
+    require('../shader/screen.vert'),
+    require('../shader/blur.frag')
+  );
+
+  let shadowBlurMap = renderer.textures.create(null, {
+    width: 128,
+    height: 128,
+    params: {
+      mipmap: false,
+      minFilter: gl.LINEAR
+    }
+  });
+  let shadowBlurFramebuffer = renderer.framebuffers.create({
+    color: shadowBlurMap
   });
 
   let lightCamera = new Camera(orthogonal(1.5, 2.5, 5.5));
@@ -170,7 +201,7 @@ export default function shadow(renderer) {
           shadowMatrix: () => lightCamera.getPV()
         },
         uPointLight: [],
-        uDirectionalLightShadowMap: shadowMap
+        uDirectionalLightShadowMap: shadowBlurMap
       }),
       passes: [{
         options: {
@@ -187,6 +218,30 @@ export default function shadow(renderer) {
         shaderHandler,
         framebuffer: shadowFramebuffer,
         passes: world
+      }, {
+        options: {
+          depth: false
+        },
+        geometry: quad,
+        passes: [{
+          framebuffer: {
+            color: shadowFxaaMap, framebuffer: shadowBlurFramebuffer
+          },
+          uniforms: {
+            uTexture: shadowMap,
+            uTextureOffset: [1/128, 1/128]
+          },
+          shader: fxaaShader
+        }, {
+          framebuffer: {
+            color: shadowBlurMap, framebuffer: shadowBlurFramebuffer
+          },
+          uniforms: {
+            uTexture: shadowFxaaMap,
+            uTextureOffset: [1/128, 1/128]
+          },
+          shader: blurShader
+        }]
       }, world, {
         shader: skyboxShader,
         geometry: box,
@@ -207,7 +262,7 @@ export default function shadow(renderer) {
             shader.renderer.width, shader.renderer.height
           ],
           uTextureSize: [512, 512],
-          uTexture: shadowMap
+          uTexture: shadowBlurMap
         }
       }]
     });
