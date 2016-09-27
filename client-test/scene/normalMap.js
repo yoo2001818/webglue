@@ -15,7 +15,7 @@ export default function normalMap(renderer) {
     require('../texture/texture2.png'));
   let normalMap = renderer.textures.create(
     require('../texture/texture2_normal.png'));
-  let heightMap = renderer.textures.create(
+  let bumpMap = renderer.textures.create(
     require('../texture/texture2_depth.png'));
   let skybox = renderer.textures.create([
     require('../texture/stormyday/front.jpg'),
@@ -67,7 +67,7 @@ export default function normalMap(renderer) {
           uHeightMapScale: [0.2, 1.1],
           uEnvironmentMap: skybox,
           uNormalMap: normalMap,
-          uHeightMap: heightMap,
+          uHeightMap: bumpMap,
           uDiffuseMap: texture
         }
       }, {

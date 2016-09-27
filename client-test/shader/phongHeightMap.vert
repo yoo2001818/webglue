@@ -28,6 +28,8 @@ uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat3 uNormal;
 
+uniform sampler2D uHeightTerrainMap;
+
 vec3 getViewPosWorld() {
   return -mat3(
     uView[0].x, uView[1].x, uView[2].x,
@@ -37,7 +39,10 @@ vec3 getViewPosWorld() {
 }
 
 void main() {
-  vec4 fragPos = uModel * vec4(aPosition, 1.0) + vec4(aInstPos, 0.0);
+  vec3 offset = vec3(-1.0, 0.0, 1.0);
+  float s11 = texture2D(uHeightTerrainMap, aTexCoord).r;
+  vec3 vertPos = aPosition + aNormal * s11 * 1.0;
+  vec4 fragPos = uModel * vec4(vertPos, 1.0);
   gl_Position = uProjectionView * fragPos;
   vTexCoord = aTexCoord;
   #ifdef USE_TANGENT_SPACE
