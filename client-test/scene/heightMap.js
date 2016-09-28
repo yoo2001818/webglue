@@ -3,6 +3,8 @@ import calcNormals from 'webglue/geom/calcNormals';
 import calcTangents from 'webglue/geom/calcTangents';
 import quadGeom from 'webglue/geom/quad';
 
+import Filter from 'webglue/filter';
+
 import onLoad from 'webglue/util/onLoad';
 
 import { mat3, mat4 } from 'gl-matrix';
@@ -10,9 +12,16 @@ import { mat3, mat4 } from 'gl-matrix';
 export default function heightMap(renderer) {
   const gl = renderer.gl;
   let quad = renderer.geometries.create(
-    calcTangents(calcNormals(quadGeom(50, 50)))
+    calcTangents(calcNormals(quadGeom(32, 32)))
   );
-  let heightMap = renderer.textures.create(require('../texture/heightmap.png'));
+  let heightMap = renderer.textures.create(
+    require('../texture/heightmap.png'), {
+      params: {
+        minFilter: gl.LINEAR,
+        mipmap: false
+      }
+    }
+  );
   let normalMap = renderer.textures.create(null, {
     width: 256,
     height: 256,
@@ -34,37 +43,19 @@ export default function heightMap(renderer) {
     require('../shader/phong.frag')
   );
 
-  let calcNormalShader = renderer.shaders.create(
-    require('../shader/screen.vert'),
-    require('../shader/heightToNormal.frag')
-  );
-  let blurShader = renderer.shaders.create(
-    require('../shader/screen.vert'),
-    require('../shader/blur.frag')
-  );
-  let framebuffer = renderer.framebuffers.create({
-    color: normalMap
-  });
+  let calcNormal = new Filter(renderer,
+    require('../shader/heightToNormal.frag'));
+  let blur = new Filter(renderer,
+    require('../shader/blur.frag'));
   onLoad(heightMap, () => {
-    renderer.render({
-      geometry: quad,
-      passes: [{
-        framebuffer: { framebuffer, color: normalMap },
-        shader: calcNormalShader,
-        uniforms: {
-          uTexture: heightMap,
-          uScale: 1/2,
-          uTextureOffset: [1/64, 1/64]
-        }
-      }, {
-        framebuffer: { framebuffer, color: blurNormalMap },
-        shader: blurShader,
-        uniforms: {
-          uTexture: normalMap,
-          uTextureOffset: [1/256, 1/256]
-        }
-      }]
-    });
+    renderer.render([
+      calcNormal.get(heightMap, normalMap, {
+        uScale: 1/2, uTextureOffset: [1/48, 1/48]
+      }),
+      blur.get(normalMap, blurNormalMap, {
+        uTextureOffset: [1/256, 1/256]
+      })
+    ]);
   });
 
   let box = renderer.geometries.create(boxGeom());
@@ -83,7 +74,7 @@ export default function heightMap(renderer) {
 
   let model1Mat = mat4.create();
   let model1Normal = mat3.create();
-  mat4.scale(model1Mat, model1Mat, [1, 1/2, 1]);
+  mat4.scale(model1Mat, model1Mat, [100, 50, 100]);
   mat4.rotateX(model1Mat, model1Mat, -Math.PI / 2);
   mat3.normalFromMat4(model1Normal, model1Mat);
 

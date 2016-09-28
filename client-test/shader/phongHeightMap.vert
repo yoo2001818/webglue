@@ -40,7 +40,7 @@ vec3 getViewPosWorld() {
 
 void main() {
   vec3 offset = vec3(-1.0, 0.0, 1.0);
-  float s11 = texture2D(uHeightTerrainMap, aTexCoord).r;
+  float s11 = texture2D(uHeightTerrainMap, aTexCoord).r * 2.0 - 1.0;
   vec3 vertPos = aPosition + aNormal * s11 * 1.0;
   vec4 fragPos = uModel * vec4(vertPos, 1.0);
   gl_Position = uProjectionView * fragPos;

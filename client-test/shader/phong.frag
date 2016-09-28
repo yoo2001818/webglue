@@ -262,7 +262,7 @@ void main(void) {
 	if (uMaterial.reflectivity.w > 0.5) {
     #ifdef USE_TANGENT_SPACE
       // (Sigh) Get world space viewDir
-      lowp vec3 worldViewDir = vViewPos - (uModel * vec4(vPosition, 1.0)).xyz;
+      lowp vec3 worldViewDir = vViewPos - vPosition;
 	    lowp vec3 outVec = reflect(worldViewDir, normal);
     #else
 	    lowp vec3 outVec = reflect(viewDir, normal);
