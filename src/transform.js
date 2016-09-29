@@ -1,32 +1,31 @@
-import { mat4, vec3, quat } from 'gl-matrix';
-export default class Transform {
-  constructor(
-    position = vec3.create(),
-    rotation = quat.create(),
-    scale = vec3.fromValues(1, 1, 1)
-  ) {
-    this.position = position;
-    this.rotation = rotation;
-    this.scale = scale;
+import BaseTransform from './baseTransform';
 
-    this.localMatrix = mat4.create();
-    this.valid = false;
-    this.ticks = 0;
-    this.get();
+import { mat4 } from 'gl-matrix';
+
+export default class Transform extends BaseTransform {
+  constructor(position, rotation, scale, parent) {
+    super(position, rotation, scale);
+
+    this.matrix = mat4.create();
+    this.parent = parent;
+    this._localTicks = -1;
+    this._parentTicks = -1;
+    this._transformTicks = 0;
 
     this.get = this.get.bind(this);
   }
   get() {
-    if (this.valid) return this.localMatrix;
-    // Recalculate transform matrix
-    mat4.fromRotationTranslation(this.localMatrix, this.rotation,
-      this.position);
-    mat4.scale(this.localMatrix, this.localMatrix, this.scale);
-    this.valid = true;
-    this.ticks ++;
-    return this.localMatrix;
-  }
-  invalidate() {
-    this.valid = false;
+    if (this.parent == null) return super.get();
+    let parentMatrix = this.parent.get();
+    let local = super.get();
+    if (this._parentTicks !== this.parent.ticks ||
+      this._localTicks !== this.ticks
+    ) {
+      this._parentTicks = this.parent.ticks;
+      this._localTicks = this.ticks;
+      this._transformTicks ++;
+      mat4.multiply(this.matrix, parentMatrix, local);
+    }
+    return this.matrix;
   }
 }

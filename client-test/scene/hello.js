@@ -3,8 +3,6 @@ import calcNormals from 'webglue/geom/calcNormals';
 
 import MeshTransform from 'webglue/meshTransform';
 
-import { quat } from 'gl-matrix';
-
 export default function hello(renderer) {
   const gl = renderer.gl;
   let box = renderer.geometries.create(calcNormals(boxGeom()));
@@ -22,11 +20,9 @@ export default function hello(renderer) {
   return (delta, context) => {
     timer += delta;
 
-    quat.rotateZ(parent.rotation, parent.rotation, delta * 2);
-    parent.invalidate();
-    quat.rotateX(model.rotation, model.rotation, delta * 10);
-    model.position[0] = Math.sin(timer * 7) * 2 + 2;
-    model.invalidate();
+    parent.rotateZ(delta * 2);
+    model.rotateX(delta * 10);
+    model.setPos([Math.sin(timer * 7) * 2 + 2, 0, 0]);
 
     renderer.render({
       options: {
