@@ -6,7 +6,7 @@ export default class Buffer {
       this.data = new Float32Array(data);
     }
     this.usage = usage == null ? renderer.gl.STATIC_DRAW : usage;
-    this.buffer = null;
+    this.vbo = null;
   }
   update(data) {
     this.data = data;
@@ -17,16 +17,16 @@ export default class Buffer {
   }
   upload() {
     const gl = this.renderer.gl;
-    if (this.buffer == null) this.buffer = gl.createBuffer();
+    if (this.vbo == null) this.vbo = gl.createBuffer();
     // Upload whole data... Nothing special
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, this.data, this.usage);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
   dispose() {
     const gl = this.renderer.gl;
     if (this.buffer == null) return;
-    gl.deleteBuffer(this.buffer);
+    gl.deleteBuffer(this.vbo);
     this.buffer = null;
   }
 }

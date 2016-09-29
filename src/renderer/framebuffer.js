@@ -104,5 +104,6 @@ export default class Framebuffer {
     const gl = this.renderer.gl;
     if (this.framebuffer == null) return;
     gl.deleteFramebuffer(this.framebuffer);
+    this.framebuffer = null;
   }
 }

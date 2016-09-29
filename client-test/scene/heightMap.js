@@ -50,7 +50,7 @@ export default function heightMap(renderer) {
   onLoad(heightMap, () => {
     renderer.render([
       calcNormal.get(heightMap, normalMap, {
-        uScale: 1/2, uTextureOffset: [1/48, 1/48]
+        uScale: 1/2, uTextureOffset: [1/64, 1/64]
       }),
       blur.get(normalMap, blurNormalMap, {
         uTextureOffset: [1/256, 1/256]
@@ -110,7 +110,7 @@ export default function heightMap(renderer) {
             diffuse: '#aaaaaa',
             specular: '#444444',
             reflectivity: '#8c444444',
-            shininess: 90
+            shininess: 200
           },
           uHeightTerrainMap: heightMap,
           uNormalMap: blurNormalMap,

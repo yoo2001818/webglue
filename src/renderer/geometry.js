@@ -174,7 +174,7 @@ export default class Geometry {
             count = attributeCount;
           }
         }
-        if (entry.buffer == null || entry.buffer === this.vbo) {
+        if (entry.buffer == null || entry.buffer === this) {
           // Check if the size EXACTLY matches
           if (entry.data.length !== original.data.length) {
             // Failed!
@@ -275,8 +275,8 @@ export default class Geometry {
           this.count = attributeCount;
         }
       }
-      if (entry.buffer == null || entry.buffer === this.vbo) {
-        entry.buffer = this.vbo;
+      if (entry.buffer == null || entry.buffer === this) {
+        entry.buffer = this;
         entry.offset = vboPos;
         vboPos += entry.data.length * entry.typeSize;
         uploadAttributes.push(entry);
@@ -415,8 +415,11 @@ export default class Geometry {
       */
       if (attribPos == null) continue;
       if (attribute.buffer !== currentBuffer) {
-        if (attribute.buffer.buffer) {
-          gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer.buffer);
+        if (attribute.buffer.vbo) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer.vbo);
+        } else if (attribute.buffer.upload) {
+          attribute.buffer.upload();
+          gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer.vbo);
         } else {
           gl.bindBuffer(gl.ARRAY_BUFFER, attribute.buffer);
         }
@@ -494,10 +497,7 @@ export default class Geometry {
     // Throw away vbo, ebo, vao
     gl.deleteBuffer(this.vbo);
     gl.deleteBuffer(this.ebo);
-    if (this.vao && this.standard) {
-      this.renderer.vao.deleteVertexArrayOES(this.vao);
-      this.vao = null;
-    }
+    if (this.vao) this.clearVAO();
     this.vbo = null;
     this.ebo = null;
   }
