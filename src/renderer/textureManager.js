@@ -1,5 +1,11 @@
 import Texture from './texture';
 
+function isEmpty(source) {
+  if (source == null) return true;
+  if (Array.isArray(source)) return source.every(a => a == null);
+  return false;
+}
+
 export default class TextureManager {
   constructor(renderer) {
     this.renderer = renderer;
@@ -22,15 +28,27 @@ export default class TextureManager {
         flipY: true
       }
     };
+    this.emptyDefaults = {
+      params: {
+        mipmap: false,
+        minFilter: gl.LINEAR
+      }
+    };
   }
   setDefault(options) {
     this.defaults = options;
   }
   create(source, options) {
-    let combinedOptions = Object.assign({}, this.defaults, options, {
-      source,
-      params: Object.assign({}, this.defaults.params, options && options.params)
-    });
+    let empty = isEmpty(source);
+    let combinedOptions = Object.assign({},
+      this.defaults, empty && this.emptyDefaults, options,
+      {
+        source,
+        params: Object.assign({},
+          this.defaults.params, empty && this.emptyDefaults.params,
+          options && options.params)
+      }
+    );
     let texture = new Texture(this.renderer, combinedOptions);
     this.textures.push(texture);
     return texture;

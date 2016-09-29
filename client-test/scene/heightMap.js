@@ -15,28 +15,15 @@ export default function heightMap(renderer) {
     calcTangents(calcNormals(quadGeom(32, 32)))
   );
   let heightMap = renderer.textures.create(
-    require('../texture/heightmap.png'), {
-      params: {
-        minFilter: gl.LINEAR,
-        mipmap: false
-      }
-    }
+    require('../texture/heightmap.png')
   );
   let normalMap = renderer.textures.create(null, {
     width: 256,
-    height: 256,
-    params: {
-      minFilter: gl.LINEAR,
-      mipmap: false
-    }
+    height: 256
   });
   let blurNormalMap = renderer.textures.create(null, {
     width: 256,
-    height: 256,
-    params: {
-      minFilter: gl.LINEAR,
-      mipmap: false
-    }
+    height: 256
   });
   let shader = renderer.shaders.create(
     require('../shader/phongHeightMap.vert'),
