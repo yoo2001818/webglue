@@ -6,6 +6,21 @@ export default class ShaderManager {
     this.shaders = [];
     this.current = null;
     this.handler = null;
+    // Preprocess shader's governor list
+    this.governors = {
+      max: {
+        checker: (shader, current) => shader >= current,
+        allocator: current => current
+      },
+      equal: {
+        checker: (shader, current) => shader === current,
+        allocator: current => current
+      },
+      maxLength: {
+        checker: (shader, current) => shader >= current.length,
+        allocator: current => current.length
+      }
+    };
   }
   create(vert, frag, noPreprocess = false) {
     let shader;

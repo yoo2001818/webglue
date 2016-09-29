@@ -3,7 +3,7 @@
 #pragma webglue: feature(USE_DIFFUSE_MAP, uDiffuseMap)
 #pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
 #pragma webglue: feature(USE_HEIGHT_MAP, uHeightMap)
-#pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, max)
+#pragma webglue: count(POINT_LIGHT_SIZE, uPointLight, maxLength)
 #pragma webglue: feature(USE_DIRECTIONAL_LIGHT_SHADOW_MAP, uDirectionalLightShadowMap)
 
 #if defined(USE_NORMAL_MAP) || defined(USE_HEIGHT_MAP)

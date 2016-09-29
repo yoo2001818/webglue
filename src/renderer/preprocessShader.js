@@ -4,12 +4,7 @@ import attachAppendage from '../util/attachAppendage';
 const HEADER_PATTERN =
   /^\s*#pragma webglue: ([a-z]+)\((([^\),]+)(,\s*(?:[^\),]+))*)\)\s*$/gm;
 
-const GOVERNORS = {
-  max: (shader, current) => shader >= current,
-  equal: (shader, current) => shader === current
-};
-
-function parseMetadata(code) {
+function parseMetadata(code, governors) {
   let output = {
     features: {},
     counts: {}
@@ -26,7 +21,7 @@ function parseMetadata(code) {
     case 'count':
       if (output.counts[args[1]] == null) {
         output.counts[args[1]] = {
-          governor: GOVERNORS[args[2]] || GOVERNORS.equal,
+          governor: governors[args[2]] || governors.equal,
           defines: []
         };
       }
@@ -72,8 +67,10 @@ export default class PreprocessShader {
     this.renderer = renderer;
     this.source = { vert, frag };
 
-    this.metadata = flattenMetadata(mergeMetadata(parseMetadata(vert),
-      parseMetadata(frag)));
+    let governors = this.renderer.shaders.governors;
+
+    this.metadata = flattenMetadata(mergeMetadata(
+      parseMetadata(vert, governors), parseMetadata(frag, governors)));
     this.useFeatures = Object.keys(this.metadata.features).length !== 0;
     this.useCounts = Object.keys(this.metadata.counts).length !== 0;
     // Shaders tree structure: { [flags]: [{counts: ..., shader}, ...], ...}
@@ -109,19 +106,22 @@ export default class PreprocessShader {
           return this.metadata.counts.every(v => {
             let governor = (v.vert && v.vert.governor) ||
               (v.frag && v.frag.governor);
-            return governor(entry.uniforms[v.key], uniforms[v.key].length);
+            return governor.checker(entry.uniforms[v.key], uniforms[v.key]);
           });
         });
         if (match == null) {
           let uniformData = {};
           this.metadata.counts.forEach(v => {
+            let governor = (v.vert && v.vert.governor) ||
+              (v.frag && v.frag.governor);
+            let value = governor.allocator(uniforms[v.key]);
             vertDefines.push.apply(vertDefines,
               ((v.vert && v.vert.defines) || []).map(field => field + ' ' +
-                uniforms[v.key].length));
+                value));
             fragDefines.push.apply(fragDefines,
               ((v.frag && v.frag.defines) || []).map(field => field + ' ' +
-                uniforms[v.key].length));
-            uniformData[v.key] = uniforms[v.key].length;
+                value));
+            uniformData[v.key] = value;
           });
           // Create the shader
           let vertStr = vertDefines.map(v => `#define ${v}\n`).join('');
@@ -130,6 +130,7 @@ export default class PreprocessShader {
             attachAppendage(this.source.vert, vertStr),
             attachAppendage(this.source.frag, fragStr)
           );
+          shader.parent = this;
           selected.push({shader, uniforms: uniformData});
           return shader;
         } else {
@@ -144,6 +145,7 @@ export default class PreprocessShader {
             attachAppendage(this.source.vert, vertStr),
             attachAppendage(this.source.frag, fragStr)
           );
+          shader.parent = this;
           this.shaders[featureKey] = shader;
         }
         let selected = this.shaders[featureKey];
@@ -153,6 +155,7 @@ export default class PreprocessShader {
       if (this.shaders == null) {
         this.shaders = new Shader(this.renderer,
           this.source.vert, this.source.frag);
+        this.shaders.parent = this;
       }
       return this.shaders;
     }
