@@ -1,7 +1,7 @@
 #version 100
 precision lowp float;
 
-#define SAMPLE_COUNT 24
+#define SAMPLE_COUNT 22
 #define PATTERN_SIZE 4.0
 
 varying lowp vec2 vTexCoord;
@@ -30,17 +30,17 @@ vec3 getSample(int i) {
     rand(vec2(x, y))
   );
   sampler = normalize(sampler);
-  sampler *= rand(vec2(x, y - 2.0));
+  sampler *= x * x;
   return sampler;
 }
 
 vec3 getNoise() {
   vec2 coord = mod(floor(gl_FragCoord.xy), PATTERN_SIZE);
-  return vec3(
+  return normalize(vec3(
     rand(vec2(coord.x + 1.0, coord.y)) * 2.0 - 1.0,
     rand(vec2(coord.x - 1.0, coord.y)) * 2.0 - 1.0,
     0.0
-  );
+  ));
 }
 
 vec3 getUV(vec3 pos) {
@@ -85,12 +85,10 @@ void main() {
     float sampleDepth = decodeDepth(sampleData.ba);
     vec3 samplePos = sampleRay * sampleDepth;
 
-    float lambert = max(0.0, dot(normalize(sampleDir), normal));
-
     float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(sampleVec.z - samplePos.z));
-    occulsion += (sampleVec.z <= samplePos.z ? 1.0 : 0.0) * rangeCheck * lambert;
+    occulsion += (sampleVec.z <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
 
   }
-  occulsion = pow(1.0 - (occulsion / float(SAMPLE_COUNT)), 1.9);
+  occulsion = 1.0 - (occulsion / float(SAMPLE_COUNT));
   gl_FragColor = vec4(vec3(occulsion), 1.0);
 }

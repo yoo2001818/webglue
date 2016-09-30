@@ -235,7 +235,7 @@ export default function ssao(renderer) {
         ],
         uProjection: context.cameraObj.getProjection,
         uInverseProjection: context.cameraObj.getInverseProjection,
-        uRadius: 1 / 20
+        uRadius: 1 / 6
       }), {
         options: {
           blend: {
