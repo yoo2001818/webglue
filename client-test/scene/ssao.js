@@ -65,16 +65,16 @@ export default function ssao(renderer) {
       minFilter: gl.NEAREST,
       magFilter: gl.NEAREST
     },
-    width: () => gl.drawingBufferWidth / 2,
-    height: () => gl.drawingBufferHeight / 2
+    width: () => gl.drawingBufferWidth / 3,
+    height: () => gl.drawingBufferHeight / 3
   });
   let ssaoOutTexture = renderer.textures.create(null, {
-    width: () => gl.drawingBufferWidth / 2,
-    height: () => gl.drawingBufferHeight / 2
+    width: () => gl.drawingBufferWidth / 3,
+    height: () => gl.drawingBufferHeight / 3
   });
   let ssaoOutTexture2 = renderer.textures.create(null, {
-    width: () => gl.drawingBufferWidth / 2,
-    height: () => gl.drawingBufferHeight / 2
+    width: () => gl.drawingBufferWidth / 3,
+    height: () => gl.drawingBufferHeight / 3
   });
   let ssaoFramebuffer = renderer.framebuffers.create({
     color: ssaoTexture,
