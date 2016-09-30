@@ -75,6 +75,44 @@ export default class CameraController {
     this.node.addEventListener('contextmenu', e => {
       e.preventDefault();
     });
+    this.node.addEventListener('touchstart', e => {
+      e.preventDefault();
+      this.mouseHeld = true;
+      // Determine if we should go clockwise or anticlockwise.
+      let upLocal = vec3.create();
+      let up = vec3.fromValues(0, 1, 0);
+      vec3.transformQuat(upLocal, [0, 1, 0],
+        this.camera.transform.rotation);
+      let upDot = vec3.dot(up, upLocal);
+      this.rotateDir = upDot >= 0 ? 1 : -1;
+      // Set position
+      this.mouseX = e.changedTouches[0].pageX;
+      this.mouseY = e.changedTouches[0].pageY;
+    }, false);
+    this.node.addEventListener('touchmove', e => {
+      if (!this.mouseHeld) return;
+      let offsetX = e.changedTouches[0].pageX - this.mouseX;
+      let offsetY = e.changedTouches[0].pageY - this.mouseY;
+      this.mouseX = e.changedTouches[0].pageX;
+      this.mouseY = e.changedTouches[0].pageY;
+      let transform = this.camera.transform;
+      // rotation....
+      let rot = quat.create();
+      quat.rotateY(rot, rot, Math.PI / 180 * -offsetX *
+        this.rotateDir / 4);
+      quat.multiply(transform.rotation, rot, transform.rotation);
+      quat.rotateX(transform.rotation, transform.rotation,
+        Math.PI / 180 * -offsetY / 4);
+      this.hasChanged = true;
+    });
+    this.node.addEventListener('touchend', e => {
+      e.preventDefault();
+      this.mouseHeld = false;
+    }, false);
+    this.node.addEventListener('touchcancel', e => {
+      e.preventDefault();
+      this.mouseHeld = false;
+    }, false);
     this.node.addEventListener('mousedown', e => {
       if (e.button === 0) return;
       this.mouseHeld = true;
