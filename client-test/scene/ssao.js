@@ -64,9 +64,18 @@ export default function ssao(renderer) {
     params: {
       minFilter: gl.NEAREST,
       magFilter: gl.NEAREST
-    }
+    },
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
   });
-  let ssaoOutTexture = renderer.textures.create(null);
+  let ssaoOutTexture = renderer.textures.create(null, {
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
+  });
+  let ssaoOutTexture2 = renderer.textures.create(null, {
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
+  });
   let ssaoFramebuffer = renderer.framebuffers.create({
     color: ssaoTexture,
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
@@ -85,11 +94,12 @@ export default function ssao(renderer) {
     require('../shader/skybox.vert'),
     require('../shader/skybox.frag')
   );
-  let blurShader = renderer.shaders.create(
+  let screenShader = renderer.shaders.create(
     require('../shader/screen.vert'),
-    require('../shader/blur.frag')
+    require('../shader/fxaa.frag')
   );
   let ssaoFilter = new Filter(renderer, require('../shader/ssao.frag'));
+  let ssaoBlurFilter = new Filter(renderer, require('../shader/ssaoBlur.frag'));
 
   let teapotTransform = new MeshTransform();
   let floorTransform = new MeshTransform();
@@ -229,25 +239,41 @@ export default function ssao(renderer) {
         }
       },
       worldGraph,
-      ssaoFilter.get(ssaoTexture, ssaoOutTexture, {
-        uTextureOffset: shader => [
-          1 / shader.renderer.width, 1 / shader.renderer.height
-        ],
-        uProjection: context.cameraObj.getProjection,
-        uInverseProjection: context.cameraObj.getInverseProjection,
-        uRadius: 1/4
-      }), {
+      [
+        ssaoFilter.get(ssaoTexture, ssaoOutTexture, {
+          uTextureOffset: shader => [
+            1 / shader.renderer.width, 1 / shader.renderer.height
+          ],
+          uProjection: context.cameraObj.getProjection,
+          uInverseProjection: context.cameraObj.getInverseProjection,
+          uRadius: 1/4
+        }),
+        ssaoBlurFilter.get(ssaoOutTexture, ssaoOutTexture2, {
+          uTextureOffset: shader => [
+            1 / shader.renderer.width, 1 / shader.renderer.height
+          ],
+          uDirection: [1, 0],
+          uDepthTexture: ssaoTexture
+        }),
+        ssaoBlurFilter.get(ssaoOutTexture2, ssaoOutTexture, {
+          uTextureOffset: shader => [
+            1 / shader.renderer.width, 1 / shader.renderer.height
+          ],
+          uDirection: [0, 1],
+          uDepthTexture: ssaoTexture
+        })
+      ], {
         options: {
           blend: {
             func: [gl.ZERO, gl.SRC_COLOR]
           }
         },
         geometry: quad,
-        shader: blurShader,
+        shader: screenShader,
         uniforms: {
           uTexture: ssaoOutTexture,
           uTextureOffset: shader => [
-            1.5 / shader.renderer.width, 1.5 / shader.renderer.height
+            1 / ssaoOutTexture.width, 1 / ssaoOutTexture.height
           ]
         }
       }]
