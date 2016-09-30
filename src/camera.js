@@ -18,6 +18,7 @@ export default class Camera extends Object3D {
     this.projection = projection;
 
     this.getProjection = this.getProjection.bind(this);
+    this.getInverseProjection = this.getInverseProjection.bind(this);
     this.getView = this.getView.bind(this);
     this.getPV = this.getPV.bind(this);
 
@@ -26,6 +27,9 @@ export default class Camera extends Object3D {
     this._aspect = 1;
     this.projectionTicks = 0;
     this.projectionMatrix = mat4.create();
+
+    this.inverseProjectionTicks = 0;
+    this.inverseProjectionMatrix = mat4.create();
 
     this.viewTicks = 0;
     this.viewMatrix = mat4.create();
@@ -59,6 +63,14 @@ export default class Camera extends Object3D {
       this.projectionTicks ++;
     }
     return this.projectionMatrix;
+  }
+  getInverseProjection(input) {
+    let projectionMat = this.getProjection(input);
+    if (this.inverseProjectionTicks !== this.projectionTicks) {
+      this.inverseProjectionTicks = this.projectionTicks;
+      mat4.invert(this.inverseProjectionMatrix, projectionMat);
+    }
+    return this.inverseProjectionMatrix;
   }
   getView() {
     let transformMat = this.transform.get();

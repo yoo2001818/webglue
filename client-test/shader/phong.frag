@@ -77,7 +77,6 @@ uniform Material uMaterial;
 
 uniform mat4 uModel;
 uniform mat3 uNormal;
-uniform lowp vec3 uTint;
 uniform sampler2D uNormalMap;
 uniform sampler2D uDiffuseMap;
 uniform sampler2D uHeightMap;
@@ -147,7 +146,7 @@ lowp float linstep(lowp float low, lowp float high, lowp float v) {
 
 lowp float lerpShadow(lowp float depth, lowp float moment, lowp float compare) {
   if (compare <= depth) return 1.0;
-  float variance = max(moment - depth * depth, 0.000025);
+  float variance = max(moment - depth * depth, 0.00025);
   float d = compare - depth;
   float pMax = variance / (variance + d * d);
   return pMax;
@@ -249,7 +248,7 @@ void main(void) {
   matColor.specular = uMaterial.specular;
 
   #ifdef USE_DIFFUSE_MAP
-  lowp vec4 diffuseTex = vec4(texture2D(uDiffuseMap, texCoord).xyz + uTint, 1.0);
+  lowp vec4 diffuseTex = vec4(texture2D(uDiffuseMap, texCoord).xyz, 1.0);
   matColor.ambient *= diffuseTex.xyz;
   matColor.diffuse *= diffuseTex.xyz;
   #endif
