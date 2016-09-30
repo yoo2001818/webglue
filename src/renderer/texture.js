@@ -24,6 +24,14 @@ export function isLoaded(source) {
   return true;
 }
 
+function getWidth(options, renderer) {
+  return renderer.gl.drawingBufferWidth;
+}
+
+function getHeight(options, renderer) {
+  return renderer.gl.drawingBufferHeight;
+}
+
 export default class Texture {
   constructor(renderer, options) {
     this.renderer = renderer;
@@ -52,6 +60,7 @@ export default class Texture {
     this.loaded = false;
 
     this.mipmapPending = false;
+    this.varyingSize = false;
 
     this.width = null;
     this.height = null;
@@ -62,6 +71,7 @@ export default class Texture {
   }
   uploadTexture(target, source) {
     const gl = this.renderer.gl;
+    this.varyingSize = false;
     let format = this.options.format;
     if (typeof format === 'function') {
       format = format(this.options, this.renderer);
@@ -80,13 +90,32 @@ export default class Texture {
       this.height = source.height;
     } else {
       // width and height shouldn't be 0, right?
-      let width = this.options.width || gl.drawingBufferWidth;
-      let height = this.options.height || gl.drawingBufferHeight;
+      let width = this.options.width || getWidth;
+      let height = this.options.height || getHeight;
+      if (typeof width === 'function') {
+        width = width(this.options, this.renderer);
+        this.varyingSize = true;
+      }
+      if (typeof height === 'function') {
+        height = height(this.options, this.renderer);
+        this.varyingSize = true;
+      }
       gl.texImage2D(target, 0, format, width, height, 0, format, type, source);
 
       this.width = width;
       this.height = height;
     }
+  }
+  validateSize() {
+    let width = this.options.width || getWidth;
+    let height = this.options.height || getHeight;
+    if (typeof width === 'function') {
+      width = width(this.options, this.renderer);
+    }
+    if (typeof height === 'function') {
+      height = height(this.options, this.renderer);
+    }
+    return this.width === width && this.height === height;
   }
   upload() {
     const gl = this.renderer.gl;
@@ -149,7 +178,7 @@ export default class Texture {
     gl.activeTexture(gl.TEXTURE0 + unit);
     // Reupload the texture if required.
     if (this.texture == null) this.init();
-    if (!this.loaded) {
+    if (!this.loaded || (this.varyingSize && !this.validateSize())) {
       this.upload();
     } else {
       gl.bindTexture(this.target, this.texture);

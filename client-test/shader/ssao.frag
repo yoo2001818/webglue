@@ -1,7 +1,7 @@
 #version 100
 precision lowp float;
 
-#define SAMPLE_COUNT 22
+#define SAMPLE_COUNT 16
 #define PATTERN_SIZE 4.0
 
 varying lowp vec2 vTexCoord;
@@ -23,14 +23,14 @@ vec3 getSample(int i) {
   vec2 coord = mod(floor(gl_FragCoord.xy), PATTERN_SIZE);
   float y = (coord.x + coord.y * PATTERN_SIZE + 0.5) /
     (PATTERN_SIZE * PATTERN_SIZE);
-  float x = (float(i) + 0.5) / float(SAMPLE_COUNT);
+  float x = float(i) / float(SAMPLE_COUNT);
   vec3 sampler = vec3(
     rand(vec2(x, y + 1.0)) * 2.0 - 1.0,
     rand(vec2(x, y - 1.0)) * 2.0 - 1.0,
     rand(vec2(x, y))
   );
   sampler = normalize(sampler);
-  sampler *= x * x;
+  sampler *= mix(0.1, 1.0, x * x);
   return sampler;
 }
 
@@ -81,14 +81,13 @@ void main() {
       vec4(sampleCoord.xy * 2.0 - 1.0, -1.0, 1.0)).xyz);
 
     vec4 sampleData = texture2D(uTexture, sampleCoord.xy);
-    vec3 sampleNormal = decodeNormal(sampleData.rg);
+    // vec3 sampleNormal = decodeNormal(sampleData.rg);
     float sampleDepth = decodeDepth(sampleData.ba);
     vec3 samplePos = sampleRay * sampleDepth;
 
-    float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(sampleVec.z - samplePos.z));
+    float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(samplePos.z - viewPos.z));
     occulsion += (sampleVec.z <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
-
   }
-  occulsion = 1.0 - (occulsion / float(SAMPLE_COUNT));
+  occulsion = pow(1.0 - (occulsion / float(SAMPLE_COUNT)), 2.82);
   gl_FragColor = vec4(vec3(occulsion), 1.0);
 }

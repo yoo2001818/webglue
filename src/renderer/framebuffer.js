@@ -44,13 +44,14 @@ export default class Framebuffer {
         texture = options.color.texture;
         target = options.color.target;
       }
-      if (!texture.loaded) {
+      if (!texture.loaded || (texture.varyingSize && !texture.validateSize())) {
         this.renderer.textures.use(0, texture, true);
       }
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
         target, texture.texture, 0);
       width = texture.width;
       height = texture.height;
+      this.color = texture;
     } else {
       // ???
       throw new Error('Color attachment must be specified');
@@ -84,18 +85,75 @@ export default class Framebuffer {
         texture = options.color.texture;
         target = options.color.target;
       }
-      if (!texture.loaded) {
+      if (!texture.loaded || (texture.varyingSize && !texture.validateSize())) {
         this.renderer.textures.use(0, texture, true);
       }
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
         target, texture.texture, 0);
       this.width = texture.width;
       this.height = texture.height;
+      this.color = texture;
     }
+  }
+  resize() {
+    const gl = this.renderer.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+    let options = this.options;
+    // Upload the textures and renderbuffers
+    // Determine the size of the framebuffer
+    let width = gl.drawingBufferWidth;
+    let height = gl.drawingBufferHeight;
+    // TODO Color only supports texture attachment
+    // Also, no stencil for now, and no draw_buffers extension.
+    if (options.color && typeof options.color !== 'number') {
+      let texture = options.color;
+      let target = gl.TEXTURE_2D;
+      if (options.color.renderer == null) {
+        texture = options.color.texture;
+        target = options.color.target;
+      }
+      if (!texture.loaded || (texture.varyingSize && !texture.validateSize())) {
+        this.renderer.textures.use(0, texture, true);
+      }
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+        target, texture.texture, 0);
+      width = texture.width;
+      height = texture.height;
+      this.color = texture;
+    } else {
+      // ???
+      throw new Error('Color attachment must be specified');
+    }
+    // Bind depth... should support textures too.
+    if (options.depth && typeof options.depth === 'number') {
+      if (this.width !== width || this.height !== height) {
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth);
+        // TODO Should reset renderbuffer if it has different size.
+        gl.renderbufferStorage(gl.RENDERBUFFER, options.depth,
+          width, height);
+        // Bind the renderbuffer.
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
+          getAttachment(gl, options.depth), gl.RENDERBUFFER, this.depth);
+      }
+    }
+    // Good enough! we're done. Kind of.
+    this.width = width;
+    this.height = height;
+  }
+  validateSize() {
+    if (this.color != null && this.color.varyingSize &&
+      !this.color.validateSize()
+    ) {
+      return false;
+    }
+    return this.color.width === this.width && this.color.height === this.height;
   }
   use(options) {
     if (this.framebuffer == null) return this.init(options);
     if (options != null) return this.rebind(options);
+    if (!this.validateSize()) {
+      return this.resize();
+    }
     const gl = this.renderer.gl;
     // Too easy
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);

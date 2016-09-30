@@ -1,5 +1,5 @@
 #version 100
-#pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
+// #pragma webglue: feature(USE_NORMAL_MAP, uNormalMap)
 #if defined(USE_NORMAL_MAP)
   #define USE_TANGENT_SPACE
 #endif
