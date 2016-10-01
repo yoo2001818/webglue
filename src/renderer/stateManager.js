@@ -211,6 +211,20 @@ export default class StateManager {
       }
     }
   }
+  setViewport(value) {
+    if (value == null && !this.doReset) return;
+    // If value is not 'false', it's enabled.
+    let enabled = value !== false && value != null;
+    if (enabled) {
+      const gl = this.renderer.gl;
+      gl.viewport(value[0], value[1], value[2], value[3]);
+      this.renderer.width = value[2];
+      this.renderer.height = value[3];
+    } else {
+      // Revert to original viewport
+      this.renderer.setViewport();
+    }
+  }
   clear(options) {
     const gl = this.renderer.gl;
     let flag = 0;
@@ -241,6 +255,7 @@ export default class StateManager {
     this.setDepth(options.depth);
     this.setEnabled(gl.DITHER, BIT_POS.dither, options.dither);
     this.setStencil(options.stencil);
+    this.setViewport(options.viewport);
     // TODO Polygon offset fill
     // TODO Scissor test
   }

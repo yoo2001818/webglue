@@ -114,7 +114,7 @@ export default class Renderer {
     // Set state
     if (tree.framebuffer != this.framebuffers.current) {
       this.framebuffers.use(pass.framebuffer);
-      this.setViewport();
+      if (tree.options.viewport == null) this.setViewport();
     }
     if (pass.options) {
       this.state.set(pass.options, parent == null);
@@ -155,12 +155,6 @@ export default class Renderer {
     if (parent.geometry && pass.geometry) {
       tree.geometry = parent.geometry;
     }
-    // Restore framebuffer
-    if (pass.framebuffer) {
-      tree.framebuffer = parent.framebuffer;
-      this.framebuffers.use(parent.framebuffer);
-      this.setViewport();
-    }
     // Restore options
     if (parent.options && pass.options) {
       Object.assign(tree.options, parent.options);
@@ -173,6 +167,12 @@ export default class Renderer {
         recoverOpts[key] = parent.options[key] || false;
       }
       this.state.set(recoverOpts);
+    }
+    // Restore framebuffer
+    if (pass.framebuffer) {
+      tree.framebuffer = parent.framebuffer;
+      this.framebuffers.use(parent.framebuffer);
+      if (tree.options.viewport == null) this.setViewport();
     }
   }
 }
