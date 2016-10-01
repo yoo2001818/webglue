@@ -3,7 +3,7 @@ import calcNormals from 'webglue/geom/calcNormals';
 
 import MeshTransform from 'webglue/meshTransform';
 
-import { vec4 } from 'gl-matrix';
+import { vec2, vec3, vec4 } from 'gl-matrix';
 
 function packColor(id) {
   // Get R, G, B, A (using little endian)
@@ -66,11 +66,23 @@ export default function mousePick(renderer) {
     depth: gl.DEPTH_COMPONENT16 // Automatically use renderbuffer
   });
 
+  let align = true;
+  let alignColor = '#ff0000';
+  let alignDir = [1, 0, 0];
+
+  let alignGeom = renderer.geometries.create({
+    attributes: {
+      aPosition: [[-1, 0, 0], [1, 0, 0]]
+    },
+    mode: gl.LINES
+  });
+
   let selectedId = 0;
   let contextCache;
   let mouseDown = false;
   let mousePosX = 0;
   let mousePosY = 0;
+  let relativeOffset = vec2.create();
   return {
     update(delta, context) {
       contextCache = context;
@@ -89,7 +101,7 @@ export default function mousePick(renderer) {
             intensity: [0.3, 1.0, 1.0]
           }
         }),
-        passes: meshList.map((data, id) => ({
+        passes: [meshList.map((data, id) => ({
           shader: shader,
           geometry: box,
           uniforms: {
@@ -114,7 +126,22 @@ export default function mousePick(renderer) {
             },
             shader: borderShader
           }, {}] : [{}]
-        }))
+        })), align && meshList[selectedId] != null && {
+          shader: pickShader,
+          geometry: alignGeom,
+          uniforms: {
+            uColor: alignColor,
+            uModel: [
+              alignDir[0] * 1000, alignDir[1] * 1000, alignDir[2] * 1000, 0,
+              0, 0, 0, 0,
+              0, 0, 0, 0,
+              meshList[selectedId].transform.position[0],
+              meshList[selectedId].transform.position[1],
+              meshList[selectedId].transform.position[2],
+              1
+            ]
+          }
+        }]
       });
     },
     mousedown(e, ndc) {
@@ -147,6 +174,37 @@ export default function mousePick(renderer) {
       mousePosX = ndc[0];
       mousePosY = ndc[1];
       mouseDown = true;
+      if (meshList[selectedId] == null) return;
+      if (align) {
+        // We're aligning to axis - Get relative offset from origin to clicked
+        // point
+        let transform = meshList[selectedId].transform;
+        // Project current model position to projection space
+        // (to get Z value)
+        let perspPos = vec4.fromValues(0, 0, 0, 1);
+        vec4.transformMat4(perspPos, perspPos, transform.get());
+        vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.getPV());
+        vec4.scale(perspPos, perspPos, 1 / perspPos[3]);
+        // Last, store relative offset for future use
+        vec2.subtract(relativeOffset, ndc, perspPos);
+      }
+    },
+    keydown(e) {
+      if (e.keyCode === 67) {
+        align = false;
+      } else if (e.keyCode === 88) {
+        align = true;
+        alignColor = '#ff0000';
+        alignDir = [1, 0, 0];
+      } else if (e.keyCode === 89) {
+        align = true;
+        alignColor = '#00ff00';
+        alignDir = [0, 1, 0];
+      } else if (e.keyCode === 90) {
+        align = true;
+        alignColor = '#0000ff';
+        alignDir = [0, 0, 1];
+      }
     },
     mouseup() {
       mouseDown = false;
@@ -158,24 +216,57 @@ export default function mousePick(renderer) {
       mousePosX = ndc[0];
       mousePosY = ndc[1];
       if (meshList[selectedId] == null) return;
-      let transform = meshList[selectedId].transform;
-      // Project current model position to projection space
-      let perspPos = vec4.fromValues(0, 0, 0, 1);
-      vec4.transformMat4(perspPos, perspPos, transform.get());
-      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.getPV());
-      // Then move using delta value
-      perspPos[0] += deltaX * perspPos[3];
-      perspPos[1] += deltaY * perspPos[3];
-      // Inverse-project to world space
-      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
-        getInverseProjection());
-      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
-        transform.get());
-      // Last, write the pos to transform
-      transform.position[0] = perspPos[0];
-      transform.position[1] = perspPos[1];
-      transform.position[2] = perspPos[2];
-      transform.invalidate();
+      if (!align) {
+        // Freestyle translation
+        let transform = meshList[selectedId].transform;
+        // Project current model position to projection space
+        let perspPos = vec4.fromValues(0, 0, 0, 1);
+        vec4.transformMat4(perspPos, perspPos, transform.get());
+        vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.getPV());
+        // Then move using delta value
+        perspPos[0] += deltaX * perspPos[3];
+        perspPos[1] += deltaY * perspPos[3];
+        // Inverse-project to world space
+        vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
+          getInverseProjection());
+        vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
+          transform.get());
+        // Last, write the pos to transform
+        vec3.copy(transform.position, perspPos);
+        transform.invalidate();
+      } else {
+        // How much should it move in viewport space in order to move (1, 0, 0)?
+        let transform = meshList[selectedId].transform;
+        // Project current model position to projection space
+        let perspPos = vec4.fromValues(0, 0, 0, 1);
+        vec4.transformMat4(perspPos, perspPos, transform.get());
+        let addedPos = vec4.create();
+        addedPos[3] = 1;
+        vec3.add(addedPos, perspPos, alignDir);
+        vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.getPV());
+        vec4.transformMat4(addedPos, addedPos, contextCache.cameraObj.getPV());
+        let centerPos = vec2.create();
+        vec2.copy(centerPos, perspPos);
+        vec2.scale(centerPos, centerPos, 1 / perspPos[3]);
+        let dirPos = vec2.create();
+        vec2.copy(dirPos, addedPos);
+        vec2.scale(dirPos, dirPos, 1 / addedPos[3]);
+        vec2.subtract(dirPos, dirPos, centerPos);
+        let dirNorm = vec2.create();
+        vec2.normalize(dirNorm, dirPos);
+        // Now we've got everything, calculated required transform length
+        // and translate to it
+        let projected = vec2.create();
+        vec2.subtract(projected, ndc, centerPos);
+        vec2.subtract(projected, projected, relativeOffset);
+        let dist = vec2.dot(projected, dirNorm);
+        let transSize = dist / vec2.length(dirPos);
+        let translation = vec3.create();
+        vec3.copy(translation, alignDir);
+        vec3.scale(translation, translation, transSize);
+        vec3.add(transform.position, transform.position, translation);
+        transform.invalidate();
+      }
     }
   };
 }

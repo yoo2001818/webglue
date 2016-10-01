@@ -71,6 +71,7 @@ export default class Renderer {
     }
   }
   renderPass(pass, tree) {
+    if (pass == null) return;
     if (Array.isArray(pass)) {
       pass.forEach(data => this.renderPass(data, tree));
       return;
