@@ -3,6 +3,8 @@ import calcNormals from 'webglue/geom/calcNormals';
 
 import MeshTransform from 'webglue/meshTransform';
 
+import { vec4 } from 'gl-matrix';
+
 function packColor(id) {
   // Get R, G, B, A (using little endian)
   // Why do we use Float32Array? Because it's OpenGL.
@@ -66,6 +68,9 @@ export default function mousePick(renderer) {
 
   let selectedId = 0;
   let contextCache;
+  let mouseDown = false;
+  let mousePosX = 0;
+  let mousePosY = 0;
   return {
     update(delta, context) {
       contextCache = context;
@@ -112,7 +117,7 @@ export default function mousePick(renderer) {
         }))
       });
     },
-    mousedown(e) {
+    mousedown(e, ndc) {
       if (e.button !== 0) return;
       // Render mouse pick data
       renderer.render({
@@ -139,6 +144,38 @@ export default function mousePick(renderer) {
       pickFramebuffer.readPixelsRGBA(e.clientX,
         gl.drawingBufferHeight - e.clientY, 1, 1, pixel);
       selectedId = unpackColor(pixel);
+      mousePosX = ndc[0];
+      mousePosY = ndc[1];
+      mouseDown = true;
+    },
+    mouseup() {
+      mouseDown = false;
+    },
+    mousemove(e, ndc) {
+      if (!mouseDown) return;
+      let deltaX = ndc[0] - mousePosX;
+      let deltaY = ndc[1] - mousePosY;
+      mousePosX = ndc[0];
+      mousePosY = ndc[1];
+      if (meshList[selectedId] == null) return;
+      let transform = meshList[selectedId].transform;
+      // Project current model position to projection space
+      let perspPos = vec4.fromValues(0, 0, 0, 1);
+      vec4.transformMat4(perspPos, perspPos, transform.get());
+      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.getPV());
+      // Then move using delta value
+      perspPos[0] += deltaX * perspPos[3];
+      perspPos[1] += deltaY * perspPos[3];
+      // Inverse-project to world space
+      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
+        getInverseProjection());
+      vec4.transformMat4(perspPos, perspPos, contextCache.cameraObj.
+        transform.get());
+      // Last, write the pos to transform
+      transform.position[0] = perspPos[0];
+      transform.position[1] = perspPos[1];
+      transform.position[2] = perspPos[2];
+      transform.invalidate();
     }
   };
 }
