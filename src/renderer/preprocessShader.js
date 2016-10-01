@@ -179,7 +179,7 @@ export default class PreprocessShader {
       if (this.useCounts) {
         this.shaders.forEach(v => v.shader.dispose());
       } else {
-        this.shaders.dispose();
+        if (this.shaders != null) this.shaders.dispose();
       }
     }
   }

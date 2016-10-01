@@ -56,7 +56,7 @@ export default function border(renderer) {
             depthMask: true
           },
           uniforms: {
-            uBias: 0.02,
+            uBias: [0.02, 0.02],
             uColor: '#ffffff'
           },
           shader: monoShader

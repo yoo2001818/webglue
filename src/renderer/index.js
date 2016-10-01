@@ -111,12 +111,9 @@ export default class Renderer {
     }
     // -- Push (Enter)
     // Set state
-    if (pass.framebuffer) {
+    if (tree.framebuffer != this.framebuffers.current) {
       this.framebuffers.use(pass.framebuffer);
       this.setViewport();
-    }
-    if (parent.framebuffer != null && pass.framebuffer == null) {
-      this.framebuffers.use(null);
     }
     if (pass.options) {
       this.state.set(pass.options, parent == null);

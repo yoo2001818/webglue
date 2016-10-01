@@ -46,14 +46,8 @@ export default function ssao(renderer) {
       ]
     })
   );
-  let floorTexture = renderer.textures.create(require('../texture/stone.jpg'), {
+  let floorTexture = renderer.textures.create(require('../texture/wood4.jpg'), {
     params: {
-      wrapS: gl.REPEAT,
-      wrapT: gl.REPEAT
-    }
-  });
-  let floorNormal = renderer.textures.create(
-    require('../texture/stone-normal.jpg'), { params: {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT
     }
@@ -65,16 +59,16 @@ export default function ssao(renderer) {
       minFilter: gl.NEAREST,
       magFilter: gl.NEAREST
     },
-    width: () => gl.drawingBufferWidth / 3,
-    height: () => gl.drawingBufferHeight / 3
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
   });
   let ssaoOutTexture = renderer.textures.create(null, {
-    width: () => gl.drawingBufferWidth / 3,
-    height: () => gl.drawingBufferHeight / 3
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
   });
   let ssaoOutTexture2 = renderer.textures.create(null, {
-    width: () => gl.drawingBufferWidth / 3,
-    height: () => gl.drawingBufferHeight / 3
+    width: () => gl.drawingBufferWidth / 2,
+    height: () => gl.drawingBufferHeight / 2
   });
   let ssaoFramebuffer = renderer.framebuffers.create({
     color: ssaoTexture,
@@ -163,7 +157,6 @@ export default function ssao(renderer) {
           uModel: floorTransform.get,
           uNormal: floorTransform.getNormal,
           uDiffuseMap: floorTexture,
-          uNormalMap: floorNormal,
           uMaterial: {
             ambient: '#ffffff',
             diffuse: '#999999',

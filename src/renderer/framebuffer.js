@@ -148,6 +148,36 @@ export default class Framebuffer {
     }
     return this.color.width === this.width && this.color.height === this.height;
   }
+  readPixels(x, y, width, height, format, type, pixels) {
+    const gl = this.renderer.gl;
+    // Use itself
+    this.renderer.framebuffers.use(this);
+    return gl.readPixels(x, y, width, height, format, type, pixels);
+  }
+  readPixelsRGBA(x, y, width, height, pixels) {
+    const gl = this.renderer.gl;
+    if (pixels instanceof Uint8Array) {
+      return this.readPixels(x, y, width, height, gl.RGBA,
+        gl.UNSIGNED_BYTE, pixels);
+    } else if (pixels instanceof Float32Array) {
+      return this.readPixels(x, y, width, height, gl.RGBA,
+        gl.FLOAT, pixels);
+    } else {
+      throw new Error('Uint16Array is not supported (use readPixels)');
+    }
+  }
+  readPixelsRGB(x, y, width, height, pixels) {
+    const gl = this.renderer.gl;
+    if (pixels instanceof Uint8Array) {
+      return this.readPixels(x, y, width, height, gl.RGB,
+        gl.UNSIGNED_BYTE, pixels);
+    } else if (pixels instanceof Float32Array) {
+      return this.readPixels(x, y, width, height, gl.RGB,
+        gl.FLOAT, pixels);
+    } else {
+      throw new Error('Uint16Array is not supported (use readPixels)');
+    }
+  }
   use(options) {
     if (this.framebuffer == null) return this.init(options);
     if (options != null) return this.rebind(options);

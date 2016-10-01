@@ -88,6 +88,6 @@ void main() {
     float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(samplePos.z - viewPos.z));
     occulsion += (sampleVec.z <= samplePos.z ? 1.0 : 0.0) * rangeCheck;
   }
-  occulsion = pow(1.0 - (occulsion / float(SAMPLE_COUNT)), 2.82);
+  occulsion = pow(1.0 - (occulsion / float(SAMPLE_COUNT)), 1.50);
   gl_FragColor = vec4(vec3(occulsion), 1.0);
 }
