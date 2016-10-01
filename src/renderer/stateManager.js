@@ -225,6 +225,12 @@ export default class StateManager {
       this.renderer.setViewport();
     }
   }
+  setScissor(options) {
+    const gl = this.renderer.gl;
+    this.setEnabled(gl.SCISSOR_TEST, BIT_POS.scissor, options);
+    if (!options) return;
+    gl.scissor(options[0], options[1], options[2], options[3]);
+  }
   clear(options) {
     const gl = this.renderer.gl;
     let flag = 0;
@@ -256,7 +262,7 @@ export default class StateManager {
     this.setEnabled(gl.DITHER, BIT_POS.dither, options.dither);
     this.setStencil(options.stencil);
     this.setViewport(options.viewport);
+    this.setScissor(options.scissor);
     // TODO Polygon offset fill
-    // TODO Scissor test
   }
 }

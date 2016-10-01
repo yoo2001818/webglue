@@ -2,6 +2,11 @@
 import parseAttributes from '../../util/parseAttributes';
 import parseIndices from '../../util/parseIndices';
 
+export { default as channelOld } from './channelOld';
+export { default as calcTangents } from './calcTangents';
+export { default as calcSmoothNormals } from './calcSmoothNormals';
+export { default as calcNormals } from './calcNormals';
+
 export default function channel(input) {
   if (Array.isArray(input)) return input.map(v => channel(v));
   let attributes = parseAttributes(input.attributes);

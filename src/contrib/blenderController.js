@@ -1,13 +1,18 @@
 import { quat, vec3 } from 'gl-matrix';
+import { perspective, orthogonal } from '../camera';
+
+function easeInOutQuad (t) {
+  t *= 2;
+  if (t < 1) return t*t/2;
+  t--;
+  return (t*(t-2) - 1) / -2;
+}
 
 export default class BlenderCameraController {
   constructor(node, keyNode, camera) {
-    this.node = node;
-    this.keyNode = keyNode;
-    this.camera = camera;
+    // Blender-like control mode
     this.center = vec3.create();
     this.radius = 6;
-    this.hasChanged = true;
 
     this.mouseHeld = false;
     this.mouseX = 0;
@@ -21,24 +26,38 @@ export default class BlenderCameraController {
     this.lerpStart = vec3.create();
     this.lerpEnd = vec3.create();
     this.lerpCounter = -1;
+
+    // false - Blender-like control
+    // true - FPS-like control
+    this.mode = false;
+    //
+    this.perspective = true;
+
+    this.hasChanged = true;
+    this.camera = camera;
+
+    this.node = node;
+    this.keyNode = keyNode;
+
+    this.registerEvents();
   }
   registerEvents() {
     this.node.addEventListener('mousemove', e => {
       if (!this.mouseHeld) return;
-      const { camera } = this;
       let offsetX = e.clientX - this.mouseX;
       let offsetY = e.clientY - this.mouseY;
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
+      let transform = this.camera.transform;
       if (e.shiftKey) {
         // Do translation instead - we'd need two vectors to make translation
         // relative to the camera rotation
         let vecX = vec3.create();
         let vecY = vec3.create();
         vec3.transformQuat(vecX, [-offsetX * this.radius / 600, 0, 0],
-          camera.transform.rotation);
+          transform.rotation);
         vec3.transformQuat(vecY, [0, offsetY * this.radius / 600, 0],
-          camera.transform.rotation);
+          transform.rotation);
         vec3.add(this.center, this.center, vecX);
         vec3.add(this.center, this.center, vecY);
         this.hasChanged = true;
@@ -46,18 +65,56 @@ export default class BlenderCameraController {
       }
       // rotation....
       let rot = quat.create();
-      quat.rotateY(rot, rot,
-          Math.PI / 180 * -offsetX * this.rotateDir);
-      quat.multiply(camera.transform.rotation, rot, camera.transform.rotation);
-      quat.rotateX(camera.transform.rotation, camera.transform.rotation,
-          Math.PI / 180 * -offsetY);
+      quat.rotateY(rot, rot, Math.PI / 180 * -offsetX *
+        this.rotateDir / 4);
+      quat.multiply(transform.rotation, rot, transform.rotation);
+      quat.rotateX(transform.rotation, transform.rotation,
+        Math.PI / 180 * -offsetY / 4);
       this.hasChanged = true;
     });
     this.node.addEventListener('contextmenu', e => {
       e.preventDefault();
     });
+    this.node.addEventListener('touchstart', e => {
+      e.preventDefault();
+      this.mouseHeld = true;
+      // Determine if we should go clockwise or anticlockwise.
+      let upLocal = vec3.create();
+      let up = vec3.fromValues(0, 1, 0);
+      vec3.transformQuat(upLocal, [0, 1, 0],
+        this.camera.transform.rotation);
+      let upDot = vec3.dot(up, upLocal);
+      this.rotateDir = upDot >= 0 ? 1 : -1;
+      // Set position
+      this.mouseX = e.changedTouches[0].pageX;
+      this.mouseY = e.changedTouches[0].pageY;
+    }, false);
+    this.node.addEventListener('touchmove', e => {
+      if (!this.mouseHeld) return;
+      let offsetX = e.changedTouches[0].pageX - this.mouseX;
+      let offsetY = e.changedTouches[0].pageY - this.mouseY;
+      this.mouseX = e.changedTouches[0].pageX;
+      this.mouseY = e.changedTouches[0].pageY;
+      let transform = this.camera.transform;
+      // rotation....
+      let rot = quat.create();
+      quat.rotateY(rot, rot, Math.PI / 180 * -offsetX *
+        this.rotateDir / 4);
+      quat.multiply(transform.rotation, rot, transform.rotation);
+      quat.rotateX(transform.rotation, transform.rotation,
+        Math.PI / 180 * -offsetY / 4);
+      this.hasChanged = true;
+    });
+    this.node.addEventListener('touchend', e => {
+      e.preventDefault();
+      this.mouseHeld = false;
+    }, false);
+    this.node.addEventListener('touchcancel', e => {
+      e.preventDefault();
+      this.mouseHeld = false;
+    }, false);
     this.node.addEventListener('mousedown', e => {
-      if (e.button !== 1 && e.button !== 2) return;
+      if (e.button === 0) return;
       this.mouseHeld = true;
       // Determine if we should go clockwise or anticlockwise.
       let upLocal = vec3.create();
@@ -72,7 +129,7 @@ export default class BlenderCameraController {
       e.preventDefault();
     });
     this.node.addEventListener('mouseup', e => {
-      if (e.button !== 1 && e.button !== 2) return;
+      if (e.button === 0) return;
       this.mouseHeld = false;
       e.preventDefault();
     });
@@ -86,18 +143,10 @@ export default class BlenderCameraController {
       }
       // Persp - Ortho swap
       if (e.keyCode === 101 || e.keyCode === 53) {
-        if (camera.options.type === 'persp') {
-          camera.options.type = 'ortho';
-          camera.options.near = -100;
-          //camera.far = 100;
-          // statusBar.innerHTML = 'User Ortho';
-        } else {
-          camera.options.type = 'persp';
-          camera.options.near = 0.3;
-          //camera.far = 1000;
-          // statusBar.innerHTML = 'User Persp';
+        this.perspective = !this.perspective;
+        if (this.perspective) {
+          camera.projection = perspective(Math.PI / 180 * 70, 0.3, 1000);
         }
-        camera.invalidate();
         this.hasChanged = true;
       }
       // Front
@@ -131,17 +180,32 @@ export default class BlenderCameraController {
       }
     });
     this.node.addEventListener('wheel', e => {
-      if (e.deltaMode === 0) {
-        this.radius += this.radius * e.deltaY / 50 / 12;
-      } else {
-        this.radius += this.radius * e.deltaY / 50;
+      let diff = e.deltaY / 50;
+      if (e.deltaMode === 0) diff /= 12;
+      if (e.shiftKey) {
+        let vecY = vec3.create();
+        vec3.transformQuat(vecY, [0, -diff * this.radius, 0],
+          this.rotation);
+        vec3.add(this.center, this.center, vecY);
+        this.hasChanged = true;
+        e.preventDefault();
+        return;
+      } else if (e.ctrlKey) {
+        let vecX = vec3.create();
+        vec3.transformQuat(vecX, [diff * this.radius, 0, 0],
+          this.rotation);
+        vec3.add(this.center, this.center, vecX);
+        this.hasChanged = true;
+        e.preventDefault();
+        return;
       }
+      this.radius += this.radius * diff;
       this.hasChanged = true;
       e.preventDefault();
     });
   }
   update(delta) {
-    const { camera } = this;
+    let transform = this.camera.transform;
     if (this.lerpCounter !== -1) {
       this.lerpCounter = Math.min(1, this.lerpCounter + delta * 4);
       vec3.lerp(this.center,
@@ -152,35 +216,21 @@ export default class BlenderCameraController {
     }
     if (this.slerpCounter !== -1) {
       this.slerpCounter = Math.min(1, this.slerpCounter + delta * 4);
-      quat.slerp(camera.transform.rotation,
+      quat.slerp(transform.rotation,
         this.slerpStart, this.slerpEnd, easeInOutQuad(this.slerpCounter)
       );
       this.hasChanged = true;
       if (this.slerpCounter >= 1) this.slerpCounter = -1;
     }
     if (this.hasChanged) {
-      if (camera.options.type === 'ortho') {
-        camera.options.zoom = this.radius;
-        camera.invalidate();
-        vec3.transformQuat(camera.transform.position, [0, 0, 100],
-          camera.transform.rotation);
-        vec3.add(camera.transform.position, camera.transform.position,
-          this.center);
-      } else {
-        vec3.transformQuat(camera.transform.position, [0, 0, this.radius],
-          camera.transform.rotation);
-        vec3.add(camera.transform.position, camera.transform.position,
-          this.center);
+      if (!this.perspective) {
+        this.camera.projection = orthogonal(this.radius / 2, 0.1, 1000);
       }
-      camera.transform.invalidate();
+      vec3.transformQuat(transform.position, [0, 0, this.radius],
+        transform.rotation);
+      vec3.add(transform.position, transform.position, this.center);
+      transform.invalidate();
       this.hasChanged = false;
     }
   }
-}
-
-function easeInOutQuad (t) {
-  t *= 2;
-  if (t < 1) return t*t/2;
-  t--;
-  return (t*(t-2) - 1) / -2;
 }

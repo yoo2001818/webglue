@@ -13,6 +13,8 @@ export default class FPSCameraController {
     this.mouseX = 0;
     this.mouseY = 0;
     this.keys = [];
+    
+    this.registerEvents();
   }
   registerEvents() {
     this.node.addEventListener('click', () => {

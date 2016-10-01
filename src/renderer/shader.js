@@ -1,8 +1,5 @@
 import parseUniform from '../util/parseUniform';
 
-const PRODUCTION = typeof process != 'undefined' &&
-  process.env.NODE_ENV === 'production';
-
 function compileShader(gl, data, type) {
   let shader = gl.createShader(type);
   gl.shaderSource(shader, data);
@@ -50,13 +47,11 @@ export default class Shader {
         gl.getProgramInfoLog(program));
     }
 
-    if (PRODUCTION) {
-      // Clean up the shaders
-      gl.detachShader(program, this.shader.vert);
-      gl.detachShader(program, this.shader.frag);
-      gl.deleteShader(this.shader.vert);
-      gl.deleteShader(this.shader.frag);
-    }
+    // Clean up the shaders
+    gl.detachShader(program, this.shader.vert);
+    gl.detachShader(program, this.shader.frag);
+    gl.deleteShader(this.shader.vert);
+    gl.deleteShader(this.shader.frag);
 
     this.program = program;
     this.attributes = {};

@@ -1,6 +1,6 @@
 import Renderer from 'webglue/renderer';
 import Camera from 'webglue/camera';
-import CameraController from './cameraController';
+import CameraController from 'webglue/contrib/blenderController';
 import './style/index.css';
 
 function requireAll(context) {
