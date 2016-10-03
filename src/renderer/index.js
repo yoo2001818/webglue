@@ -76,6 +76,9 @@ export default class Renderer {
       pass.forEach(data => this.renderPass(data, tree));
       return;
     }
+    if (typeof pass === 'function') {
+      return this.renderPass(pass(tree), this);
+    }
     if (tree.uniforms == null) tree.uniforms = {};
     if (tree.options == null) tree.options = {};
     let parent = {};

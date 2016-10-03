@@ -84,15 +84,15 @@ export default class PreprocessShader {
       let vertDefines = [];
       let fragDefines = [];
       // Build current feature map
-      let featureKey = this.metadata.features.map(v => {
+      let featureKey = this.metadata.features.reduce((prev, v) => {
         if (uniforms[v.key]) {
           vertDefines.push.apply(vertDefines, v.vert || []);
           fragDefines.push.apply(fragDefines, v.frag || []);
-          return 'o';
+          return prev << 1 + 1;
         } else {
-          return 'x';
+          return prev << 1;
         }
-      }).join('');
+      }, 0);
       if (this.useCounts) {
         let selected;
         if (this.shaders[featureKey] == null) {
