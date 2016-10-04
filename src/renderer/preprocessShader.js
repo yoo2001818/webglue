@@ -88,7 +88,7 @@ export default class PreprocessShader {
         if (uniforms[v.key]) {
           vertDefines.push.apply(vertDefines, v.vert || []);
           fragDefines.push.apply(fragDefines, v.frag || []);
-          return prev << 1 + 1;
+          return (prev << 1) + 1;
         } else {
           return prev << 1;
         }

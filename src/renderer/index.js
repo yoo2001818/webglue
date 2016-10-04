@@ -50,6 +50,8 @@ export default class Renderer {
       this.width = gl.drawingBufferWidth;
       this.height = gl.drawingBufferHeight;
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    } else {
+      this.framebuffers.use(this.framebuffers.current);
     }
     if (!Array.isArray(data)) return this.renderPass(data, {});
     // Render each pass
