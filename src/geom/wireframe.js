@@ -3,9 +3,8 @@ import getVerticesCount from '../util/getVerticesCount';
 import createIndicesArray from '../util/createIndicesArray';
 
 export default function wireframe(input) {
-  if (input.mode != null && input.mode != TRIANGLES) {
-    throw new Error('Wireframe geometry only supports triangles');
-  }
+  if (Array.isArray(input)) return input.map(v => wireframe(v));
+  if (input.mode != null && input.mode != TRIANGLES) return input;
   let verticesCount = getVerticesCount(input.attributes);
   if (input.indices) {
     let indices = createIndicesArray(verticesCount,
