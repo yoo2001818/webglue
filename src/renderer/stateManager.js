@@ -231,6 +231,12 @@ export default class StateManager {
     if (!options) return;
     gl.scissor(options[0], options[1], options[2], options[3]);
   }
+  setPolygonOffset(options) {
+    const gl = this.renderer.gl;
+    this.setEnabled(gl.POLYGON_OFFSET_FILL, BIT_POS.polygonOffset, options);
+    if (!options) return;
+    gl.polygonOffset(options[0], options[1]);
+  }
   clear(options) {
     const gl = this.renderer.gl;
     let flag = 0;
@@ -263,6 +269,6 @@ export default class StateManager {
     this.setStencil(options.stencil);
     this.setViewport(options.viewport);
     this.setScissor(options.scissor);
-    // TODO Polygon offset fill
+    this.setPolygonOffset(options.polygonOffset);
   }
 }
