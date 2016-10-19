@@ -17,8 +17,9 @@ export default class ShaderManager {
         allocator: current => current
       },
       maxLength: {
-        checker: (shader, current) => shader >= current.length,
-        allocator: current => current.length
+        checker: (shader, current) =>
+          shader >= (current == null ? 0 : current.length),
+        allocator: current => current == null ? 0 : current.length
       }
     };
   }
