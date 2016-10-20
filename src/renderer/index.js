@@ -79,7 +79,7 @@ export default class Renderer {
       return;
     }
     if (typeof pass === 'function') {
-      return this.renderPass(pass(tree), this);
+      return this.renderPass(pass(tree), tree);
     }
     if (tree.uniforms == null) tree.uniforms = {};
     if (tree.options == null) tree.options = {};
