@@ -10,6 +10,7 @@ export default class TextureManager {
   constructor(renderer) {
     this.renderer = renderer;
     this.textures = [];
+    this.handler = null;
 
     // Active textures in LRU order
     this.activeTextures = [];

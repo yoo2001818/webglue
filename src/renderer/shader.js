@@ -252,7 +252,10 @@ export default class Shader {
       break;
     case gl.SAMPLER_2D:
     case gl.SAMPLER_CUBE:
-      // TODO Apply texture...
+      // Call texture handler (if any)
+      if (this.renderer.textures.handler != null) {
+        value = this.renderer.textures.handler(value);
+      }
       gl.uniform1i(key, this.renderer.textures.use(metadata.texture, value));
       break;
     }

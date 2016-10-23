@@ -103,6 +103,11 @@ export default class Renderer {
       tree.shaderHandler = pass.shaderHandler;
       this.shaders.handler = pass.shaderHandler;
     }
+    if (pass.textureHandler) {
+      parent.textureHandler = tree.textureHandler;
+      tree.textureHandler = pass.textureHandler;
+      this.textures.handler = pass.textureHandler;
+    }
     if (pass.shader) {
       parent.shader = tree.shader;
       tree.shader = pass.shader;
@@ -150,6 +155,10 @@ export default class Renderer {
     if (pass.shaderHandler) {
       tree.shaderHandler = parent.shaderHandler;
       this.shaders.handler = parent.shaderHandler;
+    }
+    if (pass.textureHandler) {
+      tree.textureHandler = parent.textureHandler;
+      this.textures.handler = parent.textureHandler;
     }
     if (parent.shader && pass.shader) {
       tree.shader = parent.shader;
