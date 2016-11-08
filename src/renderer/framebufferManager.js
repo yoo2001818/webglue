@@ -18,7 +18,6 @@ export default class FramebufferManager {
       if (this.current == null) return;
       const gl = this.renderer.gl;
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
       this.current = null;
       return;
     }
