@@ -1,4 +1,5 @@
 import parseUniform from '../util/parseUniform';
+import traverseNode from '../util/traverseNode';
 
 const BIT_POS = {
   blend: 1,
@@ -17,6 +18,7 @@ export default class StateManager {
     this.doReset = false;
     this.renderer = renderer;
     this.state = 0;
+    this.currentNode = null;
     /*this.state = {
       blend: {
         enabled: false,
@@ -255,6 +257,31 @@ export default class StateManager {
       flag |= gl.STENCIL_BUFFER_BIT;
     }
     if (flag !== 0) gl.clear(flag);
+  }
+  setNode(node) {
+    let dirty = false;
+    let options = {};
+    traverseNode(this.currentNode, node, v => {
+      dirty = true;
+      for (let key in v.data.options) {
+        if (key === 'clearStencil') continue;
+        if (key === 'clearDepth') continue;
+        if (key === 'clearColor') continue;
+        let parent = v.parent;
+        if (parent != null && parent.data.options != null) {
+          options[key] = parent.data.options[key];
+        } else {
+          options[key] = false;
+        }
+      }
+    }, v => {
+      dirty = true;
+      for (let key in v.data.options) {
+        options[key] = v.data.options[key];
+      }
+    });
+    if (dirty) this.set(options, this.currentNode == null);
+    this.currentNode = node;
   }
   set(options, reset = false) {
     this.doReset = reset;

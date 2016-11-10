@@ -21,6 +21,7 @@ export default class Shader {
     this.attributes = {};
     this.uniforms = {};
     this.uniformTypes = {};
+    this.currentNode = null;
   }
   upload() {
     if (this.program !== null) return;
@@ -164,7 +165,7 @@ export default class Shader {
     const gl = this.renderer.gl;
     if (this.program === null) this.upload();
     if (current !== this) gl.useProgram(this.program);
-    this.setUniforms(uniforms);
+    if (uniforms != null) this.setUniforms(uniforms);
     return this;
   }
   setUniforms(originalValues, uniforms = this.uniforms) {
@@ -178,7 +179,10 @@ export default class Shader {
     if (typeof uniforms.type === 'number') {
       return this.setUniform(values, uniforms);
     }
+    // Disable setting to 0 because it's meaningless.
+    if (values === false) return;
     // Set all children to 0...
+    /*
     if (values === false) {
       if (Array.isArray(uniforms)) {
         for (let i = 0; i < uniforms.length; ++i) {
@@ -190,6 +194,7 @@ export default class Shader {
         }
       }
     }
+    */
     if (Array.isArray(values)) {
       for (let i = 0; i < values.length; ++i) {
         if (uniforms[i] == null) continue;

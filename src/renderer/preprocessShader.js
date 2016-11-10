@@ -71,14 +71,58 @@ export default class PreprocessShader {
 
     this.metadata = flattenMetadata(mergeMetadata(
       parseMetadata(vert, governors), parseMetadata(frag, governors)));
-    this.useFeatures = Object.keys(this.metadata.features).length !== 0;
-    this.useCounts = Object.keys(this.metadata.counts).length !== 0;
+    this.useFeatures = this.metadata.features.length !== 0;
+    this.useCounts = this.metadata.counts.length !== 0;
+    this.invalidators = [];
+    if (this.useFeatures) {
+      this.metadata.features.forEach(v => {
+        this.invalidators.push(v.key);
+      });
+    }
+    if (this.useCounts) {
+      this.metadata.counts.forEach(v => {
+        this.invalidators.push(v.key);
+      });
+    }
+    this.dirty = true;
+    this.currentShader = null;
+    this.currentUniforms = {};
+    this.currentNode = null;
     // Shaders tree structure: { [flags]: [{counts: ..., shader}, ...], ...}
     // What if there is no 'feature'? It'll fallback to array.
     // What if there is no 'count'? It'll fallback to raw shader object.
     this.shaders = null;
   }
-  getShader(uniforms) {
+  ascendNode(node) {
+    let uniforms = node.data.uniforms;
+    if (uniforms == null) return;
+    this.invalidators.forEach(key => {
+      if (uniforms[key] !== undefined) {
+        if (node.parent == null) {
+          this.currentUniforms[key] = null;
+        } else {
+          this.currentUniforms[key] = node.parent.getUniform(key);
+        }
+        this.dirty = true;
+      }
+    });
+  }
+  descendNode(node) {
+    let uniforms = node.data.uniforms;
+    if (uniforms == null) return;
+    this.invalidators.forEach(key => {
+      if (uniforms[key] !== undefined) {
+        // TODO Check if count/feature is still valid
+        this.currentUniforms[key] = uniforms[key];
+        this.dirty = true;
+      }
+    });
+  }
+  getShader(uniforms = this.currentUniforms) {
+    if (uniforms === this.currentUniforms && !this.dirty) {
+      return this.currentShader;
+    }
+    this.dirty = false;
     if (this.useFeatures) {
       if (this.shaders == null) this.shaders = {};
       let vertDefines = [];
@@ -132,8 +176,10 @@ export default class PreprocessShader {
           );
           shader.parent = this;
           selected.push({shader, uniforms: uniformData});
+          this.currentShader = shader;
           return shader;
         } else {
+          this.currentShader = match.shader;
           return match.shader;
         }
       } else {
@@ -149,6 +195,7 @@ export default class PreprocessShader {
           this.shaders[featureKey] = shader;
         }
         let selected = this.shaders[featureKey];
+        this.currentShader = selected;
         return selected;
       }
     } else {
@@ -157,6 +204,7 @@ export default class PreprocessShader {
           this.source.vert, this.source.frag);
         this.shaders.parent = this;
       }
+      this.currentShader = this.shaders;
       return this.shaders;
     }
   }

@@ -3,6 +3,7 @@ import GeometryManager from './geometryManager';
 import TextureManager from './textureManager';
 import FramebufferManager from './framebufferManager';
 import StateManager from './stateManager';
+import RenderNode from '../util/renderNode';
 
 export default class Renderer {
   constructor(gl) {
@@ -44,13 +45,10 @@ export default class Renderer {
   }
   render(data) {
     if (this.gl.isContextLost()) return false;
-    let newTree = {
-      uniforms: {},
-      options: {}
-    };
-    if (!Array.isArray(data)) return this.renderPass(data, newTree, true);
+    this.state.currentNode = null;
+    if (!Array.isArray(data)) return this.renderPass(data, null);
     // Render each pass
-    data.forEach(pass => this.renderPass(pass, newTree, true));
+    data.forEach(pass => this.renderPass(pass, null));
   }
   setViewport() {
     const gl = this.gl;
@@ -67,72 +65,48 @@ export default class Renderer {
       gl.viewport(0, 0, framebuffer.width, framebuffer.height);
     }
   }
-  renderPass(pass, tree, isRoot) {
+  renderPass(pass, parent) {
     if (pass == null || pass === false) return;
     if (Array.isArray(pass)) {
-      pass.forEach(data => this.renderPass(data, tree));
+      pass.forEach(data => this.renderPass(data, parent));
       return;
     }
     if (typeof pass === 'function') {
-      return this.renderPass(pass(tree), tree);
+      return this.renderPass(pass(parent), parent);
     }
-    let newTree = Object.assign({}, tree);
-    if (pass.framebuffer != null) newTree.framebuffer = pass.framebuffer;
-    if (pass.framebuffer || isRoot) {
+    // Build node
+    let node = new RenderNode(pass, parent);
+    // Set framebuffers.
+    if (pass.framebuffer !== undefined || parent == null) {
       this.framebuffers.use(pass.framebuffer);
-      if (newTree.options.viewport == null) this.setViewport();
+      if (node.getOption('viewport') == null) this.setViewport();
     }
-    if (pass.uniforms) {
-      newTree.uniforms = Object.assign({}, tree.uniforms, pass.uniforms);
-    }
-    let optionsRecover;
-    if (pass.options) {
-      optionsRecover = {};
-      newTree.options = Object.assign({}, tree.options);
-      for (let key in pass.options) {
-        if (key === 'clearStencil' || key === 'clearDepth' ||
-          key === 'clearColor') continue;
-        optionsRecover[key] = newTree.options[key] || false;
-        newTree.options[key] = pass.options[key];
-      }
-      this.state.set(pass.options, isRoot);
-    }
-    if (pass.shaderHandler) newTree.shaderHandler = pass.shaderHandler;
-    if (pass.textureHandler) newTree.textureHandler = pass.textureHandler;
-    this.shaders.handler = newTree.shaderHandler;
-    this.textures.handler = newTree.textureHandler;
-    if (pass.shader) newTree.shader = pass.shader;
-    if (pass.geometry) newTree.geometry = pass.geometry;
-    // -- Push (Enter)
-    // -- Draw call... quite simple.
+    // We do 'lazy evaluation' or something like that - to prevent useless
+    // WebGL calls.
     if (pass.passes == null) {
-      this.shaders.use(newTree.shader, newTree.uniforms);
-      this.geometries.use(newTree.geometry);
+      this.shaders.handler = node.shaderHandler;
+      this.textures.handler = node.textureHandler;
+      this.state.setNode(node);
+      this.shaders.useNode(node);
+      this.geometries.use(node.geometry);
       this.geometries.draw();
       // Check mipmap
-      if (newTree.framebuffer != null && newTree.options.mipmap === true) {
+      if (node.framebuffer != null && node.getOption('mipmap') === true) {
         // TODO This will be a problem if color texture is not specified
         let texture = this.framebuffers.current.options.color;
         if (texture.renderer == null) texture = texture.texture;
         texture.generateMipmap();
       }
-    }
-    // -- Children
-    if (pass.passes) {
+    } else {
       if (Array.isArray(pass.passes)) {
-        pass.passes.forEach(data => this.renderPass(data, newTree));
+        pass.passes.forEach(data => this.renderPass(data, node));
       } else {
-        this.renderPass(pass.passes, newTree);
+        this.renderPass(pass.passes, node);
       }
     }
-    // -- Pop (Exit)
-    // Restore options
-    if (pass.options && !isRoot) {
-      this.state.set(optionsRecover);
-    }
-    if (pass.framebuffer) {
-      this.framebuffers.use(tree.framebuffer);
-      if (newTree.options.viewport == null) this.setViewport();
+    if (pass.framebuffer !== undefined && parent != null) {
+      this.framebuffers.use(parent.framebuffer);
+      if (node.getOption('viewport') == null) this.setViewport();
     }
   }
 }

@@ -1,5 +1,6 @@
 import PreprocessShader from './preprocessShader';
 import Shader from './shader';
+import traverseNode from '../util/traverseNode';
 export default class ShaderManager {
   constructor(renderer) {
     this.renderer = renderer;
@@ -32,6 +33,33 @@ export default class ShaderManager {
     }
     this.shaders.push(shader);
     return shader;
+  }
+  useNode(node) {
+    let shader = node.shader;
+    // First, we pre-calculate uniforms before doing anything else.
+    // However, this is only for 'pre-process' shader, so we skip if
+    // invaliators are not defined.
+    if (shader.invalidators && (shader.useCounts || shader.useFeatures)) {
+      traverseNode(shader.currentNode, node, v => {
+        shader.ascendNode(v);
+      }, v => {
+        shader.descendNode(v);
+      }, () => {
+        shader.currentUniforms = {};
+      });
+      shader.currentNode = node;
+      shader = shader.getShader();
+    }
+    if (this.handler != null) {
+      shader = this.handler(shader, node, this.renderer);
+    }
+    shader = shader.use(undefined, this.current);
+    this.current = shader;
+    // Traverse to the uniforms
+    traverseNode(shader.currentNode, node, () => {}, v => {
+      if (v.data.uniforms != null) shader.setUniforms(v.data.uniforms);
+    });
+    shader.currentNode = node;
   }
   use(shader, uniforms) {
     let returned = shader.getShader(uniforms, this.current);
