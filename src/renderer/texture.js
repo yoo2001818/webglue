@@ -58,6 +58,8 @@ export default class Texture {
     this.unit = -1;
     this.texture = null;
     this.loaded = false;
+    // Use this to reupload only the texture
+    this.valid = false;
 
     this.mipmapPending = false;
     this.varyingSize = false;
@@ -117,6 +119,23 @@ export default class Texture {
     }
     return this.width === width && this.height === height;
   }
+  reupload() {
+    const gl = this.renderer.gl;
+    let source = this.options.source;
+    // Make sure everything is loaded and load...
+    if (Array.isArray(source)) {
+      if (!source.every(isLoaded)) return false;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
+      for (let i = 0; i < 6; ++i) {
+        this.uploadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, source[i]);
+      }
+    } else {
+      if (!isLoaded(source)) return false;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
+      this.uploadTexture(gl.TEXTURE_2D, source);
+    }
+    this.valid = true;
+  }
   upload() {
     const gl = this.renderer.gl;
     if (this.texture == null) this.init();
@@ -133,18 +152,7 @@ export default class Texture {
     this.width = null;
     this.height = null;
 
-    // Make sure everything is loaded and load...
-    if (Array.isArray(source)) {
-      if (!source.every(isLoaded)) return false;
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
-      for (let i = 0; i < 6; ++i) {
-        this.uploadTexture(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, source[i]);
-      }
-    } else {
-      if (!isLoaded(source)) return false;
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.options.params.flipY);
-      this.uploadTexture(gl.TEXTURE_2D, source);
-    }
+    this.reupload();
 
     // Set texture parameters
     for (let key in this.options.params) {
@@ -167,6 +175,7 @@ export default class Texture {
       gl.texParameteri(target, OPTIONS_KEY[key], value);
     }
     this.loaded = true;
+    this.valid = true;
     // All done!
   }
   generateMipmap() {
@@ -182,6 +191,7 @@ export default class Texture {
       this.upload();
     } else {
       gl.bindTexture(this.target, this.texture);
+      if (!this.valid) this.reupload();
       if (this.mipmapPending && !isFramebuffer) {
         this.mipmapPending = false;
         gl.generateMipmap(this.target);

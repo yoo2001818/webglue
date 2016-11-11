@@ -60,7 +60,7 @@ export default class TextureManager {
     // anything but draw calls aren't expensive. So we'd just stick with it?
     // If the texture is already bound at right unit, don't do anything
     if (this.activeTextures[unit] === texture && texture.loaded &&
-      !texture.varyingSize) return unit;
+      texture.valid && !texture.varyingSize) return unit;
     // Otherwise, bind the texture at specified unit.
     texture.use(unit, isFramebuffer);
     this.activeTextures[unit] = texture;
