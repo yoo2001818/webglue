@@ -25,7 +25,7 @@ export default class FramebufferManager {
       options = input;
       framebuffer = input.framebuffer;
     }
-    if (this.current === framebuffer) return;
+    if (this.current === framebuffer && options == null) return;
     framebuffer.use(options);
     this.current = framebuffer;
   }

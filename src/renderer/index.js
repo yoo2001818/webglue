@@ -77,7 +77,7 @@ export default class Renderer {
     // Build node
     let node = new RenderNode(pass, parent);
     // Set framebuffers.
-    if (pass.framebuffer !== undefined || parent == null) {
+    if (pass.framebuffer != null || parent == null) {
       this.framebuffers.use(pass.framebuffer);
       if (node.getOption('viewport') == null) this.setViewport();
     }
@@ -106,7 +106,7 @@ export default class Renderer {
     }
     if (pass.framebuffer !== undefined && parent != null) {
       this.framebuffers.use(parent.framebuffer);
-      if (node.getOption('viewport') == null) this.setViewport();
+      if (parent.getOption('viewport') == null) this.setViewport();
     }
   }
 }

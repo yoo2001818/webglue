@@ -11,7 +11,8 @@ export default class RenderNode {
     else this.root = parent.root;
 
     this.data = data;
-    this.framebuffer = data.framebuffer || (parent && parent.framebuffer);
+    this.framebuffer = data.framebuffer === undefined ?
+      (parent && parent.framebuffer) : data.framebuffer;
     this.shader = data.shader || (parent && parent.shader);
     this.geometry = data.geometry || (parent && parent.geometry);
     this.shaderHandler = data.shaderHandler || (parent && parent.shaderHandler);
