@@ -135,6 +135,7 @@ export default class Texture {
       this.uploadTexture(gl.TEXTURE_2D, source);
     }
     this.valid = true;
+    return true;
   }
   upload() {
     const gl = this.renderer.gl;
@@ -152,7 +153,7 @@ export default class Texture {
     this.width = null;
     this.height = null;
 
-    this.reupload();
+    if (!this.reupload()) return false;
 
     // Set texture parameters
     for (let key in this.options.params) {
