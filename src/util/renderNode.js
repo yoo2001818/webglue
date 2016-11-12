@@ -16,8 +16,8 @@ export default class RenderNode {
     this.shader = data.shader || (parent && parent.shader);
     this.geometry = data.geometry || (parent && parent.geometry);
     this.shaderHandler = data.shaderHandler || (parent && parent.shaderHandler);
-    this.geometryHandler = data.geometryHandler || (parent &&
-      parent.geometryHandler);
+    this.textureHandler = data.textureHandler ||
+      (parent && parent.textureHandler);
   }
   get(key) {
     if (this.data[key] !== undefined) return this.data[key];
