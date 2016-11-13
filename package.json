@@ -1,6 +1,6 @@
 {
   "name": "webglue",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Minimal WebGL wrapper library",
   "main": "lib/",
   "scripts": {

@@ -26,15 +26,13 @@ export default class RenderNode {
   }
   getOption(key) {
     let options = this.data.options;
-    if (options == null) return;
-    if (options[key] !== undefined) return options[key];
+    if (options != null && options[key] !== undefined) return options[key];
     if (this.parent != null) return this.parent.getOption(key);
     return null;
   }
   getUniform(key) {
     let uniforms = this.data.uniforms;
-    if (uniforms == null) return;
-    if (uniforms[key] !== undefined) return uniforms[key];
+    if (uniforms != null && uniforms[key] !== undefined) return uniforms[key];
     if (this.parent != null) return this.parent.getUniform(key);
     return null;
   }
