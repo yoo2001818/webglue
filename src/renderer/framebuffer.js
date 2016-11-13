@@ -57,18 +57,18 @@ export default class Framebuffer {
       throw new Error('Color attachment must be specified');
     }
     // Bind depth... should support textures too.
-    if (options.depth && typeof options.depth === 'number') {
+    if (this.options.depth && typeof this.options.depth === 'number') {
       // Create renderbuffer if it doesn't exists.
       if (this.depth == null) {
         this.depth = gl.createRenderbuffer();
       }
       gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth);
       // TODO Should reset renderbuffer if it has different size.
-      gl.renderbufferStorage(gl.RENDERBUFFER, options.depth,
+      gl.renderbufferStorage(gl.RENDERBUFFER, this.options.depth,
         width, height);
       // Bind the renderbuffer.
       gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
-        getAttachment(gl, options.depth), gl.RENDERBUFFER, this.depth);
+        getAttachment(gl, this.options.depth), gl.RENDERBUFFER, this.depth);
     }
     // Good enough! we're done. Kind of.
     this.width = width;
