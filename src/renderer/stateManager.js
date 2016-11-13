@@ -269,7 +269,8 @@ export default class StateManager {
         if (key === 'clearColor') continue;
         let parent = v.parent;
         if (parent != null && parent.data.options != null) {
-          options[key] = parent.data.options[key];
+          let value = parent.data.options[key];
+          options[key] = value != null ? value : false;
         } else {
           options[key] = false;
         }
