@@ -87,9 +87,10 @@ export default class Renderer {
       this.shaders.handler = node.shaderHandler;
       this.textures.handler = node.textureHandler;
       this.state.setNode(node);
-      this.shaders.useNode(node);
-      this.geometries.use(node.geometry);
-      this.geometries.draw();
+      if (this.shaders.useNode(node) !== false) {
+        this.geometries.use(node.geometry);
+        this.geometries.draw();
+      }
       // Check mipmap
       if (node.framebuffer != null && node.getOption('mipmap') === true) {
         // TODO This will be a problem if color texture is not specified

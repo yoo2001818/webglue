@@ -36,6 +36,7 @@ export default class ShaderManager {
   }
   useNode(node) {
     let shader = node.shader;
+    if (shader == null || shader === false) return false;
     // First, we pre-calculate uniforms before doing anything else.
     // However, this is only for 'pre-process' shader, so we skip if
     // invaliators are not defined.
@@ -53,6 +54,7 @@ export default class ShaderManager {
     if (this.handler != null) {
       shader = this.handler(shader, node, this.renderer);
     }
+    if (shader == null || shader === false) return false;
     shader = shader.use(undefined, this.current);
     this.current = shader;
     // Traverse to the uniforms
