@@ -154,8 +154,8 @@ export default class Geometry {
         }
         fillMetadata(gl, entry);
         if (entry.instanced != null && entry.instanced !== 0) {
-          let attributeCount = entry.data.length / entry.stride *
-            entry.typeSize * entry.instanced;
+          let attributeCount = Math.ceil(entry.data.length / entry.stride *
+            entry.typeSize * entry.instanced);
           if (primCount === -1 || primCount > attributeCount) {
             primCount = attributeCount;
           }
@@ -168,8 +168,8 @@ export default class Geometry {
             return this.upload();
           }
         } else {
-          let attributeCount = entry.data.length / entry.stride *
-            entry.typeSize;
+          let attributeCount = Math.ceil(entry.data.length / entry.stride *
+            entry.typeSize);
           if (count === -1 || count > attributeCount) {
             count = attributeCount;
           }
@@ -253,8 +253,8 @@ export default class Geometry {
       fillMetadata(gl, entry);
       entry.name = key;
       if (entry.instanced != null && entry.instanced !== 0) {
-        let attributeCount = entry.data.length / entry.stride * entry.typeSize
-          * entry.instanced;
+        let attributeCount = Math.ceil(entry.data.length / entry.stride *
+          entry.typeSize * entry.instanced);
         if (this.primCount === -1 || this.primCount > attributeCount) {
           this.primCount = attributeCount;
         }
@@ -270,7 +270,8 @@ export default class Geometry {
           continue;
         }
       } else {
-        let attributeCount = entry.data.length / entry.stride * entry.typeSize;
+        let attributeCount = Math.ceil(entry.data.length / entry.stride *
+          entry.typeSize);
         if (this.count === -1 || this.count > attributeCount) {
           this.count = attributeCount;
         }
