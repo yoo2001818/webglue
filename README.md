@@ -101,6 +101,9 @@ Shader interface can be accessed using `renderer.shaders`.
   shader code, `frag` is fragment shader code.  
   If `noPreprocess` is true, preprocessing will be disabled for the shader.
 
+### Shader object
+- `dispose()` - Disposes the shader object.
+
 ### Preprocessing
 If preprocessing is enabled, webglue will look for registered uniform values,
 then automatically put `#define`s into the shader.
@@ -160,3 +163,100 @@ Predefined governors are:
 - `max` - `defined value >= uniform value`
 - `equal` - `defined value == uniform value`
 - `maxLength` - `defined value >= (uniform value).length`
+
+## Geometry
+Geometry interface can be accessed using `renderer.geometries`.
+
+- `create(options)` - Creates the geometry.
+- `createBuffer(data: Float32Array)` - Creates the VBO buffer.
+
+### Geometry options
+Geometry options are defined using the following schema.
+
+```js
+{
+  attributes: {
+    aPosition: {
+      data: [0, 0, 0, 0, 0, 1],
+      axis: 3
+    },
+    aInstanced: {
+      data: [0, 1],
+      axis: 2,
+      instanced: 1
+    },
+    aVerbose: {
+      data: [0, 1],
+      axis: 1
+      // geometry.vbo or buffer object
+      // buffer: null
+      stride: 4, // Stride value, in bytes
+      offset: 0 // Offset value, in bytes
+    }
+  },
+  // Instanced attributes can be defined like this too
+  /* instanced: {
+    aInstanced: 1
+  }, */
+  indices: [0, 1],
+  mode: gl.LINES,
+  // count: 2,
+  // primCount: 2
+}
+```
+
+#### Attribute
+Attribute name can be anything, but webglue uses `aPosition`, `aTexCoord`,
+`aNormal`, `aTangent` by default.
+
+You can use either Float32Array or just regular array, as webglue automatically
+parses them. It's also possible to define them using 2D array. If using 1D
+array, you must specify axis.
+
+```js
+{
+  attributes: {
+    aPosition: [
+      [0, 0, 0], [1, 0, 0]
+    ],
+    aTexCoord: {
+      data: [0, 0, 1, 1],
+      axis: 2
+    },
+    aNormal: {
+      data: new Float32Array([0, 1, 0, 0, 1, 0]),
+      axis: 3
+    }
+  }
+}
+```
+
+You can specify WebGL buffer, `stride`, `offset`, `instanced` (divisor) for
+an attribute too.
+
+#### Indices
+Indices are exactly same as WebGL indices buffer, but an array or 2D array can
+be used as well.
+
+#### Mode
+Mode is exactly same as WebGL mode, it can be one of the following:
+
+- `gl.TRIANGLES` - the default value
+- `gl.TRIANGLE_STRIP`
+- `gl.TRIANGLE_FAN`
+- `gl.LINES`
+- `gl.LINE_STRIP`
+- `gl.LINE_LOOP`
+- `gl.POINTS`
+
+### Geometry object
+Once `renderer.geometries.create(options)` is called, it returns an geometry
+object. It can be used to reuse geometry buffer in another geometry, or
+to reupload the geometry object.
+
+- `update(options)` - Updates the geometry object. Only given attributes/indices
+  will be uploaded (If not specified, it won't be changed.) If `null` or `false`
+  is given as an attribute, it'll be deleted.
+- `dispose()` - Disposes the geometry object. This will remove the VBO object
+  from WebGL, so if other geometry is referencing the geometry,
+  it'll cause an error.
