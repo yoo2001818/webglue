@@ -91,7 +91,6 @@ resource.
 - geometries
 - textures
 - framebuffers
-- state
 
 `Renderer` itself handles `render` function.
 
@@ -168,7 +167,7 @@ Predefined governors are:
 Geometry interface can be accessed using `renderer.geometries`.
 
 - `create(options)` - Creates the geometry.
-- `createBuffer(data: Float32Array)` - Creates the VBO buffer.
+- `createBuffer(data: Float32Array)` - Creates the buffer.
 
 ### Geometry options
 Geometry options are defined using the following schema.
@@ -250,7 +249,7 @@ Mode is exactly same as WebGL mode, it can be one of the following:
 - `gl.POINTS`
 
 ### Geometry object
-Once `renderer.geometries.create(options)` is called, it returns an geometry
+Once `renderer.geometries.create(options)` is called, it returns a geometry
 object. It can be used to reuse geometry buffer in another geometry, or
 to reupload the geometry object.
 
@@ -260,3 +259,75 @@ to reupload the geometry object.
 - `dispose()` - Disposes the geometry object. This will remove the VBO object
   from WebGL, so if other geometry is referencing the geometry,
   it'll cause an error.
+
+### Buffer object
+`renderer.geometries.createBuffer(data)` will return a buffer object. It can be
+specified in attribute's `buffer`.
+
+- `update(data)` - Reuploads the buffer object.
+- `updateSub(data, offset)` - Reuploads the portion of buffer object. Offset
+  is in Float32Array index, not in bytes.
+- `dispose()` - Disposes the buffer object. This will remove the VBO object
+  from WebGL, so if other geometry is referencing the geometry,
+  it'll cause an error.
+
+## Texture
+Texture interface can be accessed using `renderer.textures`.
+
+- `create(source, options)` - Creates the texture. Source can be a URL,
+  a Image or Video, or TypedArray, or null. If the source is an array (not
+  TypedArray), a cubemap will be created.
+  If TypedArray is specified, width and height must be specified in options.
+
+The following code specifies the default options of textures. If the source
+is null, `minFilter` will be `gl.LINEAR` and `mipmap` will be disabled.
+
+```js
+{
+  target: renderer.gl.TEXTURE_2D,
+  format: renderer.gl.RGB,
+  type: renderer.gl.UNSIGNED_BYTE,
+  params: {
+    magFilter: gl.LINEAR,
+    minFilter: gl.LINEAR_MIPMAP_LINEAR,
+    wrapS: gl.CLAMP_TO_EDGE,
+    wrapT: gl.CLAMP_TO_EDGE,
+    mipmap: true,
+    flipY: true
+  }
+}
+```
+
+### Texture object
+Once `renderer.textures.create(texture, options)` is called, it returns a
+texture object.
+
+- `this.valid` - If false, texture will be reuploaded. This is useful for
+  processing videos.
+- `this.width` - The texture width. (0 if not uploaded)
+- `this.height` - The texture height. (0 if not uploaded)
+- `generateMipmap()` - Generates mipmap of the texture.
+- `dispose()` - Disposes the texture object.
+
+## Framebuffer
+Framebuffer interface can be accessed using `renderer.framebuffers`.
+
+- `create(options)` - Creates the framebuffer object.
+
+Options look like this. Note that only depth renderbuffer is supported for now.
+
+```js
+{
+  color: texture,
+  depth: gl.DEPTH_COMPONENT16
+}
+```
+
+### Framebuffer object
+`renderer.framebuffers.create(options)` returns a framebuffer object.
+
+- `readPixels(x, y, width, height, format, type, pixels)` - Calls
+  `gl.readPixels`.
+- `readPixelsRGBA(x, y, width, height, pixels)` - Reads pixels into `pixels`.
+- `readPixelsRGB(x, y, width, height, pixels)` - Reads pixels into `pixels`.
+- `dispose()` - Disposes the framebuffer object.
