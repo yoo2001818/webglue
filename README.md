@@ -208,8 +208,42 @@ framebuffer: {
 ```
 
 ### uniforms
+Sets uniforms to pass to the shader.
+
+```js
+{
+  uView: camera.getView,
+  uProjection: camera.getProjection,
+  uColor: '#ff0000',
+  uTexture: texture,
+  uLightPos: [1, 2, 3],
+  uNormal: new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+  uMaterial: {
+    ambient: '#ffffff',
+    diffuse: '#ff0000',
+    specular: '#aabbbbbb' // ARGB
+  },
+  uArray: ['#ff0000', '#0000ff']
+}
+```
+
+This is pretty self-explanatory though, but here's some description:
+
+- GLSL Structs and arrays will be expanded to support JSON.
+- JS Array will be converted to Float32Array, or Int32Array.
+- RGB can be specified on vec3.
+- RGB or ARGB can be specified on vec4.
+- Texture object can be specified on sampler2D, samplerCube.
+- Function can be specified, then the function's result will be used as the
+  uniform.
 
 ### passes
+Sets the child nodes to render. If this is specified, the node itself won't
+be rendered - only the children will.
+
+Child node inherits parent node's properties, except `clearColor`, `clearDepth`
+and `clearStencil`. This is really useful for rendering multiple objects
+on the screen.
 
 ## Shader
 Shader interface can be accessed using `renderer.shaders`.
