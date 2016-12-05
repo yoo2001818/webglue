@@ -17,7 +17,10 @@ export default function loadOBJ(data, separate = false) {
   let texCoordIndices = [];
   let normalSpecified = false;
   let normalSmooth = false;
-  let geometries = [];
+
+  let attributes = null;
+  let polyList = [];
+  let geometries = {};
 
   function addFaceIndex(point) {
     vertexIndices.push(point.vertex);
@@ -25,15 +28,19 @@ export default function loadOBJ(data, separate = false) {
     normalIndices.push(point.normal);
   }
 
-  function finalizeGeometry() {
+  function finalizePolyList() {
+    if (vertexIndices.length === 0) return;
+    // This should be saved I suppose
+    // if (attributes === null) {
+    attributes = {
+      aPosition: {data: new Float32Array(vertices), axis: 3},
+      aNormal: {data: new Float32Array(normals), axis: 3},
+      aTexCoord: {data: new Float32Array(texCoords), axis: 2}
+    };
+    // }
     let geometry = {
-      name: objName,
       material: objMaterial,
-      attributes: {
-        aPosition: {data: new Float32Array(vertices), axis: 3},
-        aNormal: {data: new Float32Array(normals), axis: 3},
-        aTexCoord: {data: new Float32Array(texCoords), axis: 2}
-      },
+      attributes,
       indices: {
         aPosition: parseIndices(vertexIndices),
         aNormal: parseIndices(normalIndices),
@@ -49,18 +56,21 @@ export default function loadOBJ(data, separate = false) {
       }
     }
     geometry = calcTangents(geometry);
-    /*// Calculate tangent vectors.
-    if (normalSmooth) {
-      geometry.calculateTangents();
-    } else {
-      geometry.calculateTangents();
-    }*/
-    // Add geometry to output geometries list.
-    geometries.push(geometry);
+    polyList.push(geometry);
     // Empty current indices buffer.
     vertexIndices = [];
     normalIndices = [];
     texCoordIndices = [];
+  }
+
+  function finalizeGeometry() {
+    finalizePolyList();
+    // Add geometry to output geometries list.
+    if (separate) {
+      geometries[objName] = polyList.length === 1 ? polyList[0] : polyList;
+    } else {
+      geometries = polyList[0];
+    }
   }
 
   // Parser logic starts here.
@@ -133,6 +143,9 @@ export default function loadOBJ(data, separate = false) {
       break;
     }
     case 'usemtl': {
+      if (separate && vertexIndices.length > 0) {
+        finalizePolyList();
+      }
       // Material name.
       objMaterial = args.join(' ');
       break;
@@ -154,6 +167,6 @@ export default function loadOBJ(data, separate = false) {
   // End of file - Build geometry object.
   if (vertexIndices.length > 0) finalizeGeometry();
   // All done! return the geometry object.
-  if (!separate) return geometries[0];
+  if (!separate) return geometries;
   return geometries;
 }
