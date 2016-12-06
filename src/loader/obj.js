@@ -18,7 +18,7 @@ export default function loadOBJ(data, separate = false) {
   let normalSpecified = false;
   let normalSmooth = false;
 
-  let attributes = null;
+  let attributes;
   let polyList = [];
   let geometries = {};
 
@@ -30,32 +30,16 @@ export default function loadOBJ(data, separate = false) {
 
   function finalizePolyList() {
     if (vertexIndices.length === 0) return;
-    // This should be saved I suppose
-    // if (attributes === null) {
-    attributes = {
-      aPosition: {data: new Float32Array(vertices), axis: 3},
-      aNormal: {data: new Float32Array(normals), axis: 3},
-      aTexCoord: {data: new Float32Array(texCoords), axis: 2}
-    };
-    // }
     let geometry = {
       material: objMaterial,
-      attributes,
+      normalSpecified,
+      normalSmooth,
       indices: {
         aPosition: parseIndices(vertexIndices),
         aNormal: parseIndices(normalIndices),
         aTexCoord: parseIndices(texCoordIndices)
       }
     };
-    // Calculate normal vectors, if not specified.
-    if (!normalSpecified) {
-      if (normalSmooth) {
-        geometry = calcSmoothNormals(geometry);
-      } else {
-        geometry = calcNormals(geometry);
-      }
-    }
-    geometry = calcTangents(geometry);
     polyList.push(geometry);
     // Empty current indices buffer.
     vertexIndices = [];
@@ -71,6 +55,21 @@ export default function loadOBJ(data, separate = false) {
     } else {
       geometries = polyList[0];
     }
+    normalSpecified = false;
+    normalSmooth = false;
+  }
+
+  function calculateGeometry(geometry) {
+    geometry.attributes = attributes;
+    if (!geometry.normalSpecified) {
+      if (geometry.normalSmooth) {
+        geometry = calcSmoothNormals(geometry);
+      } else {
+        geometry = calcNormals(geometry);
+      }
+    }
+    geometry = calcTangents(geometry);
+    return geometry;
   }
 
   // Parser logic starts here.
@@ -166,7 +165,25 @@ export default function loadOBJ(data, separate = false) {
   }
   // End of file - Build geometry object.
   if (vertexIndices.length > 0) finalizeGeometry();
+  // Then, process all geometries - Calculate normals and tangents.
+  attributes = {
+    aPosition: { data: new Float32Array(vertices), axis: 3 },
+    aNormal: { data: new Float32Array(normals), axis: 3 },
+    aTexCoord: { data: new Float32Array(texCoords), axis: 2 }
+  };
+
+  if (separate) {
+    for (let key in geometries) {
+      if (Array.isArray(geometries[key])) {
+        geometries[key] = geometries[key].map(v => calculateGeometry(v));
+      } else {
+        geometries[key] = calculateGeometry(geometries[key]);
+      }
+    }
+  } else {
+    geometries = calculateGeometry(geometries);
+  }
+
   // All done! return the geometry object.
-  if (!separate) return geometries;
   return geometries;
 }
