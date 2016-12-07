@@ -5,7 +5,7 @@ import parseIndices from '../util/parseIndices';
 
 // Loads OBJ file to Geometry object. Currently does not support materials
 // and etc.
-export default function loadOBJ(data, separate = false) {
+export default function loadOBJ(data, separate = false, noObject = false) {
   // Parser machine state
   let objName = 'OBJ_' + (Math.random() * 1000 | 0);
   let objMaterial = null;
@@ -20,7 +20,7 @@ export default function loadOBJ(data, separate = false) {
 
   let attributes;
   let polyList = [];
-  let geometries = {};
+  let geometries = noObject ? [] : {};
 
   function addFaceIndex(point) {
     vertexIndices.push(point.vertex);
@@ -31,9 +31,11 @@ export default function loadOBJ(data, separate = false) {
   function finalizePolyList() {
     if (vertexIndices.length === 0) return;
     let geometry = {
-      material: objMaterial,
-      normalSpecified,
-      normalSmooth,
+      metadata: {
+        material: objMaterial,
+        normalSpecified,
+        normalSmooth,
+      },
       indices: {
         aPosition: parseIndices(vertexIndices),
         aNormal: parseIndices(normalIndices),
@@ -51,18 +53,23 @@ export default function loadOBJ(data, separate = false) {
     finalizePolyList();
     // Add geometry to output geometries list.
     if (separate) {
-      geometries[objName] = polyList.length === 1 ? polyList[0] : polyList;
+      if (noObject) {
+        geometries = geometries.concat(polyList);
+      } else {
+        geometries[objName] = polyList.length === 1 ? polyList[0] : polyList;
+      }
     } else {
       geometries = polyList[0];
     }
+    polyList = [];
     normalSpecified = false;
     normalSmooth = false;
   }
 
   function calculateGeometry(geometry) {
     geometry.attributes = attributes;
-    if (!geometry.normalSpecified) {
-      if (geometry.normalSmooth) {
+    if (!geometry.metadata.normalSpecified) {
+      if (geometry.metadata.normalSmooth) {
         geometry = calcSmoothNormals(geometry);
       } else {
         geometry = calcNormals(geometry);
@@ -173,11 +180,15 @@ export default function loadOBJ(data, separate = false) {
   };
 
   if (separate) {
-    for (let key in geometries) {
-      if (Array.isArray(geometries[key])) {
-        geometries[key] = geometries[key].map(v => calculateGeometry(v));
-      } else {
-        geometries[key] = calculateGeometry(geometries[key]);
+    if (noObject) {
+      geometries = geometries.map(v => calculateGeometry(v));
+    } else {
+      for (let key in geometries) {
+        if (Array.isArray(geometries[key])) {
+          geometries[key] = geometries[key].map(v => calculateGeometry(v));
+        } else {
+          geometries[key] = calculateGeometry(geometries[key]);
+        }
       }
     }
   } else {

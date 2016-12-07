@@ -97,6 +97,7 @@ export default class Geometry {
     if (options.instanced) {
       Object.assign(output.instanced, options.instanced);
     }
+    if (options.metadata != null) output.metadata = options.metadata;
     if (options.mode != null) output.mode = options.mode;
     if (options.count != null) {
       output.count = options.count;
@@ -220,6 +221,8 @@ export default class Geometry {
     if (this.indices == null) {
       this.indices = parseIndices(options.indices);
     }
+    // Update metadata
+    this.metadata = options.metadata;
     // gl.POINTS is 0
     this.mode = options.mode == null ? gl.TRIANGLES : options.mode;
     this.usage = options.usage == null ? gl.STATIC_DRAW : options.usage;

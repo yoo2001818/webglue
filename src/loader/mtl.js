@@ -1,7 +1,7 @@
 // Parses MTL file to material objects. However webglue doesn't include phong
-// shader (yet), so user needs to create their shader on their own. So,
+// shader, so user needs to create their shader on their own. So,
 // only material options will be returned, not material itself.
-export default function loadMTL(data, textures) {
+export default function loadMTL(data) {
   let materials = {};
   let currentMaterial = null;
   function finalizeMaterial() {
@@ -23,8 +23,7 @@ export default function loadMTL(data, textures) {
   }
   function parseTexture(args) {
     // TODO Arguments are not supported yet.
-    if (textures == null) return args.join(' ');
-    return textures[args.join(' ')];
+    return args.join(' ');
   }
 
   // Parser logic starts here.
@@ -55,8 +54,13 @@ export default function loadMTL(data, textures) {
       // Specular reflectivity.
       currentMaterial.specular = parseColor(args);
       break;
+    case 'Ke':
+      // Emission reflectivity.
+      currentMaterial.emission = parseColor(args);
+      break;
     case 'Tf':
       // Transmission filter. Not implemented (yet).
+      currentMaterial.transmission = parseColor(args);
       break;
     case 'illum':
       // Illumination model.
@@ -79,6 +83,10 @@ export default function loadMTL(data, textures) {
     case 'd':
       // Dissolve factor. Not implemented yet.
       // -halo should be implemented too.
+      if (args[0] === '-halo') {
+        currentMaterial.dissolveHalo = true;
+      }
+      currentMaterial.dissolve = parseFloat(args[args.length - 1]);
       break;
     case 'Ns':
       // Specular exponent.
@@ -86,9 +94,11 @@ export default function loadMTL(data, textures) {
       break;
     case 'sharpness':
       // Reflection sharpness. Not implemented yet.
+      currentMaterial.sharpness = parseFloat(args[0]);
       break;
     case 'Ni':
       // Optical density. Not implemented.
+      currentMaterial.density = parseFloat(args[0]);
       break;
     // Material texture
     case 'map_Ka':
@@ -109,6 +119,7 @@ export default function loadMTL(data, textures) {
       break;
     case 'map_d':
       // Dissolve map. Not implemented yet.
+      currentMaterial.dissolveMap = parseTexture(args);
       break;
     case 'map_aat':
       // Selectively enable anti-aliasing... Which is not possible in OpenGL.

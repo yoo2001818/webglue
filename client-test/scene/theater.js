@@ -13,7 +13,8 @@ export default function theater(renderer) {
     'theaterlowpoly.png': renderer.textures.create(
       require('../texture/theaterlowpoly.png'))
   });
-  let geometries = channelGeom(loadOBJ(require('../geom/theater2.obj'), true));
+  let geometries = channelGeom(loadOBJ(
+    require('../geom/theater2.obj'), true, true));
   geometries.forEach(geometry => {
     geometry.geometry = renderer.geometries.create(geometry);
   });
