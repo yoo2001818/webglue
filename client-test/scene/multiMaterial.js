@@ -53,7 +53,7 @@ export default function multiMaterial(renderer) {
         uPointLight: [{
           position: [0, 1, 1],
           color: '#ffffff',
-          intensity: [0.1, 0.7, 1.0, 0.00015]
+          intensity: [0.3, 0.8, 1.0, 0.00015]
         }]
       }),
       passes: [{
