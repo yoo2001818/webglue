@@ -17,6 +17,9 @@ export default class Shader {
   constructor(renderer, vert, frag) {
     this.renderer = renderer;
     this.source = { vert, frag };
+    // TODO This should allow dynamic pipeline.. or something.
+    // This only does simple AABB though.
+    this.frustumCull = vert.indexOf('#pragma webglue: frustumCull\n') !== -1;
     this.program = null;
     this.attributes = {};
     this.uniforms = {};

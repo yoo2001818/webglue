@@ -1,6 +1,7 @@
 import PreprocessShader from './preprocessShader';
 import Shader from './shader';
 import traverseNode from '../util/traverseNode';
+import checkFrustum from '../util/checkFrustum';
 export default class ShaderManager {
   constructor(renderer) {
     this.renderer = renderer;
@@ -23,6 +24,7 @@ export default class ShaderManager {
         allocator: current => current == null ? 0 : current.length
       }
     };
+    this.checkFrustum = checkFrustum;
   }
   create(vert, frag, noPreprocess = false) {
     let shader;

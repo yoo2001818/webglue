@@ -88,8 +88,13 @@ export default class Renderer {
       this.textures.handler = node.textureHandler;
       this.state.setNode(node);
       if (this.shaders.useNode(node) !== false) {
-        this.geometries.use(node.geometry);
-        this.geometries.draw();
+        // Check frustum culling
+        if (!this.shaders.current.frustumCull ||
+          this.shaders.checkFrustum(this, node)
+        ) {
+          this.geometries.use(node.geometry);
+          this.geometries.draw();
+        }
       }
       // Check mipmap
       if (node.framebuffer != null && node.getOption('mipmap') === true) {

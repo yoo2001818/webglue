@@ -1,5 +1,6 @@
 import parseAttributes from '../util/parseAttributes';
 import parseIndices from '../util/parseIndices';
+import getAABB from '../util/getAABB';
 
 export const POINTS = 0;
 export const LINES = 1;
@@ -72,6 +73,8 @@ export default class Geometry {
     this.eboType = null;
     this.vao = null;
 
+    this.aabb = null;
+
     this.attributeList = null;
     this.instancedList = null;
 
@@ -90,9 +93,18 @@ export default class Geometry {
       this.upload();
     }
   }
+  getAABB() {
+    // This assumes that the geometry has been uploaded
+    if (!this.loaded) return false;
+    // TODO Support changing attribute name
+    if (this.aabb != null) return this.aabb;
+    this.aabb = getAABB(this, 'aPosition');
+    return this.aabb;
+  }
   update(options) {
     const gl = this.renderer.gl;
     let output = this.options;
+    this.aabb = null;
     // Legacy code compatibility
     if (options.instanced) {
       Object.assign(output.instanced, options.instanced);
