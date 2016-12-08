@@ -47,7 +47,7 @@ module.exports = {
         loader: 'style!css'
       },
       {
-        test: /(\.vert|\.frag|\.obj|\.mtl)$/i,
+        test: /(\.vert|\.frag|\.obj|\.mtl|\.dae)$/i,
         loader: 'raw'
       },
       {

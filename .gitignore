@@ -35,4 +35,4 @@ node_modules
 dist/
 lib/
 
-.gitignore
+yarn.lock
