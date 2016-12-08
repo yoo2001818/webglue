@@ -92,6 +92,8 @@ export default class PreprocessShader {
     // What if there is no 'feature'? It'll fallback to array.
     // What if there is no 'count'? It'll fallback to raw shader object.
     this.shaders = null;
+    // ...
+    this.frustumCull = vert.indexOf('#pragma webglue: frustumCull\n') !== -1;
   }
   ascendNode(node) {
     let uniforms = node.data.uniforms;

@@ -81,17 +81,18 @@ export default class Renderer {
       this.framebuffers.use(pass.framebuffer);
       if (node.getOption('viewport') == null) this.setViewport();
     }
+    if (pass.options != null) this.state.clear(pass.options);
     // We do 'lazy evaluation' or something like that - to prevent useless
     // WebGL calls.
     if (pass.passes == null) {
       this.shaders.handler = node.shaderHandler;
       this.textures.handler = node.textureHandler;
-      this.state.setNode(node);
-      if (this.shaders.useNode(node) !== false) {
-        // Check frustum culling
-        if (!this.shaders.current.frustumCull ||
-          this.shaders.checkFrustum(this, node)
-        ) {
+      // Check frustum culling
+      if (!node.shader.frustumCull ||
+        this.shaders.checkFrustum(this, node)
+      ) {
+        this.state.setNode(node);
+        if (this.shaders.useNode(node) !== false) {
           this.geometries.use(node.geometry);
           this.geometries.draw();
         }

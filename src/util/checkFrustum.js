@@ -4,9 +4,9 @@ let tmpVec3 = vec3.create();
 let tmpMat4 = mat4.create();
 let tmpPlanes = new Float32Array(24);
 
-function parseUniform(renderer, value) {
+function parseUniform(renderer, node, value) {
   if (typeof value === 'function') {
-    return value(renderer.shaders.current, renderer);
+    return value(node.shader, renderer);
   }
   return value;
 }
@@ -31,9 +31,10 @@ function distancePlane(plane, pos) {
 export default function checkFrustum(renderer, node) {
   // Prepare matrix
   // TODO Support custom uniform name
-  let uModel = parseUniform(renderer, node.getUniform('uModel'));
-  let uView = parseUniform(renderer, node.getUniform('uView'));
-  let uProjection = parseUniform(renderer, node.getUniform('uProjection'));
+  let uModel = parseUniform(renderer, node, node.getUniform('uModel'));
+  let uView = parseUniform(renderer, node, node.getUniform('uView'));
+  let uProjection = parseUniform(renderer, node,
+    node.getUniform('uProjection'));
   mat4.multiply(tmpMat4, uView, uModel);
   mat4.multiply(tmpMat4, uProjection, tmpMat4);
   setPlane(tmpMat4, 2, 1, tmpPlanes, 0); // Near

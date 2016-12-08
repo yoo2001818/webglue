@@ -264,9 +264,6 @@ export default class StateManager {
     traverseNode(this.currentNode, node, v => {
       dirty = true;
       for (let key in v.data.options) {
-        if (key === 'clearStencil') continue;
-        if (key === 'clearDepth') continue;
-        if (key === 'clearColor') continue;
         let parent = v.parent;
         if (parent != null && parent.data.options != null) {
           let value = parent.data.options[key];
@@ -290,7 +287,7 @@ export default class StateManager {
     this.setBlend(options.blend);
     this.setColorMask(options.colorMask);
     this.setDepthMask(options.depthMask);
-    this.clear(options);
+    // this.clear(options);
     this.setCull(options.cull);
     this.setDepth(options.depth);
     this.setEnabled(gl.DITHER, BIT_POS.dither, options.dither);

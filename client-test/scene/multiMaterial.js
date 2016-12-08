@@ -1,12 +1,26 @@
 import loadOBJ from 'webglue/loader/obj';
 import loadMTL from 'webglue/loader/mtl';
 import channelGeom from 'webglue/geom/channel';
+import boxGeom from 'webglue/geom/box';
 import bakeMesh from 'webglue/util/bakeMesh';
 
 import { mat3, mat4 } from 'gl-matrix';
 
 export default function multiMaterial(renderer) {
   const gl = renderer.gl;
+  let box = renderer.geometries.create(boxGeom());
+  let skybox = renderer.textures.create([
+    require('../texture/stormyday/front.jpg'),
+    require('../texture/stormyday/back.jpg'),
+    require('../texture/stormyday/down.jpg'),
+    require('../texture/stormyday/up.jpg'),
+    require('../texture/stormyday/right.jpg'),
+    require('../texture/stormyday/left.jpg')
+  ]);
+  let skyboxShader = renderer.shaders.create(
+    require('../shader/skybox.vert'),
+    require('../shader/skybox.frag')
+  );
   // 1. Create Geometry, then bake ChannelGeometry to WebglueGeometry
   let geometry = renderer.geometries.create(channelGeom(
     loadOBJ(require('../geom/pencil.obj'), true, true)
@@ -27,7 +41,10 @@ export default function multiMaterial(renderer) {
           ambient: material.ambient.map((v, i) => v * material.diffuse[i]),
           diffuse: material.diffuse,
           specular: material.specular,
-          shininess: material.shininess
+          shininess: material.shininess,
+          reflectivity: material.model === 3 ? new Float32Array([
+            material.specular[0], material.specular[1], material.specular[2], 1
+          ]) : '#00000000'
         }
       }
     };
@@ -61,12 +78,21 @@ export default function multiMaterial(renderer) {
         uniforms: {
           uModel: model1Mat,
           uNormal: model1Normal,
-          uHeightMapScale: [0.2, 1.1]
-          // uEnvironmentMap: skybox
+          uHeightMapScale: [0.2, 1.1],
+          uEnvironmentMap: skybox
           // uHeightMap: heightMap,
           // uDiffuseMap: texture
         },
         passes: nodes
+      }, {
+        shader: skyboxShader,
+        geometry: box,
+        options: {
+          cull: gl.FRONT
+        },
+        uniforms: {
+          uSkybox: skybox
+        }
       }]
     });
   };
