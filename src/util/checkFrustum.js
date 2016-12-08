@@ -46,18 +46,12 @@ export default function checkFrustum(renderer, node) {
   // Prepare AABB
   let aabb = node.geometry.getAABB();
   for (let i = 0; i < 6; ++i) {
-    let inCount = 0;
     // Pull plane
     let plane = tmpPlanes.subarray(i * 4, i * 4 + 4);
-    for (let j = 0; j < 8; ++j) {
-      tmpVec3[0] = (j & 1) !== 0 ? aabb[0] : aabb[3];
-      tmpVec3[1] = (j & 2) !== 0 ? aabb[1] : aabb[4];
-      tmpVec3[2] = (j & 4) !== 0 ? aabb[2] : aabb[5];
-      if (distancePlane(plane, tmpVec3) >= 0) inCount ++;
-    }
-    if (inCount === 0) {
-      return false;
-    }
+    tmpVec3[0] = plane[0] < 0 ? aabb[0] : aabb[3];
+    tmpVec3[1] = plane[1] < 0 ? aabb[1] : aabb[4];
+    tmpVec3[2] = plane[2] < 0 ? aabb[2] : aabb[5];
+    if (distancePlane(plane, tmpVec3) < 0) return false;
   }
   return true;
 }

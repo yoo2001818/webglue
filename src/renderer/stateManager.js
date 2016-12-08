@@ -265,11 +265,9 @@ export default class StateManager {
       dirty = true;
       for (let key in v.data.options) {
         let parent = v.parent;
-        if (parent != null && parent.data.options != null) {
-          let value = parent.data.options[key];
+        if (parent != null) {
+          let value = parent.getOption(key);
           options[key] = value != null ? value : false;
-        } else {
-          options[key] = false;
         }
       }
     }, v => {
