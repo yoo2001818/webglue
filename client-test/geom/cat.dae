@@ -85,7 +85,8 @@
   </library_effects>
   <library_materials>
     <material id="Catmat-material" name="Catmat">
-      <instance_effect url="#Catmat-effect"/>
+      <instance_effect url="#Catmat-effect">
+      </instance_effect>
     </material>
     <material id="EyeballMat-material" name="EyeballMat">
       <instance_effect url="#EyeballMat-effect"/>

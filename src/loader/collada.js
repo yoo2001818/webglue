@@ -18,7 +18,7 @@ class Context {
     if (this.stack.length > 0) {
       let parentFrame = this.stack[this.stack.length - 1];
       let popChild = parentFrame.operator.popChild;
-      popChild && popChild.call(this, result, parentFrame);
+      popChild && popChild.call(this, result, parentFrame, stackFrame);
     }
   }
   get() {
@@ -66,32 +66,59 @@ const multiple =
     // is available.
     merge: (prev = [], current) => (prev.push(current), prev)
   }, v));
-
-function registerNamespace(node, frame) {
-  Object.assign(frame.data, node.attributes);
-  const { id } = node.attributes;
-  if (id != null) {
-    this.namespace[id] = frame.data;
-  }
-  frame.namespace = {};
-}
-
-function registerSid(node, frame) {
-  Object.assign(frame.data, node.attributes);
-  const { id, sid } = node.attributes;
-  if (sid != null) {
-    let node = frame.parent;
-    while (node != null && node.namespace == null) {
-      node = node.parent;
+const multipleMap =
+  (schema, getKey) => cached(schema, v => v && Object.assign({
+    // merge is *always* executed by hierarchy, even though no prev object
+    // is available.
+    merge: (prev = {}, current, frame) => {
+      prev[getKey(current, frame)] = current;
+      return prev;
     }
-    if (node != null) node.namespace[sid] = frame.data;
-  } else {
-    throw new Error('sid is required but was not specified');
+  }, v));
+const registerNamespace = {
+  push(node, frame) {
+    Object.assign(frame.data, node.attributes);
+    const { id } = node.attributes;
+    if (id != null) {
+      frame.id = id;
+    }
+    frame.namespace = {};
+  },
+  pop(data, frame) {
+    data.namespace = frame.namespace;
+    if (frame.id != null) this.namespace[frame.id] = data;
+    return data;
   }
-  if (id != null) {
-    this.namespace[id] = frame.data;
+};
+
+const registerSid = {
+  push(node, frame) {
+    Object.assign(frame.data, node.attributes);
+    const { id, sid } = node.attributes;
+    if (sid != null) {
+      let parent = frame.parent;
+      while (parent != null && parent.namespace == null) {
+        parent = node.parent;
+      }
+      if (parent != null) {
+        frame.namespaceParent = parent;
+        frame.sid = sid;
+      }
+    } else {
+      throw new Error('sid is required but was not specified');
+    }
+    if (id != null) {
+      frame.id = id;
+    }
+  },
+  pop(data, frame) {
+    if (frame.namespaceParent != null) {
+      frame.namespaceParent.namespace[frame.sid] = data;
+    }
+    if (frame.id != null) this.namespace[frame.id] = data;
+    return data;
   }
-}
+};
 
 function hoist(children, triggers) {
   let onPush, onPop;
@@ -119,7 +146,7 @@ function hoist(children, triggers) {
       this.pop();
     },
     pop(data, frame) {
-      if (onPop != null) return onPop.call(this, data, frame);
+      if (onPop != null) return onPop.call(this, frame.data, frame);
       return frame.data;
     },
     popChild(data, frame) {
@@ -160,15 +187,15 @@ function hierarchy(children, triggers) {
     },
     pop(data, frame) {
       console.log(frame.data);
-      if (onPop != null) return onPop.call(this, data, frame);
+      if (onPop != null) return onPop.call(this, frame.data, frame);
       return frame.data;
     },
-    popChild(data, frame) {
+    popChild(data, frame, childFrame) {
       let prev = frame.data[frame.target];
       let result = data;
       if (frame.target == null) return;
       if (frame.targetSchema && frame.targetSchema.merge != null) {
-        result = frame.targetSchema.merge(prev, result);
+        result = frame.targetSchema.merge(prev, result, childFrame);
       }
       frame.data[frame.target] = result;
     }
@@ -263,16 +290,43 @@ const MATERIAL_STRUCTURE = {
   index_of_refraction: rename('refraction', 'floatOrParam')
 };
 
+const CORE_PARAM_TYPE = {
+  bool: 'boolean',
+  bool2: 'booleanArray',
+  bool3: 'booleanArray',
+  bool4: 'booleanArray',
+  int: 'int',
+  int2: 'intArray',
+  int3: 'intArray',
+  int4: 'intArray',
+  float: 'float',
+  float2: 'floatArray',
+  float3: 'floatArray',
+  float4: 'floatArray',
+  surface: 'surface',
+  sampler2D: 'sampler',
+  samplerCUBE: 'sampler'
+};
+
+for (let i = 1; i <= 4; ++i) {
+  for (let j = 1; j <= 4; ++j) {
+    CORE_PARAM_TYPE[`float${i}x${j}`] = 'floatArray';
+  }
+}
+
 const SCHEMA = {
   noop: NOOP,
   attributes: attributes(),
   boolean: textValue(v => v === 'true'),
+  booleanArray: textValue(v => v.split(/\s+/).map(v => v === 'true')),
   string: textValue(v => v),
   // Should be the date parsed?
   date: textValue(v => v),
   stringArray: textValue(v => v.split(/\s+/)),
   float: textValue(v => parseFloat(v)),
   floatArray: textValue(v => new Float32Array(v.split(/\s+/).map(parseFloat))),
+  int: textValue(v => parseFloat(v)),
+  intArray: textValue(v => new Int32Array(v.split(/\s+/).map(parseFloat))),
   COLLADA: hierarchy({
     asset: 'asset',
     library_animations: rename('animations', library('animation', 'animation')),
@@ -340,32 +394,28 @@ const SCHEMA = {
       }, registerSid)
     }, registerNamespace))
   }, {
-    push: registerNamespace,
-    pop: (data, frame) => {
+    push: registerNamespace.push,
+    pop(data, frame) {
       if (frame.data.common) {
         let { common } = frame.data;
         let newImages = (frame.data.images || []).concat(common.images || []);
         Object.assign(frame.data, common);
         frame.data.images = newImages;
         delete frame.data.common;
-        console.log(frame.data);
       }
-      return frame.data;
+      return registerNamespace.pop.call(this, frame.data, frame);
     }
   }),
-  newparam: hoist({
-    float: 'float',
-    float2: 'floatArray',
-    float3: 'floatArray',
-    float4: 'floatArray',
-    surface: 'surface',
-    sampler2D: 'sampler'
-  }, registerSid),
+  newparam: hoist(CORE_PARAM_TYPE, registerSid),
   colorOrTexture: hoist({
     color: 'floatArray',
     param: attributes(v => v.attributes.ref),
     // Ignore 'texCoord' for now
     texture: attributes(v => v.attributes.texture)
+  }),
+  floatOrParam: hoist({
+    float: 'float',
+    param: attributes(v => v.attributes.ref)
   }),
   surface: hierarchy({
     size: 'floatArray',
@@ -383,6 +433,21 @@ const SCHEMA = {
     minfilter: 'fxSamplerFilterCommon',
     magfilter: 'fxSamplerFilterCommon',
     mipfilter: 'fxSamplerFilterCommon'
+  }),
+  material: hoist({
+    instance_effect: 'instanceEffect'
+  }, registerNamespace),
+  instanceEffect: hierarchy({
+    setparam: rename('params', multipleMap(
+      hoist(CORE_PARAM_TYPE, (node, frame) => {
+        frame.ref = node.attributes.ref;
+      }),
+      (data, frame) => frame.ref
+    ))
+  }, {
+    push(node, frame) {
+      frame.data.effect = node.attributes.url;
+    }
   })
 };
 
@@ -406,4 +471,5 @@ export default function loadCollada(data) {
   parser.onattribute = context.getDelegator(v => v.attribute);
   parser.onend = context.getDelegator(v => v.end);
   parser.write(data).close();
+  console.log(context.namespace);
 }
