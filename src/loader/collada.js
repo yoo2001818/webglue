@@ -68,26 +68,28 @@ function cached(schema, manipulator) {
 const rename =
   (target, schema) => cached(schema, v => v && Object.assign({ target }, v));
 const multiple =
-  (schema) => cached(schema, v => v && Object.assign({
+  (schema) => cached(schema, v => v && Object.assign({}, v, {
     // merge is *always* executed by hierarchy, even though no prev object
     // is available.
     merge: (prev = [], current) => (prev.push(current), prev)
-  }, v));
+  }));
 const multipleMap =
-  (schema, getKey) => cached(schema, v => v && Object.assign({
+  (schema, getKey) => cached(schema, v => v && Object.assign({}, v, {
     // merge is *always* executed by hierarchy, even though no prev object
     // is available.
     merge: (prev = {}, current, frame) => {
+      console.log(prev, current, frame);
       prev[getKey(current, frame)] = current;
       return prev;
     }
-  }, v));
+  }));
 const registerNamespace = {
   push(node, frame) {
-    const { id } = node.attributes;
+    const { id, name } = node.attributes;
     if (id != null) {
       frame.id = id;
     }
+    frame.name = name;
     frame.namespace = {};
   },
   pop(data, frame) {
@@ -96,13 +98,23 @@ const registerNamespace = {
       this.namespace[frame.id] = data;
       data.id = frame.id;
     }
+    if (frame.name != null) data.name = frame.name;
+    return data;
+  }
+};
+const registerNamespaceSilent = {
+  push: registerNamespace.push,
+  pop(data, frame) {
+    if (frame.id != null) {
+      this.namespace[frame.id] = data;
+    }
     return data;
   }
 };
 
 const registerSid = {
   push(node, frame) {
-    const { id, sid } = node.attributes;
+    const { id, sid, name } = node.attributes;
     if (sid != null) {
       let parent = frame.parent;
       while (parent != null && parent.namespace == null) {
@@ -118,6 +130,7 @@ const registerSid = {
     if (id != null) {
       frame.id = id;
     }
+    frame.name = name;
   },
   pop(data, frame) {
     if (frame.namespaceParent != null) {
@@ -128,6 +141,7 @@ const registerSid = {
       this.namespace[frame.id] = data;
       data.id = frame.id;
     }
+    if (frame.name != null) data.name = frame.name;
     return data;
   }
 };
@@ -164,16 +178,17 @@ function hoist(children, triggers) {
   }
   return {
     push(node, frame) {
-      frame.data = {};
+      frame.data = undefined;
       if (onPush != null) onPush.call(this, node, frame);
     },
-    opentag(node) {
+    opentag(node, frame) {
       let child = children[node.name];
       // Ignore if node name doesn't match
       if (child == null) return this.push(NOOP, node);
       let schema = resolveSchema(child);
       // TODO Remove this
       if (schema == null) return this.push(NOOP, node);
+      frame.targetSchema = schema;
       this.push(schema, node);
     },
     closetag() {
@@ -184,8 +199,11 @@ function hoist(children, triggers) {
       if (onPop != null) return onPop.call(this, frame.data, frame);
       return frame.data;
     },
-    popChild(data, frame) {
+    popChild(data, frame, childFrame) {
       let result = data;
+      if (frame.targetSchema && frame.targetSchema.merge != null) {
+        result = frame.targetSchema.merge(frame.data, result, childFrame);
+      }
       frame.data = result;
     }
   };
@@ -489,14 +507,35 @@ const SCHEMA = {
   geometry: hoist({
     mesh: hierarchy({
       source: rename('sources', multipleMap('source',
-        (data, frame) => frame.id))
+        (data, frame) => frame.id)),
+      vertices: hoist({
+        input: multipleMap(attributes(), (data, frame) => frame.data.semantic)
+      }, registerNamespaceSilent),
+      lines: 'polylist',
+      linestrips: 'polylist',
+      triangles: 'polylist',
+      polylist: 'polylist'
     })
   }, registerNamespace),
+  polylist: hierarchy({
+    input: multipleMap(attributes(), (data, frame) => frame.data.semantic),
+    p: 'intArray',
+    vcount: 'intArray'
+  }, {
+    push: (node, frame) => {
+      frame.data.material = node.attributes.material;
+      frame.parent.data.type = node.name;
+    }
+  }),
   source: hierarchy({
-    Name_array: rename('data', addTrigger('stringArray', registerNamespace)),
-    bool_array: rename('data', addTrigger('booleanArray', registerNamespace)),
-    float_array: rename('data', addTrigger('floatArray', registerNamespace)),
-    int_array: rename('data', addTrigger('intArray', registerNamespace)),
+    Name_array: rename('data', addTrigger('stringArray',
+      registerNamespaceSilent)),
+    bool_array: rename('data', addTrigger('booleanArray',
+      registerNamespaceSilent)),
+    float_array: rename('data', addTrigger('floatArray',
+      registerNamespaceSilent)),
+    int_array: rename('data', addTrigger('intArray',
+      registerNamespaceSilent)),
     // TODO Read param names
     technique_common: rename('options', hoist({
       accessor: attributes()
