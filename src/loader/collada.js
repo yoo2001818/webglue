@@ -31,6 +31,13 @@ class Context {
       if (func != null) func.call(this, v, frame);
     };
   }
+  resolveURI(name) {
+    if (name.charAt(0) === '#') {
+      return this.namespace[name.slice(1)];
+    }
+    throw new Error('This parser doesn\'t support outside URI (Only XPointer ' +
+      'Syntax is supported)');
+  }
 }
 
 const NOOP = {
@@ -77,7 +84,6 @@ const multipleMap =
   }, v));
 const registerNamespace = {
   push(node, frame) {
-    Object.assign(frame.data, node.attributes);
     const { id } = node.attributes;
     if (id != null) {
       frame.id = id;
@@ -86,14 +92,16 @@ const registerNamespace = {
   },
   pop(data, frame) {
     data.namespace = frame.namespace;
-    if (frame.id != null) this.namespace[frame.id] = data;
+    if (frame.id != null) {
+      this.namespace[frame.id] = data;
+      data.id = frame.id;
+    }
     return data;
   }
 };
 
 const registerSid = {
   push(node, frame) {
-    Object.assign(frame.data, node.attributes);
     const { id, sid } = node.attributes;
     if (sid != null) {
       let parent = frame.parent;
@@ -114,11 +122,38 @@ const registerSid = {
   pop(data, frame) {
     if (frame.namespaceParent != null) {
       frame.namespaceParent.namespace[frame.sid] = data;
+      data.sid = frame.sid;
     }
-    if (frame.id != null) this.namespace[frame.id] = data;
+    if (frame.id != null) {
+      this.namespace[frame.id] = data;
+      data.id = frame.id;
+    }
     return data;
   }
 };
+
+function addTrigger(schema, triggers) {
+  let onPush, onPop;
+  if (typeof triggers === 'function') onPush = triggers;
+  else if (triggers != null) {
+    onPush = triggers.push;
+    onPop = triggers.pop;
+  }
+  return cached(schema, v => {
+    console.log(v);
+    return v && Object.assign({}, v, {
+      push(node, frame) {
+        v.push(node, frame);
+        if (onPush != null) onPush.call(this, node, frame);
+      },
+      pop(data, frame) {
+        let result = v.pop(data, frame);
+        if (onPop != null) return onPop.call(this, result, frame);
+        return result;
+      }
+    });
+  });
+}
 
 function hoist(children, triggers) {
   let onPush, onPop;
@@ -378,7 +413,9 @@ const SCHEMA = {
     profile_COMMON: rename('common', hierarchy({
       asset: 'asset',
       image: rename('images', multiple('image')),
-      newparam: rename('params', multiple('newparam')),
+      newparam: rename('params', multipleMap('newparam',
+        (data, frame) => frame.sid
+      )),
       technique: hoist({
         // TODO Accept image / newparam at this point
         // image: rename('images', multiple('image')),
@@ -447,6 +484,49 @@ const SCHEMA = {
   }, {
     push(node, frame) {
       frame.data.effect = node.attributes.url;
+    }
+  }),
+  geometry: hoist({
+    mesh: hierarchy({
+      source: rename('sources', multipleMap('source',
+        (data, frame) => frame.id))
+    })
+  }, registerNamespace),
+  source: hierarchy({
+    Name_array: rename('data', addTrigger('stringArray', registerNamespace)),
+    bool_array: rename('data', addTrigger('booleanArray', registerNamespace)),
+    float_array: rename('data', addTrigger('floatArray', registerNamespace)),
+    int_array: rename('data', addTrigger('intArray', registerNamespace)),
+    // TODO Read param names
+    technique_common: rename('options', hoist({
+      accessor: attributes()
+    }))
+  }, {
+    push: registerNamespace.push,
+    pop(data, frame) {
+      // TODO This should be outside XML parser (Should do post processing)
+      if (data.options != null) {
+        data.axis = parseInt(data.options.stride) || 1;
+        if (data.source != null) {
+          data.data = this.resolveURI(data.source, frame);
+        }
+        let offset = parseInt(data.options.offset);
+        if (!isNaN(offset)) {
+          // TODO We shouldn't care about data structure size...
+          data.offset = offset * 4;
+        }
+        let count = parseInt(data.options.count);
+        if (!isNaN(count)) {
+          data.count = count;
+          // Slice the array
+          if (Array.isArray(data.data)) {
+            data.data = data.data.slice(0, count * data.axis);
+          } else {
+            data.data = data.data.subarray(0, count * data.axis);
+          }
+        }
+      }
+      return registerNamespace.pop.call(this, data, frame);
     }
   })
 };
