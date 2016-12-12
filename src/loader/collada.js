@@ -1,4 +1,5 @@
 import sax from 'sax';
+import { mat4 } from 'gl-matrix';
 
 class Context {
   constructor() {
@@ -78,73 +79,56 @@ const multipleMap =
     // merge is *always* executed by hierarchy, even though no prev object
     // is available.
     merge: (prev = {}, current, frame) => {
-      console.log(prev, current, frame);
       prev[getKey(current, frame)] = current;
       return prev;
     }
   }));
-const registerNamespace = {
-  push(node, frame) {
-    const { id, name } = node.attributes;
-    if (id != null) {
-      frame.id = id;
-    }
-    frame.name = name;
-    frame.namespace = {};
-  },
-  pop(data, frame) {
-    data.namespace = frame.namespace;
-    if (frame.id != null) {
-      this.namespace[frame.id] = data;
-      data.id = frame.id;
-    }
-    if (frame.name != null) data.name = frame.name;
-    return data;
-  }
-};
-const registerNamespaceSilent = {
-  push: registerNamespace.push,
-  pop(data, frame) {
-    if (frame.id != null) {
-      this.namespace[frame.id] = data;
-    }
-    return data;
-  }
-};
+const merge =
+  (schema, merge) => cached(schema, v => v && Object.assign({ merge }, v));
 
-const registerSid = {
-  push(node, frame) {
-    const { id, sid, name } = node.attributes;
-    if (sid != null) {
-      let parent = frame.parent;
-      while (parent != null && parent.namespace == null) {
-        parent = node.parent;
+
+function createNamespace(createLocal, sidNecessary, overwrite = true) {
+  return {
+    push(node, frame) {
+      const { id, sid, name } = node.attributes;
+      if (sid != null) {
+        let parent = frame.parent;
+        while (parent != null && parent.namespace == null) {
+          parent = node.parent;
+        }
+        if (parent != null) {
+          frame.namespaceParent = parent;
+          frame.sid = sid;
+        }
+      } else if (sidNecessary) {
+        throw new Error('sid is required but was not specified');
       }
-      if (parent != null) {
-        frame.namespaceParent = parent;
-        frame.sid = sid;
+      if (id != null) {
+        frame.id = id;
       }
-    } else {
-      throw new Error('sid is required but was not specified');
+      frame.name = name;
+      if (createLocal) {
+        frame.namespace = {};
+      }
+    },
+    pop(data, frame) {
+      if (frame.namespaceParent != null) {
+        frame.namespaceParent.namespace[frame.sid] = data;
+        if (overwrite) data.sid = frame.sid;
+      }
+      if (frame.id != null) {
+        this.namespace[frame.id] = data;
+        if (overwrite) data.id = frame.id;
+      }
+      if (overwrite && frame.name != null) data.name = frame.name;
+      return data;
     }
-    if (id != null) {
-      frame.id = id;
-    }
-    frame.name = name;
-  },
-  pop(data, frame) {
-    if (frame.namespaceParent != null) {
-      frame.namespaceParent.namespace[frame.sid] = data;
-      data.sid = frame.sid;
-    }
-    if (frame.id != null) {
-      this.namespace[frame.id] = data;
-      data.id = frame.id;
-    }
-    if (frame.name != null) data.name = frame.name;
-    return data;
-  }
-};
+  };
+}
+
+const registerId = createNamespace(true, false, true);
+const registerIdSilent = createNamespace(true, false, false);
+const registerSid = createNamespace(false, true, true);
 
 function addTrigger(schema, triggers) {
   let onPush, onPop;
@@ -154,7 +138,6 @@ function addTrigger(schema, triggers) {
     onPop = triggers.pop;
   }
   return cached(schema, v => {
-    console.log(v);
     return v && Object.assign({}, v, {
       push(node, frame) {
         v.push(node, frame);
@@ -330,6 +313,14 @@ function textValue(proc) {
   };
 }
 
+function matrixOp(op) {
+  return rename('matrix', merge(
+    addTrigger('floatArray', registerIdSilent), (prev, current) => {
+      return mat4.multiply(prev, op(current), prev);
+    })
+  );
+}
+
 const MATERIAL_STRUCTURE = {
   emission: 'colorOrTexture',
   ambient: 'colorOrTexture',
@@ -366,6 +357,8 @@ for (let i = 1; i <= 4; ++i) {
     CORE_PARAM_TYPE[`float${i}x${j}`] = 'floatArray';
   }
 }
+
+let tmpMat4 = mat4.create();
 
 const SCHEMA = {
   noop: NOOP,
@@ -423,7 +416,7 @@ const SCHEMA = {
   }),
   animation: hierarchy({
     animation: rename('children', multiple('animation'))
-  }, registerNamespace),
+  }, registerId),
   effect: hierarchy({
     asset: 'asset',
     image: rename('images', multiple('image')),
@@ -447,9 +440,9 @@ const SCHEMA = {
         phong: hierarchy(MATERIAL_STRUCTURE,
           (node, frame) => frame.data.type = 'phong')
       }, registerSid)
-    }, registerNamespace))
+    }, registerId))
   }, {
-    push: registerNamespace.push,
+    push: registerId.push,
     pop(data, frame) {
       if (frame.data.common) {
         let { common } = frame.data;
@@ -458,7 +451,7 @@ const SCHEMA = {
         frame.data.images = newImages;
         delete frame.data.common;
       }
-      return registerNamespace.pop.call(this, frame.data, frame);
+      return registerId.pop.call(this, frame.data, frame);
     }
   }),
   newparam: hoist(CORE_PARAM_TYPE, registerSid),
@@ -491,7 +484,7 @@ const SCHEMA = {
   }),
   material: hoist({
     instance_effect: 'instanceEffect'
-  }, registerNamespace),
+  }, registerId),
   instanceEffect: hierarchy({
     setparam: rename('params', multipleMap(
       hoist(CORE_PARAM_TYPE, (node, frame) => {
@@ -510,13 +503,13 @@ const SCHEMA = {
         (data, frame) => frame.id)),
       vertices: hoist({
         input: multipleMap(attributes(), (data, frame) => frame.data.semantic)
-      }, registerNamespaceSilent),
+      }, registerIdSilent),
       lines: 'polylist',
       linestrips: 'polylist',
       triangles: 'polylist',
       polylist: 'polylist'
     })
-  }, registerNamespace),
+  }, registerId),
   polylist: hierarchy({
     input: multipleMap(attributes(), (data, frame) => frame.data.semantic),
     p: 'intArray',
@@ -528,20 +521,16 @@ const SCHEMA = {
     }
   }),
   source: hierarchy({
-    Name_array: rename('data', addTrigger('stringArray',
-      registerNamespaceSilent)),
-    bool_array: rename('data', addTrigger('booleanArray',
-      registerNamespaceSilent)),
-    float_array: rename('data', addTrigger('floatArray',
-      registerNamespaceSilent)),
-    int_array: rename('data', addTrigger('intArray',
-      registerNamespaceSilent)),
+    Name_array: rename('data', addTrigger('stringArray', registerIdSilent)),
+    bool_array: rename('data', addTrigger('booleanArray', registerIdSilent)),
+    float_array: rename('data', addTrigger('floatArray', registerIdSilent)),
+    int_array: rename('data', addTrigger('intArray', registerIdSilent)),
     // TODO Read param names
     technique_common: rename('options', hoist({
       accessor: attributes()
     }))
   }, {
-    push: registerNamespace.push,
+    push: registerId.push,
     pop(data, frame) {
       // TODO This should be outside XML parser (Should do post processing)
       if (data.options != null) {
@@ -565,8 +554,45 @@ const SCHEMA = {
           }
         }
       }
-      return registerNamespace.pop.call(this, data, frame);
+      return registerId.pop.call(this, data, frame);
     }
+  }),
+  visualScene: hierarchy({
+    node: rename('children', multiple('node'))
+  }, registerId),
+  node: hierarchy({
+    node: rename('children', multiple('node')),
+    // If we do animation, this might have to be updated often - it shouldn't
+    // be coupled with XML parser.
+    lookat: matrixOp(input => {
+      let eye = input.subarray(0, 3);
+      let center = input.subarray(3, 6);
+      let up = input.subarray(6, 9);
+      return mat4.lookAt(tmpMat4, eye, center, up);
+    }),
+    matrix: matrixOp(input => {
+      return mat4.copy(tmpMat4, input);
+    }),
+    rotate: matrixOp(input => {
+      return mat4.fromRotation(tmpMat4,
+        input[3] / 180 * Math.PI, input.subarray(0, 3));
+    }),
+    scale: matrixOp(input => {
+      return mat4.fromScaling(tmpMat4, input);
+    }),
+    skew: matrixOp(() => {
+      throw new Error('Skew operation is not supported');
+    }),
+    translate: matrixOp(input => {
+      return mat4.fromTranslation(tmpMat4, input);
+    })
+  }, {
+    push(node, frame) {
+      registerId.push(node, frame);
+      frame.data.matrix = mat4.create();
+      frame.data.type = node.attributes.type || 'NODE';
+    },
+    pop: registerId.pop
   })
 };
 
