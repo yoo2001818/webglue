@@ -129,6 +129,7 @@ function createNamespace(createLocal, sidNecessary, overwrite = true) {
 const registerId = createNamespace(true, false, true);
 const registerIdSilent = createNamespace(true, false, false);
 const registerSid = createNamespace(false, true, true);
+const registerSidOptional = createNamespace(false, false, true);
 
 function addTrigger(schema, triggers) {
   let onPush, onPop;
@@ -152,7 +153,7 @@ function addTrigger(schema, triggers) {
   });
 }
 
-function hoist(children, triggers) {
+function hoist(children, triggers, initialValue = undefined) {
   let onPush, onPop;
   if (typeof triggers === 'function') onPush = triggers;
   else if (triggers != null) {
@@ -161,7 +162,7 @@ function hoist(children, triggers) {
   }
   return {
     push(node, frame) {
-      frame.data = undefined;
+      frame.data = initialValue;
       if (onPush != null) onPush.call(this, node, frame);
     },
     opentag(node, frame) {
@@ -561,6 +562,7 @@ const SCHEMA = {
     node: rename('children', multiple('node'))
   }, registerId),
   node: hierarchy({
+    asset: 'asset',
     node: rename('children', multiple('node')),
     // If we do animation, this might have to be updated often - it shouldn't
     // be coupled with XML parser.
@@ -585,15 +587,37 @@ const SCHEMA = {
     }),
     translate: matrixOp(input => {
       return mat4.fromTranslation(tmpMat4, input);
-    })
+    }),
+    instance_geometry: rename('geometries', multiple('instanceGeometry'))
   }, {
     push(node, frame) {
-      registerId.push(node, frame);
+      registerId.push.call(this, node, frame);
       frame.data.matrix = mat4.create();
       frame.data.type = node.attributes.type || 'NODE';
     },
     pop: registerId.pop
-  })
+  }),
+  instanceGeometry: hoist({
+    bind_material: hierarchy({
+      param: rename('params', multiple(attributes())),
+      technique_common: rename('materials', hoist({
+        instance_material: multipleMap(hierarchy({}, {
+          push(node, frame) {
+            registerSidOptional.push.call(this, node, frame);
+            frame.data.target = node.attributes.target;
+            frame.data.symbol = node.attributes.symbol;
+          },
+          pop: registerSidOptional.pop
+        }), (data, frame) => frame.data.symbol)
+      }))
+    })
+  }, {
+    push(node, frame) {
+      registerSidOptional.push.call(this, node, frame);
+      frame.data.geometry = node.attributes.url;
+    },
+    pop: registerSidOptional.pop
+  }, {}),
 };
 
 const INITIAL = {
