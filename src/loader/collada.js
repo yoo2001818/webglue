@@ -83,6 +83,12 @@ const multipleMap =
       return prev;
     }
   }));
+const unwrap = (schema) => cached(schema, v => v && Object.assign({}, v, {
+  merge: (prev, current, frame) => {
+    Object.assign(frame.parent.data, current);
+    return undefined;
+  }
+}));
 const merge =
   (schema, merge) => cached(schema, v => v && Object.assign({ merge }, v));
 
@@ -234,7 +240,7 @@ function hierarchy(children, triggers) {
       if (frame.targetSchema && frame.targetSchema.merge != null) {
         result = frame.targetSchema.merge(prev, result, childFrame);
       }
-      frame.data[frame.target] = result;
+      if (result !== undefined) frame.data[frame.target] = result;
     }
   };
 }
@@ -588,7 +594,8 @@ const SCHEMA = {
     translate: matrixOp(input => {
       return mat4.fromTranslation(tmpMat4, input);
     }),
-    instance_geometry: rename('geometries', multiple('instanceGeometry'))
+    instance_geometry: rename('geometries', multiple('instanceGeometry')),
+    instance_controller: rename('controllers', multiple('instanceController'))
   }, {
     push(node, frame) {
       registerId.push.call(this, node, frame);
@@ -598,19 +605,7 @@ const SCHEMA = {
     pop: registerId.pop
   }),
   instanceGeometry: hoist({
-    bind_material: hierarchy({
-      param: rename('params', multiple(attributes())),
-      technique_common: rename('materials', hoist({
-        instance_material: multipleMap(hierarchy({}, {
-          push(node, frame) {
-            registerSidOptional.push.call(this, node, frame);
-            frame.data.target = node.attributes.target;
-            frame.data.symbol = node.attributes.symbol;
-          },
-          pop: registerSidOptional.pop
-        }), (data, frame) => frame.data.symbol)
-      }))
-    })
+    bind_material: 'bindMaterial'
   }, {
     push(node, frame) {
       registerSidOptional.push.call(this, node, frame);
@@ -618,6 +613,43 @@ const SCHEMA = {
     },
     pop: registerSidOptional.pop
   }, {}),
+  bindMaterial: hierarchy({
+    param: rename('params', multiple(attributes())),
+    technique_common: rename('materials', hoist({
+      instance_material: multipleMap(hierarchy({}, {
+        push(node, frame) {
+          registerSidOptional.push.call(this, node, frame);
+          frame.data.target = node.attributes.target;
+          frame.data.symbol = node.attributes.symbol;
+        },
+        pop: registerSidOptional.pop
+      }), (data, frame) => frame.data.symbol)
+    }))
+  }),
+  instanceController: hierarchy({
+    skeleton: 'string',
+    bind_material: unwrap('bindMaterial')
+  }),
+  controller: hoist({
+    skin: hierarchy({
+      bindShapeMatrix: 'floatArray',
+      source: rename('sources', multipleMap('source',
+        (data, frame) => frame.id)),
+      joints: hoist({
+        input: multipleMap(attributes(), (data, frame) => frame.data.semantic)
+      }),
+      vertex_weights: rename('weights', hierarchy({
+        input: rename('inputs', multipleMap(attributes(),
+          (data, frame) => frame.data.semantic)),
+        vcount: 'intArray',
+        v: 'intArray'
+      }))
+    }, {
+      push(node, frame) {
+        frame.data.source = node.attributes.source;
+      }
+    })
+  }, registerId)
 };
 
 const INITIAL = {
