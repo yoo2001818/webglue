@@ -12,7 +12,20 @@ export function isSource(source) {
   return false;
 }
 
+function isPromise(promise) {
+  if (promise == null) return false;
+  return typeof promise.then === 'function';
+}
+
+function setUpPromise(texture, source, position) {
+  source.then(value => {
+    if (position != null) texture.options.source[position] = value;
+    else texture.options.source = value;
+  });
+}
+
 export function isLoaded(source) {
+  if (isPromise(source)) return false;
   if (isSource(source)) {
     // Check readystate...
     if (source.readyState != null && source.readyState !== 4) {
@@ -39,11 +52,13 @@ export default class Texture {
 
     // TODO immutable
     if (Array.isArray(this.options.source)) {
-      this.options.source = this.options.source.map(source => {
+      this.options.source = this.options.source.map((source, index) => {
         if (typeof source === 'string') {
           let image = new Image();
           image.src = source;
           return image;
+        } else if (isPromise(source)) {
+          setUpPromise(this, source, index);
         }
         return source;
       });
@@ -52,6 +67,8 @@ export default class Texture {
         let image = new Image();
         image.src = this.options.source;
         this.options.source = image;
+      } else if (isPromise(this.options.source)) {
+        setUpPromise(this, this.options.source);
       }
     }
 
