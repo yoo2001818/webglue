@@ -17,7 +17,7 @@ export default class Transform extends BaseTransform {
   get() {
     let local = super.get();
     if (this.parent == null) {
-      this.transformTicks = this.ticks;
+      this._transformTicks = this.ticks;
       return local;
     } else {
       let parentMatrix = this.parent.get();
