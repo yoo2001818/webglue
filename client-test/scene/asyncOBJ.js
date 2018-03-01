@@ -9,7 +9,7 @@ import { mat3, mat4 } from 'gl-matrix';
 export default function asyncOBJ(renderer) {
   const gl = renderer.gl;
   let geom = renderer.geometries.create(
-    fetch(require('!!file!../geom/bunny.obj'))
+    fetch(require('!!file-loader!../geom/bunny.obj'))
     .then(res => res.text())
     .then(data => channelGeom(loadOBJ(data)))
   );

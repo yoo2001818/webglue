@@ -4,39 +4,34 @@
   "description": "Minimal WebGL wrapper library",
   "main": "lib/",
   "scripts": {
-    "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "webpack-dev-server --hot --inline",
+    "test": "npm run lint",
+    "lint": "eslint src/",
+    "build": "webpack --config=webpack.config.js --progress --profile --colors && babel src -d lib --copy-files"
   },
   "author": "Kkiro",
   "license": "MIT",
   "devDependencies": {
-    "babel-core": "^6.17.0",
-    "babel-loader": "^6.2.5",
-    "babel-plugin-syntax-flow": "^6.13.0",
-    "babel-preset-es2015": "^6.16.0",
-    "babel-register": "^6.16.3",
-    "css-loader": "^0.25.0",
-    "eslint": "^3.7.0",
-    "file-loader": "^0.9.0",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-eslint": "^3.0.1",
-    "gulp-revert-path": "^1.2.1",
-    "gulp-util": "^3.0.7",
-    "gulp-wrap": "^0.13.0",
-    "html-loader": "^0.4.4",
-    "html-webpack-plugin": "^2.22.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.3",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "css-loader": "^0.28.10",
+    "eslint": "^4.18.1",
+    "file-loader": "^1.1.10",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.0.3",
     "import-glob-loader": "^1.1.0",
-    "json-loader": "^0.5.4",
+    "json-loader": "^0.5.7",
     "raw-loader": "^0.5.1",
-    "style-loader": "^0.13.1",
-    "uglify-loader": "^1.3.0",
-    "url-loader": "^0.5.7",
-    "webpack": "^1.13.2",
-    "webpack-node-externals": "^1.4.3"
+    "style-loader": "^0.20.2",
+    "url-loader": "^0.6.2",
+    "webpack": "^4.0.1",
+    "webpack-cli": "^2.0.9",
+    "webpack-dev-server": "^3.1.0"
   },
   "dependencies": {
-    "gl-matrix": "^2.3.2",
-    "sax": "^1.2.1"
+    "gl-matrix": "^2.4.0"
   }
 }
