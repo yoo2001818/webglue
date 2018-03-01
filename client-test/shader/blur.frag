@@ -8,10 +8,10 @@ uniform lowp vec2 uTextureOffset;
 void main() {
   lowp vec2 tex = vTexCoord;
   lowp vec3 data = vec3(0.0, 0.0, 0.0);
-  for (int x = - 1; x <= 1; ++x) {
-    for (int y = - 1; y <= 1; ++y) {
+  for (int x = - 2; x <= 2; ++x) {
+    for (int y = - 2; y <= 2; ++y) {
       data += texture2D(uTexture, vTexCoord + uTextureOffset * vec2(x, y)).xyz;
     }
   }
-  gl_FragColor = vec4(data / 9.0, 1.0);
+  gl_FragColor = vec4(data / 25.0, 1.0);
 }

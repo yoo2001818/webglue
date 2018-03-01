@@ -65,9 +65,7 @@ export default function heightMap(renderer) {
   mat4.rotateX(model1Mat, model1Mat, -Math.PI / 2);
   mat3.normalFromMat4(model1Normal, model1Mat);
 
-  let timer = 0;
   return (delta, context) => {
-    timer += delta;
     // mat4.rotateY(model1Mat, model1Mat, Math.PI * delta / 1000 / 2);
     // mat3.normalFromMat4(model1Normal, model1Mat);
 

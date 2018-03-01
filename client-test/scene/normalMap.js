@@ -12,11 +12,16 @@ export default function normalMap(renderer) {
     require('../shader/phong.frag')
   );
   let texture = renderer.textures.create(
-    require('../texture/texture2.png'));
+    require('../texture/stone.jpg'), {
+      params: {
+        wrapS: gl.REPEAT,
+        wrapT: gl.REPEAT,
+      }
+    });
   let normalMap = renderer.textures.create(
-    require('../texture/texture2_normal.png'));
+    require('../texture/stone-normal.jpg'));
   let bumpMap = renderer.textures.create(
-    require('../texture/texture2_depth.png'));
+    require('../texture/heightmap.png'));
   let skybox = renderer.textures.create([
     require('../texture/stormyday/front.jpg'),
     require('../texture/stormyday/back.jpg'),
@@ -64,7 +69,7 @@ export default function normalMap(renderer) {
             reflectivity: '#ff333333',
             shininess: 100
           },
-          uHeightMapScale: [0.2, 1.1],
+          uHeightMapScale: [0.05, 1.1],
           uEnvironmentMap: skybox,
           uNormalMap: normalMap,
           uHeightMap: bumpMap,
