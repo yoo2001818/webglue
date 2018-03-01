@@ -15,17 +15,21 @@ export default class Transform extends BaseTransform {
     this.get = this.get.bind(this);
   }
   get() {
-    if (this.parent == null) return super.get();
-    let parentMatrix = this.parent.get();
     let local = super.get();
-    if (this._parentTicks !== this.parent.ticks ||
-      this._localTicks !== this.ticks
-    ) {
-      this._parentTicks = this.parent.ticks;
-      this._localTicks = this.ticks;
-      this._transformTicks ++;
-      mat4.multiply(this.matrix, parentMatrix, local);
+    if (this.parent == null) {
+      this.transformTicks = this.ticks;
+      return local;
+    } else {
+      let parentMatrix = this.parent.get();
+      if (this._parentTicks !== this.parent.ticks ||
+        this._localTicks !== this.ticks
+      ) {
+        this._parentTicks = this.parent.ticks;
+        this._localTicks = this.ticks;
+        this._transformTicks ++;
+        mat4.multiply(this.matrix, parentMatrix, local);
+      }
+      return this.matrix;
     }
-    return this.matrix;
   }
 }
