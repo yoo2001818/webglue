@@ -14,11 +14,6 @@ module.exports = {
     filename: 'bundle.js',
     sourceMapFilename: '[name].map',
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      title: 'othello-3d-view',
-    }),
-  ],
   resolve: {
     alias: {
       webglue: path.join(__dirname, 'src')
